@@ -581,7 +581,7 @@ public class NodeGroupTests
         var b = Add(patch, "math.mul", 300, 0);
         var c = Add(patch, "math.mul", 0, 300);
         var d = Add(patch, "math.mul", 300, 300);
-        var sink = Add(patch, NodeCatalog.OutputTypeId, 900, 0);
+        var sink = Add(patch, OutputModule.TypeId, 900, 0);
 
         var top = patch.Group([a.Id, b.Id]).ShouldNotBeNull();
         var low = patch.Group([c.Id, d.Id]).ShouldNotBeNull();

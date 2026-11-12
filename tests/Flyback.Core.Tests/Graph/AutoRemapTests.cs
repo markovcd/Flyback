@@ -34,8 +34,8 @@ public class AutoRemapTests
     private static Rig FromSine(float phase = 0f, params (int Port, float Value)[] knobs)
     {
         var b = new PatchBuilder(Catalog);
-        var sine = b.Add(NodeCatalog.SineTypeId, 0, 0, (1, 0f), (2, phase));
-        var remap = b.Add(NodeCatalog.AutoRemapTypeId, 200, 0, knobs);
+        var sine = b.Add(OscillatorModules.SineTypeId, 0, 0, (1, 0f), (2, phase));
+        var remap = b.Add(MathModules.AutoRemapTypeId, 200, 0, knobs);
 
         b.Wire(sine, 0, remap, AutoRemap.In);
 
@@ -52,7 +52,7 @@ public class AutoRemapTests
     public void Its_input_takes_the_range_of_what_feeds_it_and_its_output_the_range_of_what_it_feeds()
     {
         var rig = FromSine();
-        Into(rig, NodeCatalog.FilterTypeId, 1);
+        Into(rig, FilterModule.TypeId, 1);
 
         rig.Spans.In.ShouldBe(new RemapSpan(-1f, 1f));
         rig.Spans.Out.ShouldBe(new RemapSpan(20f, 12_000f, 20f));
@@ -62,8 +62,8 @@ public class AutoRemapTests
     public void An_oscillators_range_moves_with_its_amp_and_bias()
     {
         var b = new PatchBuilder(Catalog);
-        var sine = b.Add(NodeCatalog.SineTypeId, 0, 0, (3, 0.5f), (4, 0.5f));
-        var remap = b.Add(NodeCatalog.AutoRemapTypeId, 200, 0);
+        var sine = b.Add(OscillatorModules.SineTypeId, 0, 0, (3, 0.5f), (4, 0.5f));
+        var remap = b.Add(MathModules.AutoRemapTypeId, 200, 0);
         b.Wire(sine, 0, remap, AutoRemap.In);
 
         AutoRemap.Of(b.Patch, remap, Catalog).In.ShouldBe(new RemapSpan(0f, 1f));
@@ -73,7 +73,7 @@ public class AutoRemapTests
     public void An_unwired_side_is_fractions_of_nought_to_one()
     {
         var b = new PatchBuilder(Catalog);
-        var remap = b.Add(NodeCatalog.AutoRemapTypeId, 0, 0);
+        var remap = b.Add(MathModules.AutoRemapTypeId, 0, 0);
 
         AutoRemap.Of(b.Patch, remap, Catalog).ShouldBe(RemapSpans.Unwired);
     }
@@ -83,10 +83,10 @@ public class AutoRemapTests
     {
         var b = new PatchBuilder(Catalog);
         var tint = b.Add("color.hsv", 0, 0);
-        var remap = b.Add(NodeCatalog.AutoRemapTypeId, 200, 0);
-        var output = b.Add(NodeCatalog.OutputTypeId, 400, 0);
+        var remap = b.Add(MathModules.AutoRemapTypeId, 200, 0);
+        var output = b.Add(OutputModule.TypeId, 400, 0);
         b.Wire(tint, 0, remap, AutoRemap.In);
-        b.Wire(remap, 0, output, NodeCatalog.OutputColorPort);
+        b.Wire(remap, 0, output, OutputModule.ColorPort);
 
         AutoRemap.Of(b.Patch, remap, Catalog).ShouldBe(RemapSpans.Unwired);
     }
@@ -100,8 +100,8 @@ public class AutoRemapTests
     {
         var b = new PatchBuilder(Catalog);
         var red = b.Add("color.hsv", 0, 0);
-        var remap = b.Add(NodeCatalog.AutoRemapTypeId, 200, 0);
-        var sine = b.Add(NodeCatalog.SineTypeId, 400, 0);
+        var remap = b.Add(MathModules.AutoRemapTypeId, 200, 0);
+        var sine = b.Add(OscillatorModules.SineTypeId, 400, 0);
         b.Wire(red, 0, remap, AutoRemap.In);
         b.Wire(remap, 0, sine, 1);
 
@@ -116,10 +116,10 @@ public class AutoRemapTests
     {
         var b = new PatchBuilder(Catalog);
         var tint = b.Add("color.hsv", 0, 0);
-        var remap = b.Add(NodeCatalog.AutoRemapTypeId, 200, 0);
-        var output = b.Add(NodeCatalog.OutputTypeId, 400, 0);
+        var remap = b.Add(MathModules.AutoRemapTypeId, 200, 0);
+        var output = b.Add(OutputModule.TypeId, 400, 0);
         b.Wire(tint, 0, remap, AutoRemap.In);
-        b.Wire(remap, 0, output, NodeCatalog.OutputColorPort);
+        b.Wire(remap, 0, output, OutputModule.ColorPort);
 
         AutoRemap.Of(b.Patch, remap, Catalog).Narrow.ShouldBeFalse();
     }
@@ -128,8 +128,8 @@ public class AutoRemapTests
     public void A_source_with_no_range_leaves_the_input_pair_as_plain_numbers()
     {
         var b = new PatchBuilder(Catalog);
-        var value = b.Add(NodeCatalog.ValueTypeId, 0, 0);
-        var remap = b.Add(NodeCatalog.AutoRemapTypeId, 200, 0);
+        var value = b.Add(SourceModules.ValueTypeId, 0, 0);
+        var remap = b.Add(MathModules.AutoRemapTypeId, 200, 0);
         b.Wire(value, 0, remap, AutoRemap.In);
 
         var spans = AutoRemap.Of(b.Patch, remap, Catalog);
@@ -152,7 +152,7 @@ public class AutoRemapTests
     public void Two_sockets_that_disagree_leave_the_output_pair_as_plain_numbers()
     {
         var rig = FromSine();
-        Into(rig, NodeCatalog.FilterTypeId, 1);
+        Into(rig, FilterModule.TypeId, 1);
         Into(rig, "color.hsv", 0);
 
         rig.Spans.Out.ShouldBeNull();
@@ -163,7 +163,7 @@ public class AutoRemapTests
     public void A_socket_with_no_range_beside_one_with_a_range_follows_the_one_with()
     {
         var rig = FromSine();
-        Into(rig, NodeCatalog.FilterTypeId, 1);
+        Into(rig, FilterModule.TypeId, 1);
         Into(rig, "math.add", 0);
 
         rig.Spans.Out.ShouldBe(new RemapSpan(20f, 12_000f, 20f));
@@ -179,7 +179,7 @@ public class AutoRemapTests
     public void Halfway_through_its_input_it_sits_halfway_round_the_sockets_knob()
     {
         var rig = FromSine();
-        Into(rig, NodeCatalog.FilterTypeId, 1);
+        Into(rig, FilterModule.TypeId, 1);
 
         rig.Out().ShouldBe(MathF.Sqrt(20f * 12_000f), 0.5f);
     }
@@ -190,7 +190,7 @@ public class AutoRemapTests
         // The sine at its peak is the top of the upper-half input slice, so the
         // output sits at the top of its own slice.
         var rig = FromSine(0.25f, (AutoRemap.InLow, 0.5f), (AutoRemap.InHigh, 1f), (AutoRemap.OutLow, 0.2f), (AutoRemap.OutHigh, 0.5f));
-        Into(rig, NodeCatalog.FilterTypeId, 1);
+        Into(rig, FilterModule.TypeId, 1);
 
         rig.Out().ShouldBe(rig.Spans.Out!.Value.At(0.5f), 0.5f);
     }
@@ -199,8 +199,8 @@ public class AutoRemapTests
     public void With_both_ends_unranged_it_is_a_plain_remap()
     {
         var b = new PatchBuilder(Catalog);
-        var value = b.Add(NodeCatalog.ValueTypeId, 0, 0, (0, 0f));
-        var remap = b.Add(NodeCatalog.AutoRemapTypeId, 200, 0,
+        var value = b.Add(SourceModules.ValueTypeId, 0, 0, (0, 0f));
+        var remap = b.Add(MathModules.AutoRemapTypeId, 200, 0,
             (AutoRemap.InLow, -2f), (AutoRemap.InHigh, 2f), (AutoRemap.OutLow, 90f), (AutoRemap.OutHigh, 320f));
         var add = b.Add("math.add", 400, 0);
         b.Wire(value, 0, remap, AutoRemap.In);
@@ -213,8 +213,8 @@ public class AutoRemapTests
     public void A_pair_left_as_plain_numbers_is_said_when_the_patch_is_compiled()
     {
         var b = new PatchBuilder(Catalog);
-        var value = b.Add(NodeCatalog.ValueTypeId, 0, 0);
-        var remap = b.Add(NodeCatalog.AutoRemapTypeId, 200, 0);
+        var value = b.Add(SourceModules.ValueTypeId, 0, 0);
+        var remap = b.Add(MathModules.AutoRemapTypeId, 200, 0);
         b.Wire(value, 0, remap, AutoRemap.In);
 
         b.Patch.CompileForVideo(Catalog).Issues
@@ -223,11 +223,11 @@ public class AutoRemapTests
     }
 
     [Theory]
-    [InlineData(NodeCatalog.SineTypeId, NodeCatalog.FilterTypeId, 1, true)]
-    [InlineData(NodeCatalog.SineTypeId, NodeCatalog.FilterTypeId, 0, false)]
-    [InlineData(NodeCatalog.ValueTypeId, NodeCatalog.FilterTypeId, 1, false)]
-    [InlineData(NodeCatalog.SineTypeId, "math.add", 0, false)]
-    [InlineData(NodeCatalog.SineTypeId, NodeCatalog.AutoRemapTypeId, 0, false)]
+    [InlineData(OscillatorModules.SineTypeId, FilterModule.TypeId, 1, true)]
+    [InlineData(OscillatorModules.SineTypeId, FilterModule.TypeId, 0, false)]
+    [InlineData(SourceModules.ValueTypeId, FilterModule.TypeId, 1, false)]
+    [InlineData(OscillatorModules.SineTypeId, "math.add", 0, false)]
+    [InlineData(OscillatorModules.SineTypeId, MathModules.AutoRemapTypeId, 0, false)]
     public void A_wire_is_offered_a_remap_only_where_both_ends_have_ranges_that_differ(
         string from, string into, int port, bool offered)
     {
@@ -240,12 +240,12 @@ public class AutoRemapTests
     }
 
     [Theory]
-    [InlineData(NodeCatalog.SineTypeId, "color.hsv", 2, true)]
-    [InlineData(NodeCatalog.SineTypeId, "color.hsv", 0, false)]
-    [InlineData(NodeCatalog.PulseTypeId, "env.adsr", 0, false)]
-    [InlineData(NodeCatalog.SineTypeId, NodeCatalog.FilterTypeId, 0, false)]
-    [InlineData("env.adsr", NodeCatalog.SineTypeId, 1, false)]
-    [InlineData(NodeCatalog.ValueTypeId, "color.hsv", 2, false)]
+    [InlineData(OscillatorModules.SineTypeId, "color.hsv", 2, true)]
+    [InlineData(OscillatorModules.SineTypeId, "color.hsv", 0, false)]
+    [InlineData(OscillatorModules.PulseTypeId, "env.adsr", 0, false)]
+    [InlineData(OscillatorModules.SineTypeId, FilterModule.TypeId, 0, false)]
+    [InlineData("env.adsr", OscillatorModules.SineTypeId, 1, false)]
+    [InlineData(SourceModules.ValueTypeId, "color.hsv", 2, false)]
     public void A_wire_is_warned_about_only_where_its_source_swings_past_either_end_of_its_socket(
         string from, string into, int port, bool warned)
     {
@@ -261,7 +261,7 @@ public class AutoRemapTests
     public void A_wire_swinging_past_its_socket_is_said_when_the_patch_is_compiled()
     {
         var b = new PatchBuilder(Catalog);
-        var sine = b.Add(NodeCatalog.SineTypeId, 0, 0);
+        var sine = b.Add(OscillatorModules.SineTypeId, 0, 0);
         var tint = b.Add("color.hsv", 200, 0);
         b.Wire(sine, 0, tint, 2);
 

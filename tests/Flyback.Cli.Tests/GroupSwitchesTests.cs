@@ -34,7 +34,7 @@ public class GroupSwitchesTests
         GroupSwitches.Apply(patch, [], ["Bass"], new StringWriter()).ShouldBeTrue();
 
         patch.Nodes.Where(n => bass.Contains(n.Id)).ShouldAllBe(n => !n.Off);
-        patch.Nodes.Where(n => NodeCatalog.IsSink(n.TypeId)).ShouldAllBe(n => !n.Off);
+        patch.Nodes.Where(n => OutputModule.IsSink(n.TypeId)).ShouldAllBe(n => !n.Off);
         // The kick ducks the bass, so some of it feeds the bass and stays; the rest of it goes.
         patch.Nodes.Where(n => Members(patch, "Kick").Contains(n.Id)).ShouldContain(n => n.Off);
         patch.Nodes.Where(n => Members(patch, "Hats").Contains(n.Id)).ShouldContain(n => n.Off);

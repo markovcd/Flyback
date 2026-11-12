@@ -229,7 +229,7 @@ public class AssistantRunTests
     public async Task The_patch_that_was_open_is_never_touched()
     {
         var open = new Patch();
-        open.Nodes.Add(NodeInstance.Create(NodeCatalog.BuiltIn.Require(NodeCatalog.OutputTypeId), 10, 20));
+        open.Nodes.Add(NodeInstance.Create(NodeCatalog.BuiltIn.Require(OutputModule.TypeId), 10, 20));
 
         // This one really edits, through the workbench, the way a real assistant
         // does. An assistant that only talked would prove nothing here.

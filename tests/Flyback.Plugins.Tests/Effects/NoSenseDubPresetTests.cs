@@ -44,7 +44,7 @@ public class NoSenseDubPresetTests
     public void The_organ_is_one_voice()
     {
         Patch().Nodes
-            .Where(n => n.TypeId == NodeCatalog.MidiTypeId)
+            .Where(n => n.TypeId == MidiModules.MidiTypeId)
             .Select(n => (int)n.StateOf(MidiExtra.StateKey)![MidiExtra.IndexField]!.GetValue<float>())
             .Order()
             .ShouldBe([1]);
@@ -130,7 +130,7 @@ public class NoSenseDubPresetTests
     [Fact]
     public void Each_voice_has_a_meter_for_the_picture()
     {
-        Patch().Nodes.Count(n => n.TypeId == NodeCatalog.MeterTypeId).ShouldBe(1);
+        Patch().Nodes.Count(n => n.TypeId == MeterModule.TypeId).ShouldBe(1);
     }
 
     [Fact]
@@ -163,8 +163,8 @@ public class NoSenseDubPresetTests
     public void The_keys_play_one_sound_all_the_way_through()
     {
         var patch = Patch();
-        var envelopes = patch.Nodes.Where(n => n.TypeId == NodeCatalog.AdsrTypeId).Select(n => n.Id).ToHashSet();
-        var arrangements = patch.Nodes.Where(n => n.TypeId == NodeCatalog.ArrangementTypeId).Select(n => n.Id).ToHashSet();
+        var envelopes = patch.Nodes.Where(n => n.TypeId == EnvelopeModules.AdsrTypeId).Select(n => n.Id).ToHashSet();
+        var arrangements = patch.Nodes.Where(n => n.TypeId == SequencerModules.ArrangementTypeId).Select(n => n.Id).ToHashSet();
 
         patch.Connections.ShouldNotContain(c => arrangements.Contains(c.SourceNode) && envelopes.Contains(c.TargetNode));
     }
@@ -187,7 +187,7 @@ public class NoSenseDubPresetTests
         const int played = 6;
 
         var slow = Patch().Nodes
-            .Where(n => n.TypeId == NodeCatalog.ArrangementTypeId)
+            .Where(n => n.TypeId == SequencerModules.ArrangementTypeId)
             .Select(ArrangementExtra.Of)
             .MinBy(parts => parts[0].Count)!;
 

@@ -39,7 +39,7 @@ public class DescriptionLineTests
         var patch = Built("let description = sine(freq: 220)\ndescription |> out.left").Patch;
 
         patch.Description.ShouldBeNull();
-        patch.Nodes.ShouldContain(n => n.TypeId == NodeCatalog.SineTypeId);
+        patch.Nodes.ShouldContain(n => n.TypeId == OscillatorModules.SineTypeId);
     }
 
     [Fact]

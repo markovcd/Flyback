@@ -28,7 +28,7 @@ public class PlateTests
     [Fact]
     public void It_is_silent_until_it_is_struck()
     {
-        var heard = Heard(Wired(Plate, Out, NodeCatalog.OutputLeftPort), new float[Rate / 10]);
+        var heard = Heard(Wired(Plate, Out, OutputModule.LeftPort), new float[Rate / 10]);
 
         heard.ShouldAllBe(s => s == 0f);
     }
@@ -36,7 +36,7 @@ public class PlateTests
     [Fact]
     public void A_strike_rings_and_dies_away()
     {
-        var heard = Heard(Wired(Plate, Out, NodeCatalog.OutputLeftPort, 0, NodeCatalog.CoordXPort, (Decay, 0.5f)), Pulse(1, Rate * 2));
+        var heard = Heard(Wired(Plate, Out, OutputModule.LeftPort, 0, SourceModules.CoordXPort, (Decay, 0.5f)), Pulse(1, Rate * 2));
 
         var atStrike = Rms(heard.AsSpan(0, Rate / 20));
         var later = Rms(heard.AsSpan(Rate, Rate / 20));
@@ -51,8 +51,8 @@ public class PlateTests
     [Fact]
     public void A_held_trigger_strikes_once()
     {
-        var held = Heard(Wired(Plate, Out, NodeCatalog.OutputLeftPort), Pulse(Rate, Rate));
-        var tapped = Heard(Wired(Plate, Out, NodeCatalog.OutputLeftPort), Pulse(1, Rate));
+        var held = Heard(Wired(Plate, Out, OutputModule.LeftPort), Pulse(Rate, Rate));
+        var tapped = Heard(Wired(Plate, Out, OutputModule.LeftPort), Pulse(1, Rate));
 
         held.ShouldBe(tapped);
     }
@@ -64,7 +64,7 @@ public class PlateTests
         trigger[0] = 1f;
         trigger[Rate / 2] = 1f;
 
-        var heard = Heard(Wired(Plate, Out, NodeCatalog.OutputLeftPort, 0, NodeCatalog.CoordXPort, (Decay, 0.3f)), trigger);
+        var heard = Heard(Wired(Plate, Out, OutputModule.LeftPort, 0, SourceModules.CoordXPort, (Decay, 0.3f)), trigger);
 
         Rms(heard.AsSpan(Rate / 2 - Rate / 40, Rate / 40)).ShouldBeLessThan(Rms(heard.AsSpan(Rate / 2, Rate / 40)));
     }
@@ -76,7 +76,7 @@ public class PlateTests
     [Fact]
     public void Sixteen_seconds_after_a_strike_it_is_not_struck_again()
     {
-        var program = Wired(Plate, Out, NodeCatalog.OutputLeftPort, 0, NodeCatalog.CoordXPort, (Decay, 8f)).CompileForAudio(Catalog).Program;
+        var program = Wired(Plate, Out, OutputModule.LeftPort, 0, SourceModules.CoordXPort, (Decay, 8f)).CompileForAudio(Catalog).Program;
         var state = new DelayState(program, 1000);
         var registers = program.AllocateRegisters();
         var loud = new List<(double At, double Level)>();
@@ -94,7 +94,7 @@ public class PlateTests
     [Fact]
     public void Struck_on_its_edge_nothing_moves()
     {
-        var heard = Heard(Wired(Plate, Out, NodeCatalog.OutputLeftPort, 0, NodeCatalog.CoordXPort, (StrikeX, 0f)), Pulse(1, Rate / 10));
+        var heard = Heard(Wired(Plate, Out, OutputModule.LeftPort, 0, SourceModules.CoordXPort, (StrikeX, 0f)), Pulse(1, Rate / 10));
 
         heard.ShouldAllBe(s => s == 0f);
     }
@@ -102,23 +102,23 @@ public class PlateTests
     [Fact]
     public void Sand_covers_a_plate_at_rest_and_is_thrown_off_where_a_strike_moves_it()
     {
-        var resting = new Pixel(Wired(Plate, Figure, NodeCatalog.OutputColorPort, triggerPort: null));
+        var resting = new Pixel(Wired(Plate, Figure, OutputModule.ColorPort, triggerPort: null));
 
         resting.Planes.ShouldBe(3);
         resting.Frame(0.3, 0.2).ShouldBe(1d);
 
         // Struck (x is the trigger, so a pixel at x = 1 strikes as it is drawn), a point
         // off the nodal lines loses its sand and the plate's edge (y = 1) keeps it.
-        new Pixel(Wired(Plate, Figure, NodeCatalog.OutputColorPort, Trigger)).Frame(1d, 0.2).ShouldBeLessThan(0.9);
-        new Pixel(Wired(Plate, Figure, NodeCatalog.OutputColorPort, Trigger)).Frame(1d, 1d).ShouldBe(1d, 1e-6);
+        new Pixel(Wired(Plate, Figure, OutputModule.ColorPort, Trigger)).Frame(1d, 0.2).ShouldBeLessThan(0.9);
+        new Pixel(Wired(Plate, Figure, OutputModule.ColorPort, Trigger)).Frame(1d, 1d).ShouldBe(1d, 1e-6);
     }
 
     [Fact]
     public void Nothing_moves_until_a_strike_and_the_edge_never_does()
     {
-        new Pixel(Wired(Plate, Motion, NodeCatalog.OutputColorPort, triggerPort: null)).Frame(0.3, 0.2).ShouldBe(0d);
-        new Pixel(Wired(Plate, Motion, NodeCatalog.OutputColorPort, Trigger)).Frame(1d, 0.2).ShouldBeGreaterThan(0.01);
-        new Pixel(Wired(Plate, Motion, NodeCatalog.OutputColorPort, Trigger)).Frame(1d, 1d).ShouldBe(0d, 1e-6);
+        new Pixel(Wired(Plate, Motion, OutputModule.ColorPort, triggerPort: null)).Frame(0.3, 0.2).ShouldBe(0d);
+        new Pixel(Wired(Plate, Motion, OutputModule.ColorPort, Trigger)).Frame(1d, 0.2).ShouldBeGreaterThan(0.01);
+        new Pixel(Wired(Plate, Motion, OutputModule.ColorPort, Trigger)).Frame(1d, 1d).ShouldBe(0d, 1e-6);
     }
 
     /// <summary>
@@ -130,8 +130,8 @@ public class PlateTests
     public void The_ring_dies_away_and_the_sand_comes_back()
     {
         (int, float)[] knobs = [(Decay, 1f)];
-        var moving = new Pixel(Wired(Plate, Motion, NodeCatalog.OutputColorPort, Trigger, NodeCatalog.CoordAspectPort, knobs));
-        var sand = new Pixel(Wired(Plate, Figure, NodeCatalog.OutputColorPort, Trigger, NodeCatalog.CoordAspectPort, knobs));
+        var moving = new Pixel(Wired(Plate, Motion, OutputModule.ColorPort, Trigger, SourceModules.CoordAspectPort, knobs));
+        var sand = new Pixel(Wired(Plate, Figure, OutputModule.ColorPort, Trigger, SourceModules.CoordAspectPort, knobs));
 
         var atStrike = (Motion: moving.Frame(0d, 0d, aspect: 1d), Sand: sand.Frame(0d, 0d, aspect: 1d));
         moving.Skip(180);
@@ -147,14 +147,14 @@ public class PlateTests
     [Fact]
     public void A_harder_strike_rings_louder_and_throws_more_sand()
     {
-        var soft = Heard(Wired(Plate, Out, NodeCatalog.OutputLeftPort, 0, NodeCatalog.CoordXPort, (1, 0.25f)), Pulse(1, Rate / 10));
-        var hard = Heard(Wired(Plate, Out, NodeCatalog.OutputLeftPort, 0, NodeCatalog.CoordXPort, (1, 1f)), Pulse(1, Rate / 10));
+        var soft = Heard(Wired(Plate, Out, OutputModule.LeftPort, 0, SourceModules.CoordXPort, (1, 0.25f)), Pulse(1, Rate / 10));
+        var hard = Heard(Wired(Plate, Out, OutputModule.LeftPort, 0, SourceModules.CoordXPort, (1, 1f)), Pulse(1, Rate / 10));
 
         Rms(hard).ShouldBe(Rms(soft) * 4, Rms(soft) * 0.01);
 
         // Down a column of the plate, the hard strike leaves less sand in all.
-        var softSand = new Pixel(Wired(Plate, Figure, NodeCatalog.OutputColorPort, Trigger, knobs: (1, 0.25f)));
-        var hardSand = new Pixel(Wired(Plate, Figure, NodeCatalog.OutputColorPort, Trigger, knobs: (1, 1f)));
+        var softSand = new Pixel(Wired(Plate, Figure, OutputModule.ColorPort, Trigger, knobs: (1, 0.25f)));
+        var hardSand = new Pixel(Wired(Plate, Figure, OutputModule.ColorPort, Trigger, knobs: (1, 1f)));
         var column = Enumerable.Range(0, 21).Select(i => i / 10d - 1d).ToArray();
 
         column.Sum(y => hardSand.Frame(1d, y)).ShouldBeLessThan(column.Sum(y => softSand.Frame(1d, y)));
@@ -163,8 +163,8 @@ public class PlateTests
     [Fact]
     public void Its_pitch_follows_freq()
     {
-        var low = Heard(Wired(Plate, Out, NodeCatalog.OutputLeftPort, 0, NodeCatalog.CoordXPort, (Freq, 110f), (Aspect, 1.3f)), Pulse(1, Rate / 4));
-        var high = Heard(Wired(Plate, Out, NodeCatalog.OutputLeftPort, 0, NodeCatalog.CoordXPort, (Freq, 220f), (Aspect, 1.3f)), Pulse(1, Rate / 4));
+        var low = Heard(Wired(Plate, Out, OutputModule.LeftPort, 0, SourceModules.CoordXPort, (Freq, 110f), (Aspect, 1.3f)), Pulse(1, Rate / 4));
+        var high = Heard(Wired(Plate, Out, OutputModule.LeftPort, 0, SourceModules.CoordXPort, (Freq, 220f), (Aspect, 1.3f)), Pulse(1, Rate / 4));
 
         ((double)Crossings(high)).ShouldBeGreaterThan(Crossings(low) * 1.5);
     }
@@ -172,7 +172,7 @@ public class PlateTests
     [Fact]
     public void The_figure_survives_to_the_shader()
     {
-        var program = Wired(Plate, Figure, NodeCatalog.OutputColorPort).CompileForVideo(Catalog).Program;
+        var program = Wired(Plate, Figure, OutputModule.ColorPort).CompileForVideo(Catalog).Program;
 
         program.PlaneCount.ShouldBe(3);
         LowersToEveryDialect(program);
@@ -181,7 +181,7 @@ public class PlateTests
     [Fact]
     public void The_strike_is_kept_in_three_planes_and_no_cell()
     {
-        var program = Wired(Plate, Out, NodeCatalog.OutputLeftPort).CompileForAudio(Catalog).Program;
+        var program = Wired(Plate, Out, OutputModule.LeftPort).CompileForAudio(Catalog).Program;
 
         program.PlaneCount.ShouldBe(3);
         program.UnitCount.ShouldBe(0);
@@ -196,10 +196,10 @@ public class PlateTests
         var b = new PatchBuilder(Catalog);
         var plate = b.Add(Plate);
         var overtones = b.Add(Overtones);
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var output = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
         b.Wire(plate, Motion, overtones, 0)
-         .Wire(overtones, heard ? 0 : 1, output, heard ? NodeCatalog.OutputLeftPort : NodeCatalog.OutputColorPort);
+         .Wire(overtones, heard ? 0 : 1, output, heard ? OutputModule.LeftPort : OutputModule.ColorPort);
 
         var program = heard ? b.Patch.CompileForAudio(Catalog).Program : b.Patch.CompileForVideo(Catalog).Program;
 

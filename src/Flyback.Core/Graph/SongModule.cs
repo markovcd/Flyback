@@ -76,7 +76,7 @@ internal static class SongModule
         var progress = em.Unary(OpCode.Fract, traveled);
         var fromInput = em.Sub(one, em.Binary(OpCode.Step, one, traveled));
 
-        var fade = em.Ternary(OpCode.Clamp, node[2], em.Constant(NodeCatalog.ShortestFade), one);
+        var fade = em.Ternary(OpCode.Clamp, node[2], em.Constant(SequencerModules.ShortestFade), one);
         var eased = em.Ternary(OpCode.Smoothstep, zero, fade, progress);
         var levels = new SectionLevels(em, eased, progress, fromInput);
 

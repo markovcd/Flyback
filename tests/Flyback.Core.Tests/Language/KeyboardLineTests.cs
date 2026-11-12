@@ -68,7 +68,7 @@ public class KeyboardLineTests
         var patch = Built("let keyboard = midi.in()\nkeyboard.pitch |> out.left").Patch;
 
         patch.Keyboard.ShouldBeNull();
-        patch.Nodes.ShouldContain(n => n.TypeId == NodeCatalog.MidiTypeId);
+        patch.Nodes.ShouldContain(n => n.TypeId == MidiModules.MidiTypeId);
     }
 
     [Fact]

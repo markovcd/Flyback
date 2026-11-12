@@ -344,10 +344,10 @@ public class ModulationTests
 
         var coord = Add(patch, "coord");
         var effect = Add(patch, typeId, knobs);
-        var sink = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = Add(patch, OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
         patch.Connect(coord.Id, 0, effect.Id, 0);
-        patch.Connect(effect.Id, port, sink.Id, NodeCatalog.OutputLeftPort);
+        patch.Connect(effect.Id, port, sink.Id, OutputModule.LeftPort);
 
         var program = patch.CompileForAudio(Catalog).Program;
         var delays = new DelayState(
@@ -399,10 +399,10 @@ public class ModulationTests
 
         var coord = Add(patch, "coord");
         var effect = Add(patch, typeId, knobs);
-        var screen = Add(patch, NodeCatalog.OutputTypeId);
+        var screen = Add(patch, OutputModule.TypeId);
 
         patch.Connect(coord.Id, 0, effect.Id, 0);
-        patch.Connect(effect.Id, port, screen.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(effect.Id, port, screen.Id, OutputModule.ColorPort);
 
         return patch.CompileForVideo(Catalog).Program;
     }
@@ -413,10 +413,10 @@ public class ModulationTests
 
         var coord = Add(patch, "coord");
         var effect = Add(patch, typeId);
-        var sink = Add(patch, NodeCatalog.OutputTypeId);
+        var sink = Add(patch, OutputModule.TypeId);
 
         patch.Connect(coord.Id, 0, effect.Id, 0);
-        patch.Connect(effect.Id, port, sink.Id, NodeCatalog.OutputLeftPort);
+        patch.Connect(effect.Id, port, sink.Id, OutputModule.LeftPort);
 
         return patch.CompileForAudio(Catalog).Program;
     }

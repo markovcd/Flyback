@@ -19,7 +19,7 @@ public sealed class VolumeSliderTests : EditorTest
     private static Slider Slider(MainWindow window) => All<Slider>(window).Single(s => s.Name == "volume");
 
     private static float Volume(MainWindow window) =>
-        Editor(window).History.Patch.Output.InputValues[NodeCatalog.OutputVolumePort];
+        Editor(window).History.Patch.Output.InputValues[OutputModule.VolumePort];
 
     /// <summary>Where <paramref name="share"/> of the way along the slider falls, in the window.</summary>
     private static Point At(MainWindow window, double share)
@@ -42,7 +42,7 @@ public sealed class VolumeSliderTests : EditorTest
 
         Slider(window).Value.ShouldBe(Volume(window), 0.0001);
 
-        Editor(window).History.Patch.Output.InputValues[NodeCatalog.OutputVolumePort] = 0.8f;
+        Editor(window).History.Patch.Output.InputValues[OutputModule.VolumePort] = 0.8f;
         Editor(window).History.Record();
         Settle(window);
 
@@ -53,7 +53,7 @@ public sealed class VolumeSliderTests : EditorTest
     public void A_drag_along_it_is_one_edit_to_take_back()
     {
         var builder = new PatchBuilder();
-        builder.Wire(builder.Add("value"), 0, builder.Add(NodeCatalog.OutputTypeId), NodeCatalog.OutputLeftPort);
+        builder.Wire(builder.Add("value"), 0, builder.Add(OutputModule.TypeId), OutputModule.LeftPort);
 
         var window = Open(builder.Build());
         var was = Volume(window);
@@ -78,14 +78,14 @@ public sealed class VolumeSliderTests : EditorTest
     {
         var builder = new PatchBuilder();
         var level = builder.Add("value");
-        var output = builder.Add(NodeCatalog.OutputTypeId);
-        builder.Wire(level, 0, output, NodeCatalog.OutputColorPort);
+        var output = builder.Add(OutputModule.TypeId);
+        builder.Wire(level, 0, output, OutputModule.ColorPort);
 
         var window = Open(builder.Build());
 
         Slider(window).IsEffectivelyVisible.ShouldBeFalse();
 
-        Editor(window).History.Patch.Connect(level.Id, 0, output.Id, NodeCatalog.OutputLeftPort);
+        Editor(window).History.Patch.Connect(level.Id, 0, output.Id, OutputModule.LeftPort);
         Editor(window).History.Record();
         Settle(window);
 
@@ -97,8 +97,8 @@ public sealed class VolumeSliderTests : EditorTest
     {
         var builder = new PatchBuilder();
         var level = builder.Add("value");
-        var output = builder.Add(NodeCatalog.OutputTypeId);
-        builder.Wire(level, 0, output, NodeCatalog.OutputVolumePort);
+        var output = builder.Add(OutputModule.TypeId);
+        builder.Wire(level, 0, output, OutputModule.VolumePort);
 
         var window = Open(builder.Build());
 
@@ -110,7 +110,7 @@ public sealed class VolumeSliderTests : EditorTest
     public void A_notch_of_the_wheel_over_it_turns_it_and_is_taken_back_like_any_edit()
     {
         var builder = new PatchBuilder();
-        builder.Wire(builder.Add("value"), 0, builder.Add(NodeCatalog.OutputTypeId), NodeCatalog.OutputLeftPort);
+        builder.Wire(builder.Add("value"), 0, builder.Add(OutputModule.TypeId), OutputModule.LeftPort);
 
         var window = Open(builder.Build());
         var slider = Slider(window);

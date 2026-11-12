@@ -44,13 +44,13 @@ public sealed class PathTests : IDisposable
     {
         var b = new PatchBuilder(Modules);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var output = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
         var path = b.Add(PathModule.TypeId, (Freq, freq));
 
         Drawing.Point(path, file);
 
-        b.Wire(path, X, output, NodeCatalog.OutputLeftPort)
-         .Wire(path, Y, output, NodeCatalog.OutputRightPort);
+        b.Wire(path, X, output, OutputModule.LeftPort)
+         .Wire(path, Y, output, OutputModule.RightPort);
 
         return (b.Patch, path);
     }
@@ -74,15 +74,15 @@ public sealed class PathTests : IDisposable
     {
         var b = new PatchBuilder(Modules);
 
-        var output = b.Add(NodeCatalog.OutputTypeId);
+        var output = b.Add(OutputModule.TypeId);
         var path = b.Add(PathModule.TypeId, (Freq, freq), (Amp, 0.5f));
-        var beam = b.Add(NodeCatalog.BeamTypeId, (3, 0.2f));
+        var beam = b.Add(BeamModule.TypeId, (3, 0.2f));
 
         Drawing.Point(path, file);
 
         b.Wire(path, X, beam, 0)
          .Wire(path, Y, beam, 1)
-         .Wire(beam, 0, output, NodeCatalog.OutputColorPort);
+         .Wire(beam, 0, output, OutputModule.ColorPort);
 
         var heard = b.Patch.CompileForAudio(Modules, Library());
         var drawn = b.Patch.CompileForVideo(Modules, samples: Library()).Program;
@@ -146,11 +146,11 @@ public sealed class PathTests : IDisposable
     public void The_picture_reads_the_drawing_too_at_the_size_amp_says()
     {
         var b = new PatchBuilder(Modules);
-        var output = b.Add(NodeCatalog.OutputTypeId);
+        var output = b.Add(OutputModule.TypeId);
         var path = b.Add(PathModule.TypeId, (Freq, 1f), (Amp, 0.5f));
 
         Drawing.Point(path, Square());
-        b.Wire(path, X, output, NodeCatalog.OutputColorPort);
+        b.Wire(path, X, output, OutputModule.ColorPort);
 
         var drawn = b.Patch.CompileForVideo(Modules, samples: Library());
 

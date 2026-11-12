@@ -39,7 +39,7 @@ public sealed class MidiFileSteps(PatchContext context) : IDisposable
 
         if (notes.Length > 0) MidiFiles.Write(path, notes);
 
-        var player = context.Add("song", NodeCatalog.MidiFileTypeId);
+        var player = context.Add("song", MidiModules.MidiFileTypeId);
 
         MidiFileExtra.Set(player, path);
         player.SetState(MidiLineExtra.Name, new System.Text.Json.Nodes.JsonObject { ["voice"] = voice, ["channel"] = 0 });

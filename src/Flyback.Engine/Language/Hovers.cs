@@ -41,7 +41,7 @@ internal static class Hovers
 
         if (selected is not null)
         {
-            var outputs = selected.TypeId != NodeCatalog.OutputTypeId;
+            var outputs = selected.TypeId != OutputModule.TypeId;
 
             if (outputs && Find(selected.Outputs, word) is { } output) return Socket(selected, output, input: false);
             if (Find(selected.Inputs, word) is { } input) return Socket(selected, input, input: true);
@@ -72,10 +72,10 @@ internal static class Hovers
     {
         if (word == "t") return new Hover("t · the clock", "Seconds since the patch started playing.");
         if (word == "sum") return new Hover("sum · adds up a list", "sum(voices), or voices |> sum(), is the items added up as a + b + c would be.");
-        if (word == "out" && caret.Modules.Get(NodeCatalog.OutputTypeId) is { } output) return About(caret, output);
+        if (word == "out" && caret.Modules.Get(OutputModule.TypeId) is { } output) return About(caret, output);
         if (word == "_") return new Hover("_ · what the pipe brings in", "Written as one named argument, it puts the pipe on that socket.");
 
-        return caret.Modules.Get(NodeCatalog.CoordTypeId) is { } coordinates && Find(coordinates.Outputs, word) is { } coordinate
+        return caret.Modules.Get(SourceModules.CoordTypeId) is { } coordinates && Find(coordinates.Outputs, word) is { } coordinate
             ? new Hover($"{word} · one of the picture's coordinates", coordinate.Help)
             : null;
     }
@@ -91,7 +91,7 @@ internal static class Hovers
 
     private static Hover About(Caret caret, NodeDef module)
     {
-        var written = module.TypeId == NodeCatalog.OutputTypeId ? "out" : caret.Written.Written(module);
+        var written = module.TypeId == OutputModule.TypeId ? "out" : caret.Written.Written(module);
         var inputs = string.Join(", ", module.Inputs.Select(SocketNames.Written));
         var outputs = string.Join(", ", module.Outputs.Select(SocketNames.Written));
         var sockets = $"Inputs: {(inputs.Length > 0 ? inputs : "none")}. Outputs: {(outputs.Length > 0 ? outputs : "none")}.";

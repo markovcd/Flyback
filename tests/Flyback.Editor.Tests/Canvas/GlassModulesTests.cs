@@ -18,7 +18,7 @@ public class GlassModulesTests : EditorTest
     private (NodeEditor Editor, Window Window, NodeInstance Sine) OverRed()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        var sine = builder.Add(NodeCatalog.SineTypeId, 300, 200);
+        var sine = builder.Add(OscillatorModules.SineTypeId, 300, 200);
         var (editor, window) = Editing(builder.Patch);
 
         window.Background = Brushes.Red;

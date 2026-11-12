@@ -27,7 +27,7 @@ public class InkTests
         def.Name.ShouldBe("Ink");
         def.Category.ShouldBe(ModuleCategories.Color);
         def.Inputs.Select(p => p.Name).ShouldBe(["under", "mask", "r", "g", "b"]);
-        def.Extra<SettingsExtra>().ShouldNotBeNull().Fields.ShouldHaveSingleItem().Key.ShouldBe(NodeCatalog.InkModeKey);
+        def.Extra<SettingsExtra>().ShouldNotBeNull().Fields.ShouldHaveSingleItem().Key.ShouldBe(ColorModules.InkModeKey);
     }
 
     [Fact]
@@ -53,7 +53,7 @@ public class InkTests
 
         b.Wire(Ground(b), 0, blend, 0).Wire(color, 0, blend, 1).Wire(Mask(b), 0, blend, 2);
 
-        Inked(NodeCatalog.InkOver).ShouldBe(Seen(b, blend));
+        Inked(ColorModules.InkOver).ShouldBe(Seen(b, blend));
     }
 
     [Fact]
@@ -110,9 +110,9 @@ public class InkTests
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var vignette = b.Add(Vignette);
         var gray = b.Add("color.rgb");
-        var sink = b.Add(NodeCatalog.OutputTypeId);
+        var sink = b.Add(OutputModule.TypeId);
 
-        b.Wire(vignette, 1, gray, 0).Wire(gray, 0, sink, NodeCatalog.OutputColorPort);
+        b.Wire(vignette, 1, gray, 0).Wire(gray, 0, sink, OutputModule.ColorPort);
 
         var program = b.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program;
         var registers = program.AllocateRegisters();
@@ -132,7 +132,7 @@ public class InkTests
         var ink = b.Add(Ink, (2, 1f), (3, 0.35f), (4, 0.5f));
 
         if (mode is not null)
-            ink.SetState(NodeCatalog.InkStateKey, new JsonObject { [NodeCatalog.InkModeKey] = mode });
+            ink.SetState(ColorModules.InkStateKey, new JsonObject { [ColorModules.InkModeKey] = mode });
 
         b.Wire(Ground(b), 0, ink, 0).Wire(Mask(b), 0, ink, 1);
 
@@ -160,8 +160,8 @@ public class InkTests
 
     private static double[] Seen(PatchBuilder b, NodeInstance color)
     {
-        var sink = b.Add(NodeCatalog.OutputTypeId);
-        b.Wire(color, 0, sink, NodeCatalog.OutputColorPort);
+        var sink = b.Add(OutputModule.TypeId);
+        b.Wire(color, 0, sink, OutputModule.ColorPort);
 
         var result = b.Patch.CompileForVideo(NodeCatalog.BuiltIn);
         result.HasErrors.ShouldBeFalse(string.Join("; ", result.Issues.Select(i => i.Message)));

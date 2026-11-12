@@ -61,8 +61,8 @@ public sealed class EditingSteps(PatchContext context, Session session, EditorDr
         session.BeforeSound = Played();
 
         var json = PatchIO.ToJson(context.Patch);
-        json.ShouldContain($"\"{NodeCatalog.FilterTypeId}\"");
-        session.File = json.Replace($"\"{NodeCatalog.FilterTypeId}\"", $"\"{oldId}\"");
+        json.ShouldContain($"\"{FilterModule.TypeId}\"");
+        session.File = json.Replace($"\"{FilterModule.TypeId}\"", $"\"{oldId}\"");
     }
 
     [Then("it sounds exactly as it did before it was saved")]
@@ -240,15 +240,15 @@ public sealed class EditingSteps(PatchContext context, Session session, EditorDr
     [Then("the copy is on a bus of its own")]
     public void ThenTheCopyHasItsOwnBus()
     {
-        var bus = NodeCatalog.BusOf(Pasted(NodeCatalog.SendTypeId)).ShouldNotBeNull();
+        var bus = BusModules.BusOf(Pasted(BusModules.SendTypeId)).ShouldNotBeNull();
 
-        bus.ShouldNotBe(NodeCatalog.BusOf(context.Node("send")));
-        NodeCatalog.BusOf(Pasted(NodeCatalog.ReceiveTypeId)).ShouldBe(bus);
+        bus.ShouldNotBe(BusModules.BusOf(context.Node("send")));
+        BusModules.BusOf(Pasted(BusModules.ReceiveTypeId)).ShouldBe(bus);
     }
 
     [Then("the copy listens to the bus {string}")]
     public void ThenTheCopyListensTo(string bus) =>
-        NodeCatalog.BusOf(Pasted(NodeCatalog.ReceiveTypeId)).ShouldBe(bus);
+        BusModules.BusOf(Pasted(BusModules.ReceiveTypeId)).ShouldBe(bus);
 
     [When("everything is copied and pasted")]
     public void WhenEverythingIsPasted()
@@ -274,7 +274,7 @@ public sealed class EditingSteps(PatchContext context, Session session, EditorDr
     public void ThenThePastedKnobIsKept() => Pasted("math.mul").InputValues[1].ShouldBe(0.5f);
 
     [Then("the patch still has one Output")]
-    public void ThenOneOutput() => context.Patch.Nodes.Count(n => NodeCatalog.IsSink(n.TypeId)).ShouldBe(1);
+    public void ThenOneOutput() => context.Patch.Nodes.Count(n => OutputModule.IsSink(n.TypeId)).ShouldBe(1);
 
     // --- pasting between the canvas and the text ------------------------------
 
@@ -394,7 +394,7 @@ public sealed class EditingSteps(PatchContext context, Session session, EditorDr
         pictured = Path.Combine(folder, "id_rsa");
         File.WriteAllText(pictured, "-----BEGIN OPENSSH PRIVATE KEY-----");
 
-        PictureExtra.Set(context.Add("shown", NodeCatalog.PictureTypeId), pictured);
+        PictureExtra.Set(context.Add("shown", SourceModules.PictureTypeId), pictured);
     }
 
     [Given("a picture module pointed at a picture on another machine")]
@@ -402,7 +402,7 @@ public sealed class EditingSteps(PatchContext context, Session session, EditorDr
     {
         pictured = @"\\somebody\share\moon.png";
 
-        PictureExtra.Set(context.Add("shown", NodeCatalog.PictureTypeId), pictured);
+        PictureExtra.Set(context.Add("shown", SourceModules.PictureTypeId), pictured);
     }
 
     [When("the patch is saved as a bundle")]
@@ -421,7 +421,7 @@ public sealed class EditingSteps(PatchContext context, Session session, EditorDr
     [Given("a bundle holding a file named to climb out of its folder")]
     public void GivenABundleThatClimbsOut()
     {
-        PictureExtra.Set(context.Add("shown", NodeCatalog.PictureTypeId), "moon.png");
+        PictureExtra.Set(context.Add("shown", SourceModules.PictureTypeId), "moon.png");
 
         using var packed = new MemoryStream();
         PatchBundle.Write(packed, context.Patch, _ => [1, 2, 3]);
@@ -487,7 +487,7 @@ public sealed class EditingSteps(PatchContext context, Session session, EditorDr
     {
         var picked = Directory.GetFiles(library.ShouldNotBeNull(), "*.png", SearchOption.AllDirectories).Single();
 
-        chosenFor = context.Add("shown", NodeCatalog.PictureTypeId);
+        chosenFor = context.Add("shown", SourceModules.PictureTypeId);
         PictureExtra.Set(chosenFor, PatchPaths.Named(picked, library));
     }
 
@@ -500,7 +500,7 @@ public sealed class EditingSteps(PatchContext context, Session session, EditorDr
     [Then("the picture shown is the one beside the patch")]
     public void ThenTheOneBeside()
     {
-        var shown = PictureExtra.Of(openedWithLibrary.Patch.Nodes.Single(n => n.TypeId == NodeCatalog.PictureTypeId));
+        var shown = PictureExtra.Of(openedWithLibrary.Patch.Nodes.Single(n => n.TypeId == SourceModules.PictureTypeId));
 
         openedWithLibrary.Pictures.Find(shown.ShouldNotBeNull()).ShouldNotBeNull().Width.ShouldBe(1);
     }
@@ -511,7 +511,7 @@ public sealed class EditingSteps(PatchContext context, Session session, EditorDr
     /// <summary>A picture module on the screen, saved in a folder of its own.</summary>
     private void SaveShowing(string name)
     {
-        PictureExtra.Set(context.Add("shown", NodeCatalog.PictureTypeId), name);
+        PictureExtra.Set(context.Add("shown", SourceModules.PictureTypeId), name);
         context.Add("screen", "output");
         context.Wire("shown", 0, "screen", "color");
 
@@ -545,7 +545,7 @@ public sealed class EditingSteps(PatchContext context, Session session, EditorDr
     {
         context.Add("tone", "osc.sine");
         context.SetInput("tone", "freq", frequency);
-        context.Add("filter", NodeCatalog.FilterTypeId);
+        context.Add("filter", FilterModule.TypeId);
         context.Wire("tone", "out", "filter", "in");
         context.Add("screen", "output");
         context.Wire("filter", "low", "screen", "left");

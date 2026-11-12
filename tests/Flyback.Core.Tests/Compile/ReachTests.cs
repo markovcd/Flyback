@@ -34,7 +34,7 @@ public class ReachTests
 
         var coords = b.Add("coord");
         b.Add("pattern.clouds");
-        Wire(b, coords, "x", b.Add(NodeCatalog.OutputTypeId), "color");
+        Wire(b, coords, "x", b.Add(OutputModule.TypeId), "color");
 
         var compiled = b.Patch.CompileForVideo(Modules);
 
@@ -54,7 +54,7 @@ public class ReachTests
         Wire(b, coords, "x", tint, "hue");
         Wire(b, coords, "x", tint, "saturation");
         Wire(b, coords, "x", tint, "value");
-        Wire(b, tint, "color", b.Add(NodeCatalog.OutputTypeId), "color");
+        Wire(b, tint, "color", b.Add(OutputModule.TypeId), "color");
 
         Count(b.Patch.CompileForVideo(Modules), OpCode.LoadX).ShouldBe(1);
     }
@@ -64,7 +64,7 @@ public class ReachTests
     {
         var b = new PatchBuilder(Modules);
 
-        var output = b.Add(NodeCatalog.OutputTypeId);
+        var output = b.Add(OutputModule.TypeId);
         var clouds = b.Add("pattern.clouds");
         var tone = b.Add("osc.sine");
 
@@ -92,7 +92,7 @@ public class ReachTests
         halve.Off = true;
 
         Wire(b, b.Add("coord"), "x", halve, "a");
-        Wire(b, halve, "out", b.Add(NodeCatalog.OutputTypeId), "color");
+        Wire(b, halve, "out", b.Add(OutputModule.TypeId), "color");
 
         Count(b.Patch.CompileForVideo(Modules), OpCode.Mul).ShouldBe(0);
     }

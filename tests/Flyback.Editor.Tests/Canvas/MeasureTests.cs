@@ -22,7 +22,7 @@ public class MeasureTests : EditorTest
 
         lfo = b.Add("osc.sine", 0, 0, (1, 3f));
         coords = b.Add("coord", 0, 400);
-        b.Add(NodeCatalog.OutputTypeId, 700, 0);
+        b.Add(OutputModule.TypeId, 700, 0);
 
         var window = NewMainWindow();
 
@@ -100,8 +100,8 @@ public class MeasureTests : EditorTest
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var inner = b.Add("osc.sine", 0, 0, (1, 3f));
         var edge = b.Add("osc.sine", 300, 0, (1, 5f));
-        var sink = b.Add(NodeCatalog.OutputTypeId, 800, 0);
-        b.Wire(inner, 0, edge, 1).Wire(edge, 0, sink, NodeCatalog.OutputLeftPort);
+        var sink = b.Add(OutputModule.TypeId, 800, 0);
+        b.Wire(inner, 0, edge, 1).Wire(edge, 0, sink, OutputModule.LeftPort);
 
         b.Patch.Group([inner.Id, edge.Id]).ShouldNotBeNull();
 
@@ -139,8 +139,8 @@ public class MeasureTests : EditorTest
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var inner = b.Add("osc.sine", 0, 0, (1, 3f));
         var edge = b.Add("osc.sine", 300, 0);
-        var sink = b.Add(NodeCatalog.OutputTypeId, 800, 0);
-        b.Wire(inner, 0, edge, 1).Wire(edge, 0, sink, NodeCatalog.OutputLeftPort);
+        var sink = b.Add(OutputModule.TypeId, 800, 0);
+        b.Wire(inner, 0, edge, 1).Wire(edge, 0, sink, OutputModule.LeftPort);
 
         var group = b.Patch.Group([inner.Id, edge.Id]).ShouldNotBeNull();
         group.Collapsed = true;
@@ -246,7 +246,7 @@ public class MeasureTests : EditorTest
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var color = b.Add("color.hsv", 0, 0);
-        b.Add(NodeCatalog.OutputTypeId, 700, 0);
+        b.Add(OutputModule.TypeId, 700, 0);
 
         var window = NewMainWindow();
         window.Show();
@@ -309,7 +309,7 @@ public class MeasureTests : EditorTest
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var color = b.Add("color.hsv", 0, 0);
-        b.Add(NodeCatalog.OutputTypeId, 700, 0);
+        b.Add(OutputModule.TypeId, 700, 0);
 
         var window = NewMainWindow();
         window.Show();

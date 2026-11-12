@@ -386,10 +386,10 @@ public class ColorTests
         // that a knob cannot stand in for.
         var coord = Add(patch, "coord");
         var module = Add(patch, typeId, knobs);
-        var screen = Add(patch, NodeCatalog.OutputTypeId);
+        var screen = Add(patch, OutputModule.TypeId);
 
         patch.Connect(coord.Id, 0, module.Id, 0);
-        patch.Connect(module.Id, 0, screen.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(module.Id, 0, screen.Id, OutputModule.ColorPort);
 
         var program = patch.CompileForVideo(Catalog).Program;
         var registers = program.AllocateRegisters();
@@ -409,10 +409,10 @@ public class ColorTests
 
         var source = Add(patch, Rgb);
         var module = Add(patch, typeId, knobs);
-        var screen = Add(patch, NodeCatalog.OutputTypeId);
+        var screen = Add(patch, OutputModule.TypeId);
 
         patch.Connect(source.Id, 0, module.Id, 0);
-        patch.Connect(module.Id, 0, screen.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(module.Id, 0, screen.Id, OutputModule.ColorPort);
 
         var program = patch.CompileForVideo(Catalog).Program;
         program.AllocateRegisters();
@@ -441,14 +441,14 @@ public class ColorTests
         var source = Add(patch, Rgb, (0, r), (1, g), (2, b));
         var taken = Add(patch, ToHsv);
         var built = Add(patch, Rgb);
-        var screen = Add(patch, NodeCatalog.OutputTypeId);
+        var screen = Add(patch, OutputModule.TypeId);
 
         patch.Connect(source.Id, 0, taken.Id, 0);
 
         // Back into an RGB, so all three readings come out of one program on the
         // three channels the sink already has.
         for (var port = 0; port < 3; port++) patch.Connect(taken.Id, port, built.Id, port);
-        patch.Connect(built.Id, 0, screen.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(built.Id, 0, screen.Id, OutputModule.ColorPort);
 
         var program = patch.CompileForVideo(Catalog).Program;
         var registers = program.AllocateRegisters();
@@ -466,11 +466,11 @@ public class ColorTests
         var made = Add(patch, Hsv);
         var taken = Add(patch, ToHsv);
         var built = Add(patch, Rgb);
-        var screen = Add(patch, NodeCatalog.OutputTypeId);
+        var screen = Add(patch, OutputModule.TypeId);
 
         patch.Connect(made.Id, 0, taken.Id, 0);
         for (var port = 0; port < 3; port++) patch.Connect(taken.Id, port, built.Id, port);
-        patch.Connect(built.Id, 0, screen.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(built.Id, 0, screen.Id, OutputModule.ColorPort);
 
         return (h, s, v) =>
         {
@@ -493,10 +493,10 @@ public class ColorTests
 
         var source = Add(patch, Rgb, (0, 0.4f), (1, 0.7f), (2, 0.2f));
         var module = Add(patch, typeId);
-        var screen = Add(patch, NodeCatalog.OutputTypeId);
+        var screen = Add(patch, OutputModule.TypeId);
 
         patch.Connect(source.Id, 0, module.Id, 0);
-        patch.Connect(module.Id, 0, screen.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(module.Id, 0, screen.Id, OutputModule.ColorPort);
 
         return patch.CompileForVideo(Catalog).Program;
     }

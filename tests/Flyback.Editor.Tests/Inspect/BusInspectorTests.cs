@@ -22,14 +22,14 @@ public class BusInspectorTests : EditorTest
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
         var level = b.Add("value", 40, 40, (0, 0.3f));
-        var sent = b.Add(NodeCatalog.SendTypeId, 360, 40);
-        var heard = b.Add(NodeCatalog.ReceiveTypeId, 360, 300);
-        var screen = b.Add(NodeCatalog.OutputTypeId, 700, 300);
+        var sent = b.Add(BusModules.SendTypeId, 360, 40);
+        var heard = b.Add(BusModules.ReceiveTypeId, 360, 300);
+        var screen = b.Add(OutputModule.TypeId, 700, 300);
 
         sent.SetState("bus", new JsonObject { ["bus"] = "kick" });
         heard.SetState("bus", new JsonObject { ["bus"] = "kick" });
 
-        b.Wire(level, 0, sent, 0).Wire(heard, 0, screen, NodeCatalog.OutputLeftPort);
+        b.Wire(level, 0, sent, 0).Wire(heard, 0, screen, OutputModule.LeftPort);
 
         var window = NewMainWindow();
 
@@ -77,16 +77,16 @@ public class BusInspectorTests : EditorTest
         Select(window, send);
         Keep(window, "thump");
 
-        NodeCatalog.BusOf(send).ShouldBe("thump");
-        NodeCatalog.BusOf(receive).ShouldBe("thump");
+        BusModules.BusOf(send).ShouldBe("thump");
+        BusModules.BusOf(receive).ShouldBe("thump");
 
         window.KeyPressQwerty(PhysicalKey.Z, RawInputModifiers.Control);
         Settle(window);
 
         var patch = Editor(window).History.Patch;
 
-        NodeCatalog.BusOf(patch.Find(send.Id)!).ShouldBe("kick");
-        NodeCatalog.BusOf(patch.Find(receive.Id)!).ShouldBe("kick");
+        BusModules.BusOf(patch.Find(send.Id)!).ShouldBe("kick");
+        BusModules.BusOf(patch.Find(receive.Id)!).ShouldBe("kick");
     }
 
     [AvaloniaFact]
@@ -97,7 +97,7 @@ public class BusInspectorTests : EditorTest
         Select(window, receive);
         Keep(window, "snare");
 
-        NodeCatalog.BusOf(receive).ShouldBe("snare");
-        NodeCatalog.BusOf(send).ShouldBe("kick");
+        BusModules.BusOf(receive).ShouldBe("snare");
+        BusModules.BusOf(send).ShouldBe("kick");
     }
 }

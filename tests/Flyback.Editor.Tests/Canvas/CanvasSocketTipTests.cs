@@ -12,7 +12,7 @@ namespace Flyback.Editor.Tests.Canvas;
 /// <summary>Hovering a socket on the canvas says what it is for, in the panel's words.</summary>
 public class CanvasSocketTipTests : EditorTest
 {
-    private static readonly NodeDef Filter = NodeCatalog.BuiltIn.Require(NodeCatalog.FilterTypeId);
+    private static readonly NodeDef Filter = NodeCatalog.BuiltIn.Require(FilterModule.TypeId);
 
     [AvaloniaFact]
     public void Hovering_an_input_socket_shows_its_help()
@@ -25,8 +25,8 @@ public class CanvasSocketTipTests : EditorTest
 
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        b.Add(NodeCatalog.OutputTypeId, 900, 40);
-        var module = b.Add(NodeCatalog.FilterTypeId, 300, 100);
+        b.Add(OutputModule.TypeId, 900, 40);
+        var module = b.Add(FilterModule.TypeId, 300, 100);
 
         var editor = All<NodeEditor>(window).Single();
 

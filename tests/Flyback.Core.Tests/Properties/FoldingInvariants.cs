@@ -47,16 +47,16 @@ public class FoldingInvariants
     {
         var random = new Random(seed);
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var coord = b.Add(NodeCatalog.CoordTypeId);
+        var coord = b.Add(SourceModules.CoordTypeId);
         var made = new List<NodeInstance>();
         var count = random.Next(2, 12);
 
         for (var i = 0; i < count; i++)
         {
             var pick = random.Next(10);
-            var node = b.Add(pick < 6 ? Folded[random.Next(Folded.Length)] : pick < 9 ? NodeCatalog.ExpressionTypeId : "math.clamp");
+            var node = b.Add(pick < 6 ? Folded[random.Next(Folded.Length)] : pick < 9 ? MathModules.ExpressionTypeId : "math.clamp");
 
-            if (node.TypeId == NodeCatalog.ExpressionTypeId)
+            if (node.TypeId == MathModules.ExpressionTypeId)
                 node.SetState("expression", new JsonObject { ["formula"] = Formulas[random.Next(Formulas.Length)] });
 
             for (var port = 0; port < node.InputValues.Length; port++)
@@ -74,8 +74,8 @@ public class FoldingInvariants
             if (random.Next(8) == 0 && made.Count > 0)
             {
                 var bus = new JsonObject { ["bus"] = $"bus{made.Count}" };
-                var send = b.Add(NodeCatalog.SendTypeId);
-                var receive = b.Add(NodeCatalog.ReceiveTypeId);
+                var send = b.Add(BusModules.SendTypeId);
+                var receive = b.Add(BusModules.ReceiveTypeId);
 
                 send.SetState("bus", bus.DeepClone());
                 receive.SetState("bus", bus);
@@ -86,9 +86,9 @@ public class FoldingInvariants
             made.Add(node);
         }
 
-        var sink = b.Add(NodeCatalog.OutputTypeId);
-        b.Wire(made[^1], 0, sink, NodeCatalog.OutputColorPort);
-        b.Wire(made[random.Next(made.Count)], 0, sink, NodeCatalog.OutputLeftPort);
+        var sink = b.Add(OutputModule.TypeId);
+        b.Wire(made[^1], 0, sink, OutputModule.ColorPort);
+        b.Wire(made[random.Next(made.Count)], 0, sink, OutputModule.LeftPort);
 
         return b.Patch;
     }

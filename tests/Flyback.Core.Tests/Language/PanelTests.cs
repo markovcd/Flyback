@@ -158,7 +158,7 @@ public class PanelTests
     {
         var patch = Built("panel level = 0.8\nsine() |> out.left\nout.volume = level");
 
-        ControlMap.Of(patch.Output, NodeCatalog.OutputVolumePort).ShouldNotBeNull();
+        ControlMap.Of(patch.Output, OutputModule.VolumePort).ShouldNotBeNull();
     }
 
     [Fact]
@@ -249,7 +249,7 @@ public class PanelTests
             .ShouldBe(patch.Controls!.Select(c => (c.Name, c.Value, c.Midi)));
 
         ControlMap.Of(Only(again, "audio.filter"), 1).ShouldNotBeNull().Max.ShouldBe(4000f);
-        ControlMap.Of(again.Output, NodeCatalog.OutputVolumePort).ShouldNotBeNull();
+        ControlMap.Of(again.Output, OutputModule.VolumePort).ShouldNotBeNull();
     }
 
     /// <summary>A socket that follows a knob rests where the knob rests, as one linked on the canvas does.</summary>

@@ -16,7 +16,7 @@ namespace Flyback.Plugins.Tests.Voice;
 /// </remarks>
 public class TimbreTests
 {
-    private const string FilterType = NodeCatalog.FilterTypeId;
+    private const string FilterType = FilterModule.TypeId;
     private const string FoldType = "flyback.voice.fold";
 
     private const int Rate = GlobalConstants.SampleRate;
@@ -98,10 +98,10 @@ public class TimbreTests
 
         var color = Add(patch, "color.rgb", (0, 0.25f), (1, 0.9f), (2, 0.6f));
         var fold = Add(patch, FoldType, (1, 3f));
-        var screen = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var screen = Add(patch, OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
         patch.Connect(color.Id, 0, fold.Id, 0);
-        patch.Connect(fold.Id, 0, screen.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(fold.Id, 0, screen.Id, OutputModule.ColorPort);
 
         var program = patch.CompileForVideo(Catalog).Program;
         var registers = program.AllocateRegisters();
@@ -165,10 +165,10 @@ public class TimbreTests
 
         var coord = Add(patch, "coord");
         var effect = Add(patch, typeId, knobs);
-        var sink = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = Add(patch, OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
         patch.Connect(coord.Id, 0, effect.Id, 0);
-        patch.Connect(effect.Id, port, sink.Id, NodeCatalog.OutputLeftPort);
+        patch.Connect(effect.Id, port, sink.Id, OutputModule.LeftPort);
 
         var program = patch.CompileForAudio(Catalog).Program;
         var delays = new DelayState(
@@ -194,10 +194,10 @@ public class TimbreTests
 
         var coord = Add(patch, "coord");
         var effect = Add(patch, typeId, knobs);
-        var screen = Add(patch, NodeCatalog.OutputTypeId);
+        var screen = Add(patch, OutputModule.TypeId);
 
         patch.Connect(coord.Id, 0, effect.Id, 0);
-        patch.Connect(effect.Id, port, screen.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(effect.Id, port, screen.Id, OutputModule.ColorPort);
 
         var program = patch.CompileForVideo(Catalog).Program;
         var registers = program.AllocateRegisters();

@@ -30,7 +30,7 @@ public class PanBoundsTests : EditorTest
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         builder.Add("value", 0, 0);
-        builder.Add(NodeCatalog.OutputTypeId, 520, 0);
+        builder.Add(OutputModule.TypeId, 520, 0);
 
         var editor = NewCanvas(Wide, Tall);
         var window = Show(editor, Wide);
@@ -196,7 +196,7 @@ public class PanBoundsTests : EditorTest
         const double veryWide = 2600;
 
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        builder.Add(NodeCatalog.OutputTypeId, 0, 0);
+        builder.Add(OutputModule.TypeId, 0, 0);
 
         var editor = NewCanvas(veryWide, Tall);
         var window = Show(editor, veryWide);
@@ -259,7 +259,7 @@ public class PanBoundsTests : EditorTest
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
         builder.Add("value", -NodeInstance.Across, 0);
-        builder.Add(NodeCatalog.OutputTypeId, NodeInstance.Across, 0);
+        builder.Add(OutputModule.TypeId, NodeInstance.Across, 0);
 
         var editor = NewCanvas(veryWide, Tall);
         var window = Show(editor, veryWide);

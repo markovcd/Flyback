@@ -40,11 +40,11 @@ public class InfixPrinterTests
         again.Nodes.Count.ShouldBe(original.Nodes.Count, printed);
     }
 
-    private static int Expressions(Patch patch) => patch.Nodes.Count(n => n.TypeId == NodeCatalog.ExpressionTypeId);
+    private static int Expressions(Patch patch) => patch.Nodes.Count(n => n.TypeId == MathModules.ExpressionTypeId);
 
     private static NodeInstance Expression(PatchBuilder b, string formula, params NodeInstance[] sockets)
     {
-        var node = b.Add(NodeCatalog.ExpressionTypeId);
+        var node = b.Add(MathModules.ExpressionTypeId);
         node.SetState("expression", new JsonObject { ["formula"] = formula });
 
         for (var socket = 0; socket < sockets.Length; socket++) b.Wire(sockets[socket], 0, node, socket);
@@ -102,10 +102,10 @@ public class InfixPrinterTests
     public void A_formula_calling_a_function_is_printed_as_the_sum(string formula, string line)
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var coord = b.Add(NodeCatalog.CoordTypeId);
+        var coord = b.Add(SourceModules.CoordTypeId);
         var steps = Expression(b, formula, coord);
-        var sink = b.Add(NodeCatalog.OutputTypeId);
-        b.Wire(steps, 0, sink, NodeCatalog.OutputColorPort);
+        var sink = b.Add(OutputModule.TypeId);
+        b.Wire(steps, 0, sink, OutputModule.ColorPort);
 
         var printed = PatchPrinter.Print(b.Patch, NodeCatalog.BuiltIn);
         var again = Build(printed);
@@ -122,17 +122,17 @@ public class InfixPrinterTests
     public void A_function_over_a_fourth_socket_read_again_stays_one_expression()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var coord = b.Add(NodeCatalog.CoordTypeId);
+        var coord = b.Add(SourceModules.CoordTypeId);
         var low = b.Add("osc.sine", (1, 3f));
         var high = b.Add("osc.sine", (1, 8f));
-        var mixed = b.Add(NodeCatalog.ExpressionTypeId);
+        var mixed = b.Add(MathModules.ExpressionTypeId);
         mixed.SetState("expression", new JsonObject { ["formula"] = "a + b * c * 0.6 + d * pow(c, 6) * 0.2" });
-        b.Wire(coord, NodeCatalog.CoordXPort, mixed, 0);
+        b.Wire(coord, SourceModules.CoordXPort, mixed, 0);
         b.Wire(low, 0, mixed, 1);
-        b.Wire(coord, NodeCatalog.CoordYPort, mixed, 2);
+        b.Wire(coord, SourceModules.CoordYPort, mixed, 2);
         b.Wire(high, 0, mixed, 3);
-        var sink = b.Add(NodeCatalog.OutputTypeId);
-        b.Wire(mixed, 0, sink, NodeCatalog.OutputColorPort);
+        var sink = b.Add(OutputModule.TypeId);
+        b.Wire(mixed, 0, sink, OutputModule.ColorPort);
 
         var printed = PatchPrinter.Print(b.Patch, NodeCatalog.BuiltIn);
         var again = Build(printed);
@@ -157,10 +157,10 @@ public class InfixPrinterTests
     public void A_function_that_would_not_read_back_as_this_module_keeps_the_call(string formula, bool off)
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var coord = b.Add(NodeCatalog.CoordTypeId);
+        var coord = b.Add(SourceModules.CoordTypeId);
         var steps = Expression(b, formula, coord);
-        var sink = b.Add(NodeCatalog.OutputTypeId);
-        b.Wire(steps, 0, sink, NodeCatalog.OutputColorPort);
+        var sink = b.Add(OutputModule.TypeId);
+        b.Wire(steps, 0, sink, OutputModule.ColorPort);
         steps.Off = off;
 
         var printed = PatchPrinter.Print(b.Patch, NodeCatalog.BuiltIn);
@@ -194,8 +194,8 @@ public class InfixPrinterTests
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var sine = b.Add("osc.sine", (1, 3f));
         var squared = Expression(b, "a * a", sine);
-        var sink = b.Add(NodeCatalog.OutputTypeId);
-        b.Wire(squared, 0, sink, NodeCatalog.OutputColorPort);
+        var sink = b.Add(OutputModule.TypeId);
+        b.Wire(squared, 0, sink, OutputModule.ColorPort);
 
         var printed = PatchPrinter.Print(b.Patch, NodeCatalog.BuiltIn);
 
@@ -234,11 +234,11 @@ public class InfixPrinterTests
     public void A_socket_on_its_knob_is_printed_as_a_call()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var coord = b.Add(NodeCatalog.CoordTypeId);
+        var coord = b.Add(SourceModules.CoordTypeId);
         var scaled = Expression(b, "a * b", coord);
         scaled.InputValues[1] = 0.25f;
-        var sink = b.Add(NodeCatalog.OutputTypeId);
-        b.Wire(scaled, 0, sink, NodeCatalog.OutputColorPort);
+        var sink = b.Add(OutputModule.TypeId);
+        b.Wire(scaled, 0, sink, OutputModule.ColorPort);
 
         var printed = PatchPrinter.Print(b.Patch, NodeCatalog.BuiltIn);
 
@@ -251,7 +251,7 @@ public class InfixPrinterTests
     public void The_text_points_at_a_sum_from_its_operator()
     {
         var patch = Build("x * 2 - 1 |> out.color");
-        var expression = patch.Nodes.Single(n => n.TypeId == NodeCatalog.ExpressionTypeId);
+        var expression = patch.Nodes.Single(n => n.TypeId == MathModules.ExpressionTypeId);
 
         var printing = PatchPrinter.Written(patch);
 
@@ -260,7 +260,7 @@ public class InfixPrinterTests
         printing.Map.At(printing.Source.IndexOf('-')).ShouldBe(expression.Id);
 
         var typed = PatchLanguage.Build("x * 2 - 1 |> out.color", NodeCatalog.BuiltIn);
-        var placed = typed.Patch.Nodes.Single(n => n.TypeId == NodeCatalog.ExpressionTypeId);
+        var placed = typed.Patch.Nodes.Single(n => n.TypeId == MathModules.ExpressionTypeId);
 
         typed.Map.At("x * 2 - 1".IndexOf('-')).ShouldBe(placed.Id);
     }
@@ -278,6 +278,6 @@ public class InfixPrinterTests
         var printed = PatchPrinter.Print(built, NodeCatalog.BuiltIn);
         var again = PatchLanguage.Build(printed, NodeCatalog.BuiltIn).Patch;
 
-        again.Nodes.Count(n => n.TypeId == NodeCatalog.ExpressionTypeId).ShouldBe(1, printed);
+        again.Nodes.Count(n => n.TypeId == MathModules.ExpressionTypeId).ShouldBe(1, printed);
     }
 }

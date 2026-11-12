@@ -90,7 +90,7 @@ public class OutputSettingsRewindButtonTests : OutputSettingsTest
 
         var knob = editor.Edits.AddNode("value");
         knob.ShouldNotBeNull();
-        editor.History.Patch.Connect(knob.Id, 0, editor.History.Patch.Output.Id, NodeCatalog.OutputColorPort);
+        editor.History.Patch.Connect(knob.Id, 0, editor.History.Patch.Output.Id, OutputModule.ColorPort);
         editor.History.Record();
 
         Select(window, editor.History.Patch.Output);

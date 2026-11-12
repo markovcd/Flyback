@@ -21,12 +21,12 @@ namespace Flyback.Plugins.Picture;
 /// even, so a short line centered under a long one lands on whole pixels.
 /// </para>
 /// </remarks>
-internal sealed partial class BitmapFont
+internal sealed class BitmapFont
 {
     private readonly ulong[] glyphs;
     private readonly Dictionary<char, int> index;
 
-    private BitmapFont(
+    internal BitmapFont(
         string id,
         string name,
         int width,
@@ -55,7 +55,7 @@ internal sealed partial class BitmapFont
     }
 
     /// <summary>Every font there is, the first being what a Text is dropped with.</summary>
-    public static IReadOnlyList<BitmapFont> All => [Pixel, Tiny];
+    public static IReadOnlyList<BitmapFont> All => [PixelFont.Font, TinyFont.Font];
 
     /// <summary>The font an id names, or null where there is none by that name.</summary>
     public static BitmapFont? Find(string id) => All.FirstOrDefault(font => font.Id == id);

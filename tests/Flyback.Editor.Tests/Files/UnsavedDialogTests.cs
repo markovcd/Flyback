@@ -569,10 +569,10 @@ public sealed class UnsavedDialogTests : EditorTest
 
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 700, 40);
-        var player = b.Add(NodeCatalog.SampleTypeId, 200, 40);
+        var output = b.Add(OutputModule.TypeId, 700, 40);
+        var player = b.Add(SourceModules.SampleTypeId, 200, 40);
         SampleExtra.Set(player, carriedPath);
-        b.Wire(player, 0, output, NodeCatalog.OutputLeftPort);
+        b.Wire(player, 0, output, OutputModule.LeftPort);
 
         var window = NewMainWindow();
 

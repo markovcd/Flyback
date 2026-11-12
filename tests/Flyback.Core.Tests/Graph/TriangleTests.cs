@@ -21,9 +21,9 @@ public class TriangleTests
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var wave = builder.Add(NodeCatalog.TriangleTypeId, 0, 0, (Frequency, 0f), (Phase, phase), (Amp, amp), (Bias, bias));
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
-        builder.Wire(wave, 0, sink, NodeCatalog.OutputLeftPort);
+        var wave = builder.Add(OscillatorModules.TriangleTypeId, 0, 0, (Frequency, 0f), (Phase, phase), (Amp, amp), (Bias, bias));
+        var sink = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
+        builder.Wire(wave, 0, sink, OutputModule.LeftPort);
 
         var program = builder.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
         var registers = program.AllocateRegisters();

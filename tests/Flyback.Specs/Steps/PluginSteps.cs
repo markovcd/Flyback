@@ -118,8 +118,8 @@ public sealed class PluginSteps
         var b = new PatchBuilder(Modules);
         b.Patch.Nodes.Add(synth);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
-        b.Wire(synth, 0, output, NodeCatalog.OutputLeftPort).Wire(synth, 1, output, NodeCatalog.OutputRightPort);
+        var output = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
+        b.Wire(synth, 0, output, OutputModule.LeftPort).Wire(synth, 1, output, OutputModule.RightPort);
 
         var program = b.Build().CompileForAudio(Modules).Program;
         var state = new DelayState(program, Rate);
@@ -144,8 +144,8 @@ public sealed class PluginSteps
         var b = new PatchBuilder(Modules);
         b.Patch.Nodes.Add(drum);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
-        b.Wire(drum, 2, output, NodeCatalog.OutputLeftPort);
+        var output = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
+        b.Wire(drum, 2, output, OutputModule.LeftPort);
 
         var program = b.Build().CompileForAudio(Modules).Program;
         var state = new DelayState(program, Rate);
@@ -183,8 +183,8 @@ public sealed class PluginSteps
         var b = new PatchBuilder(Modules);
         b.Patch.Nodes.Add(orbit);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
-        b.Wire(orbit, 0, output, NodeCatalog.OutputLeftPort);
+        var output = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
+        b.Wire(orbit, 0, output, OutputModule.LeftPort);
 
         var program = b.Build().CompileForAudio(Modules).Program;
         var state = new DelayState(program, Rate);
@@ -270,8 +270,8 @@ public sealed class PluginSteps
         var b = new PatchBuilder(Modules);
 
         var module = Set(b.Add(typeId), knobs);
-        var output = b.Add(NodeCatalog.OutputTypeId);
-        b.Wire(module, 0, output, NodeCatalog.OutputColorPort);
+        var output = b.Add(OutputModule.TypeId);
+        b.Wire(module, 0, output, OutputModule.ColorPort);
 
         var program = b.Build().CompileForVideo(Modules).Program;
         var buffer = new byte[Width * 4 * Height];

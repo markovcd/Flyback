@@ -55,7 +55,7 @@ public class DragBoundsTests : EditorTest
 
         near = builder.Add("value", Wall - 60, 0);
         behind = builder.Add("time", Wall - 360, 0);
-        builder.Add(NodeCatalog.OutputTypeId, Wall - 900, 0);
+        builder.Add(OutputModule.TypeId, Wall - 900, 0);
 
         return builder.Patch;
     }
@@ -106,7 +106,7 @@ public class DragBoundsTests : EditorTest
         // The corner on the edge, which is as far out as a coordinate can be:
         // the body is then a whole module past it.
         var hanging = builder.Add("value", NodeInstance.Across, NodeInstance.Down);
-        builder.Add(NodeCatalog.OutputTypeId, 0, 0);
+        builder.Add(OutputModule.TypeId, 0, 0);
 
         Editing(builder.Patch);
 
@@ -149,7 +149,7 @@ public class DragBoundsTests : EditorTest
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         var stuck = builder.Add("value", Wall, 0);
-        builder.Add(NodeCatalog.OutputTypeId, Wall - 600, 0);
+        builder.Add(OutputModule.TypeId, Wall - 600, 0);
 
         var (editor, window) = Editing(builder.Patch);
 
@@ -185,7 +185,7 @@ public class DragBoundsTests : EditorTest
 
         var module = builder.Add("osc.sine", 40, 40);
         builder.Add("math.add", 500, 300);
-        builder.Add(NodeCatalog.OutputTypeId, 900, 40);
+        builder.Add(OutputModule.TypeId, 900, 40);
 
         var (editor, window) = Editing(builder.Patch);
 

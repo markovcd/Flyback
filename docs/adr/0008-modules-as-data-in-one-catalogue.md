@@ -1,6 +1,6 @@
 # ADR-0008: Modules are data in a single catalogue
 
-**Status:** Accepted · 2026-08-11 · amended by
+**Status:** Accepted · 2026-08-11 · amended 2026-11-12 (below) and by
 [0026](0026-modules-from-plugins-with-provenance-in-the-file.md), where the
 catalogue is composed from the engine's modules plus any a plugin adds
 
@@ -65,3 +65,16 @@ There is also no compile-time link between a module's declared port count and
 what its `EmitFn` indexes. `i[3]` on a three-input module throws at compile time
 rather than failing to build. With every definition adjacent to its emit lambda,
 that mismatch is visible in the same expression, which is the mitigation.
+
+## Amendment, 2026-11-12: one type per family
+
+Modules are still records in one list, and that list is still the one place
+that reads as everything Flyback can do: `NodeCatalog`'s static constructor.
+What moved is where each record is written. A family of modules is a static
+type of its own (`OscillatorModules`, `DelayModule`, `ChartModules`) that owns
+its type ids, its constants, its emit code and a `Def()` or `Defs()` the list
+calls, the way `SongModule` and the plugins' modules already were. The socket
+shorthands every family uses are in `Sockets`. `NodeCatalog` keeps the lookups,
+the list and the eight members plugins name, which forward to their family's
+type. A family's constants stop being visible to every other family, and a
+module is found by its file name (`one-type-per-file.md`).

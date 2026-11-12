@@ -359,14 +359,14 @@ public class MidiClockTests
     private static CompiledPatch Heard(int port)
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        var clock = builder.Add(NodeCatalog.ClockTypeId, 0, 0);
+        var clock = builder.Add(MidiModules.ClockTypeId, 0, 0);
         clock.SetState(MidiClockExtra.StateKey, new System.Text.Json.Nodes.JsonObject
         {
             [MidiClockExtra.DeviceField] = Box,
         });
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
 
-        builder.Wire(clock, port, sink, NodeCatalog.OutputLeftPort);
+        builder.Wire(clock, port, sink, OutputModule.LeftPort);
 
         return builder.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
     }
@@ -375,13 +375,13 @@ public class MidiClockTests
     private static CompileResult Followed(string? device)
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        var clock = builder.Add(NodeCatalog.ClockTypeId, 0, 0);
+        var clock = builder.Add(MidiModules.ClockTypeId, 0, 0);
         clock.SetState(MidiClockExtra.StateKey, device is null
             ? new System.Text.Json.Nodes.JsonObject()
             : new System.Text.Json.Nodes.JsonObject { [MidiClockExtra.DeviceField] = device });
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
 
-        builder.Wire(clock, Beats, sink, NodeCatalog.OutputLeftPort);
+        builder.Wire(clock, Beats, sink, OutputModule.LeftPort);
 
         return builder.Patch.CompileForAudio(NodeCatalog.BuiltIn);
     }

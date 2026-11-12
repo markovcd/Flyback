@@ -78,5 +78,5 @@ internal static class Workbenches
     /// <summary>The scale the bench's one quantizer holds.</summary>
     internal static IReadOnlyList<int> Scale(PatchWorkbench bench) =>
         ScaleExtra.Of(bench.Snapshot().Nodes
-            .Single(n => n.TypeId == NodeCatalog.QuantiserTypeId));
+            .Single(n => n.TypeId == PitchModules.QuantiserTypeId));
 }

@@ -210,16 +210,16 @@ internal sealed class WirePainter(
     {
         foreach (var id in selection.Ids)
         {
-            if (Patch.Find(id) is not { } end || NodeCatalog.BusOf(end) is not { } bus) continue;
+            if (Patch.Find(id) is not { } end || BusModules.BusOf(end) is not { } bus) continue;
             if (selection.Scene.Shut(end.Id) || NodeCatalog.Get(end.TypeId) is not { } def) continue;
 
-            var partner = end.TypeId == NodeCatalog.SendTypeId ? NodeCatalog.ReceiveTypeId : NodeCatalog.SendTypeId;
+            var partner = end.TypeId == BusModules.SendTypeId ? BusModules.ReceiveTypeId : BusModules.SendTypeId;
             var from = geometry.Bounds(end, def);
 
             foreach (var other in Patch.Nodes)
             {
                 if (other.TypeId != partner || selection.Scene.Shut(other.Id)) continue;
-                if (!string.Equals(NodeCatalog.BusOf(other), bus, StringComparison.OrdinalIgnoreCase)) continue;
+                if (!string.Equals(BusModules.BusOf(other), bus, StringComparison.OrdinalIgnoreCase)) continue;
                 if (NodeCatalog.Get(other.TypeId) is not { } otherDef) continue;
 
                 var to = geometry.Bounds(other, otherDef);

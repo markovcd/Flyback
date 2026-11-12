@@ -68,16 +68,16 @@ public class HissTests
     {
         var b = new PatchBuilder(Catalog);
         var level = b.Add("coord");
-        var random = b.Add(NodeCatalog.NoiseTypeId, (2, 3f));
-        var filter = b.Add(NodeCatalog.FilterTypeId, (1, 1900f), (2, 0.3f));
+        var random = b.Add(NoiseModule.TypeId, (2, 3f));
+        var filter = b.Add(FilterModule.TypeId, (1, 1900f), (2, 0.3f));
         var played = b.Add("math.mul");
         var leveled = b.Add("math.mul", (1, 2.5f));
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
         b.Wire(random, noiseOut, filter, 0)
          .Wire(level, 0, played, 0).Wire(filter, bandOut, played, 1)
          .Wire(played, 0, leveled, 0)
-         .Wire(leveled, 0, sink, NodeCatalog.OutputLeftPort);
+         .Wire(leveled, 0, sink, OutputModule.LeftPort);
 
         var envelope = Falling(Rate / 4);
 
@@ -100,9 +100,9 @@ public class HissTests
         var coord = b.Add("coord");
         var hiss = b.Add(HissType, knobs);
         hiss.SetState("hiss", new JsonObject { ["noise"] = noise, ["band"] = band });
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
-        b.Wire(coord, 0, hiss, LevelPort).Wire(hiss, 0, sink, NodeCatalog.OutputLeftPort);
+        b.Wire(coord, 0, hiss, LevelPort).Wire(hiss, 0, sink, OutputModule.LeftPort);
 
         return Interpreted.Run(b.Patch, level);
     }

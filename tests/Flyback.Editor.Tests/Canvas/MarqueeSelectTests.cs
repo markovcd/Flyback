@@ -32,7 +32,7 @@ public class MarqueeSelectTests : EditorTest
         a = builder.Add("value", 0, 0);
         builder.Add("time", 0, 200);
         c = builder.Add("coord", 0, 400);
-        builder.Add(NodeCatalog.OutputTypeId, 700, 200);
+        builder.Add(OutputModule.TypeId, 700, 200);
 
         return builder.Patch;
     }
@@ -96,7 +96,7 @@ public class MarqueeSelectTests : EditorTest
         Sweep(editor, window, new Point(-40, -40), new Point(240, 300));
 
         Selected(editor).ShouldNotContain("coord");
-        Selected(editor).ShouldNotContain(NodeCatalog.OutputTypeId);
+        Selected(editor).ShouldNotContain(OutputModule.TypeId);
     }
 
     /// <summary>

@@ -80,7 +80,7 @@ internal static class Completions
         {
             var builtins = new List<Completion> { new("t", CompletionKind.Builtin, "the clock, in seconds", "t") };
 
-            if (caret.Modules.Get(NodeCatalog.CoordTypeId) is { } coordinates)
+            if (caret.Modules.Get(SourceModules.CoordTypeId) is { } coordinates)
                 builtins.AddRange(coordinates.Outputs.Select(o =>
                     new Completion(SocketNames.Written(o), CompletionKind.Builtin, Caret.FirstSentence(o.Help, "one of the picture's coordinates"), SocketNames.Written(o))));
 
@@ -108,7 +108,7 @@ internal static class Completions
 
         private IEnumerable<Completion> Modules() =>
             caret.Modules.All
-                .Where(d => d.TypeId != NodeCatalog.OutputTypeId)
+                .Where(d => d.TypeId != OutputModule.TypeId)
                 .Select(d => (Def: d, Name: caret.Written.Written(d)))
                 .OrderBy(m => m.Name, StringComparer.OrdinalIgnoreCase)
                 .Select(m => new Completion(m.Name, CompletionKind.Module, Caret.FirstSentence(m.Def.Description, m.Def.Name), m.Name));
@@ -141,7 +141,7 @@ internal static class Completions
             var items = new List<Completion>();
             var selected = caret.Selected(out var path, out var startsStatement);
 
-            if (selected is { TypeId: NodeCatalog.OutputTypeId })
+            if (selected is { TypeId: OutputModule.TypeId })
                 items.AddRange(selected.Inputs.Select(p => Socket(p, CompletionKind.Socket, SocketNames.Written(p))));
             else if (selected is not null)
                 items.AddRange(Outputs(selected));

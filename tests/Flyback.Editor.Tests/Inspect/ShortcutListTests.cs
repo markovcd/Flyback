@@ -17,9 +17,9 @@ public class ShortcutListTests : EditorTest
     private (MainWindow Window, Guid Sine) Open()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var osc = b.Add(NodeCatalog.SineTypeId, 360, 40);
-        var screen = b.Add(NodeCatalog.OutputTypeId, 700, 40);
-        b.Wire(osc, 0, screen, NodeCatalog.OutputColorPort);
+        var osc = b.Add(OscillatorModules.SineTypeId, 360, 40);
+        var screen = b.Add(OutputModule.TypeId, 700, 40);
+        b.Wire(osc, 0, screen, OutputModule.ColorPort);
 
         return (Open(b.Patch), osc.Id);
     }

@@ -119,7 +119,7 @@ public sealed class DecisionSteps(EditorDriver editor) : IDisposable
     {
         var patch = Presets.All.Single(p => p.Name == "Plasma").Build(NodeCatalog.BuiltIn);
 
-        foreach (var (missing, port) in new[] { ("osc.nonesuch", NodeCatalog.OutputColorPort), ("osc.nothere", NodeCatalog.OutputLeftPort) })
+        foreach (var (missing, port) in new[] { ("osc.nonesuch", OutputModule.ColorPort), ("osc.nothere", OutputModule.LeftPort) })
         {
             patch.Nodes.Add(new NodeInstance { Id = Guid.NewGuid(), TypeId = missing });
             patch.Connect(patch.Nodes[^1].Id, 0, patch.Output.Id, port);

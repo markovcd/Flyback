@@ -301,7 +301,7 @@ internal sealed class Inspector
         // bar is the same width down the entire module: a module where nothing
         // has a reading gives every slider the column back, and a module where
         // even one socket does reserves it for all of them, named or not.
-        var reading = InspectorRows.ShowsReading(def) || def.TypeId == NodeCatalog.AutoRemapTypeId;
+        var reading = InspectorRows.ShowsReading(def) || def.TypeId == MathModules.AutoRemapTypeId;
 
         for (var i = 0; i < def.Inputs.Count; i++)
             Panel.Children.Add(socketRows.Edged(InspectorRows.Helped(socketRows.Input(def, node, def.Inputs[i], i, reading), def.Inputs[i].Help), node, i, output: false));
@@ -336,7 +336,7 @@ internal sealed class Inspector
         // The Output cannot be deleted, so it gets no button for it. What the
         // picture is drawn at and by is a property of the machine rather than of
         // this block, and is in the settings window — ADR-0082.
-        if (NodeCatalog.IsSink(node.TypeId))
+        if (OutputModule.IsSink(node.TypeId))
         {
             Undescribed();
             return;

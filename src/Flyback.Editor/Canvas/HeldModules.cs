@@ -25,7 +25,7 @@ internal sealed class HeldModules(CanvasHistory history, Repaint repaint)
         var nodes = ids
             .Select(history.Patch.Find)
             .OfType<NodeInstance>()
-            .Where(node => !NodeCatalog.IsSink(node.TypeId))
+            .Where(node => !OutputModule.IsSink(node.TypeId))
             .ToArray();
 
         var muting = nodes.Any(node => !node.Off);

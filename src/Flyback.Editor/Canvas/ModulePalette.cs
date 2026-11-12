@@ -741,7 +741,7 @@ public sealed class ModulePalette : UserControl
         // The Output is never listed. Every patch has one already and cannot
         // have a second, so a button for it could only ever select the one that
         // is there — and a palette entry that never adds anything is a puzzle.
-        if (NodeCatalog.IsSink(def.TypeId)) return false;
+        if (OutputModule.IsSink(def.TypeId)) return false;
 
         if (catalog.ProviderOf(def.TypeId) is { } from && hidden.Contains(from.Id)) return false;
 

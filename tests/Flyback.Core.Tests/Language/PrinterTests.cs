@@ -145,7 +145,7 @@ public class PrinterTests
         sine.Rename(NodeCatalog.BuiltIn.Require("osc.sine"), "carrier");
 
         patch.Nodes.Add(sine);
-        patch.Connect(sine.Id, 0, patch.Output.Id, NodeCatalog.OutputLeftPort);
+        patch.Connect(sine.Id, 0, patch.Output.Id, OutputModule.LeftPort);
 
         PatchPrinter.Print(patch, NodeCatalog.BuiltIn).ShouldContain("let carrier = sine(");
     }
@@ -186,8 +186,8 @@ public class PrinterTests
         sine.Rename(def, "A3");
         patch.Nodes.Add(sine);
 
-        patch.Connect(sine.Id, 0, patch.Output.Id, NodeCatalog.OutputLeftPort);
-        patch.Connect(sine.Id, 0, patch.Output.Id, NodeCatalog.OutputRightPort);
+        patch.Connect(sine.Id, 0, patch.Output.Id, OutputModule.LeftPort);
+        patch.Connect(sine.Id, 0, patch.Output.Id, OutputModule.RightPort);
 
         var source = PatchPrinter.Print(patch, NodeCatalog.BuiltIn);
 
@@ -205,7 +205,7 @@ public class PrinterTests
         var hsv = NodeInstance.Create(NodeCatalog.BuiltIn.Require("color.hsv"), 0, 0);
 
         patch.Nodes.Add(hsv);
-        patch.Connect(hsv.Id, 0, patch.Output.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(hsv.Id, 0, patch.Output.Id, OutputModule.ColorPort);
 
         PatchPrinter.Print(patch, NodeCatalog.BuiltIn).ShouldContain("color.hsv(");
     }
@@ -242,12 +242,12 @@ public class PrinterTests
         var patch = new Patch();
         patch.EnsureOutput(NodeCatalog.BuiltIn);
 
-        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.SampleTypeId);
+        var def = NodeCatalog.BuiltIn.Require(SourceModules.SampleTypeId);
         var clip = NodeInstance.Create(def, 0, 0);
 
         SampleExtra.Set(clip, "drums.wav");
         patch.Nodes.Add(clip);
-        patch.Connect(clip.Id, 0, patch.Output.Id, NodeCatalog.OutputLeftPort);
+        patch.Connect(clip.Id, 0, patch.Output.Id, OutputModule.LeftPort);
 
         var source = PatchPrinter.Print(patch, NodeCatalog.BuiltIn);
 
@@ -256,7 +256,7 @@ public class PrinterTests
         var again = PatchLanguage.Build(source, NodeCatalog.BuiltIn);
 
         again.Issues.ShouldBeEmpty(again.Report);
-        SampleExtra.Of(again.Patch.Nodes.Single(n => n.TypeId == NodeCatalog.SampleTypeId))
+        SampleExtra.Of(again.Patch.Nodes.Single(n => n.TypeId == SourceModules.SampleTypeId))
             .ShouldBe("drums.wav");
     }
 
@@ -270,13 +270,13 @@ public class PrinterTests
         var patch = new Patch();
         patch.EnsureOutput(NodeCatalog.BuiltIn);
 
-        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.MidiFileTypeId);
+        var def = NodeCatalog.BuiltIn.Require(MidiModules.MidiFileTypeId);
         var song = NodeInstance.Create(def, 0, 0);
 
         MidiFileExtra.Set(song, "tunes/riff.mid");
         song.SetState(MidiLineExtra.Name, new System.Text.Json.Nodes.JsonObject { ["voice"] = 2, ["channel"] = 3 });
         patch.Nodes.Add(song);
-        patch.Connect(song.Id, 1, patch.Output.Id, NodeCatalog.OutputLeftPort);
+        patch.Connect(song.Id, 1, patch.Output.Id, OutputModule.LeftPort);
 
         var source = PatchPrinter.Print(patch, NodeCatalog.BuiltIn);
 
@@ -286,7 +286,7 @@ public class PrinterTests
 
         again.Issues.ShouldBeEmpty(again.Report);
 
-        var back = again.Patch.Nodes.Single(n => n.TypeId == NodeCatalog.MidiFileTypeId);
+        var back = again.Patch.Nodes.Single(n => n.TypeId == MidiModules.MidiFileTypeId);
 
         MidiFileExtra.Of(back).ShouldBe("tunes/riff.mid");
         MidiLineExtra.Voice(back).ShouldBe(2);
@@ -327,7 +327,7 @@ public class PrinterTests
         var sine = NodeInstance.Create(NodeCatalog.BuiltIn.Require("osc.sine"), 0, 0);
         sine.InputValues[3] = 1f - 0.00000006f;
         patch.Nodes.Add(sine);
-        patch.Connect(sine.Id, 0, patch.Output.Id, NodeCatalog.OutputLeftPort);
+        patch.Connect(sine.Id, 0, patch.Output.Id, OutputModule.LeftPort);
 
         var again = Reread(patch, out _);
 

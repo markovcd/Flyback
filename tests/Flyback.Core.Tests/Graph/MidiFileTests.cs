@@ -331,11 +331,11 @@ public sealed class MidiFileTests : IDisposable
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var player = b.Add(NodeCatalog.MidiFileTypeId, 0, 0);
+        var player = b.Add(MidiModules.MidiFileTypeId, 0, 0);
         MidiFileExtra.Set(player, path);
 
-        var sink = b.Add(NodeCatalog.OutputTypeId, 200, 0, (NodeCatalog.OutputVolumePort, volume));
-        b.Wire(player, output, sink, NodeCatalog.OutputLeftPort);
+        var sink = b.Add(OutputModule.TypeId, 200, 0, (OutputModule.VolumePort, volume));
+        b.Wire(player, output, sink, OutputModule.LeftPort);
 
         return (b.Patch, player);
     }
@@ -458,7 +458,7 @@ public sealed class MidiFileTests : IDisposable
         var path = Write(File(480, Track(On(0, 1, 60), Off(480, 1, 60))));
         var (_, player) = Playing(path, output: 1);
 
-        var extra = NodeCatalog.BuiltIn.Require(NodeCatalog.MidiFileTypeId).Extra<MidiFileExtra>().ShouldNotBeNull();
+        var extra = NodeCatalog.BuiltIn.Require(MidiModules.MidiFileTypeId).Extra<MidiFileExtra>().ShouldNotBeNull();
 
         extra.Files(player).ShouldBe([path]);
 

@@ -39,7 +39,7 @@ public class CommandTests
 
         // Wired in, or the compiler never walks to it: an unknown module nothing
         // reaches costs nothing and is rightly not complained about.
-        patch.Connect(patch.Nodes[^1].Id, 0, patch.Output.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(patch.Nodes[^1].Id, 0, patch.Output.Id, OutputModule.ColorPort);
 
         return patch;
     }
@@ -203,7 +203,7 @@ public class CommandTests
     public void A_group_is_costed_by_what_it_adds()
     {
         var patch = Preset("Plasma");
-        var inside = patch.Nodes.Where(n => !NodeCatalog.IsSink(n.TypeId)).Take(3).Select(n => n.Id).ToArray();
+        var inside = patch.Nodes.Where(n => !OutputModule.IsSink(n.TypeId)).Take(3).Select(n => n.Id).ToArray();
         var group = patch.Group(inside).ShouldNotBeNull();
 
         group.Name = "Heart";
@@ -270,12 +270,12 @@ public class CommandTests
     public void Voices_are_mentioned_only_by_a_patch_that_has_some()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        var voice = builder.Add(NodeCatalog.VoiceTypeId, 0, 0);
+        var voice = builder.Add(PolyphonyModules.VoiceTypeId, 0, 0);
         var add = builder.Add("math.add", 0, 0);
-        var output = builder.Add(NodeCatalog.OutputTypeId, 0, 0);
+        var output = builder.Add(OutputModule.TypeId, 0, 0);
 
         voice.SetState("voices", new System.Text.Json.Nodes.JsonObject { ["voices"] = 3f });
-        builder.Wire(voice, 0, add, 0).Wire(add, 0, output, NodeCatalog.OutputLeftPort);
+        builder.Wire(voice, 0, add, 0).Wire(add, 0, output, OutputModule.LeftPort);
 
         var poly = Run((o, e) => InfoCommand.Run(builder.Patch, "chord.fbk", false, o, e));
         var bare = Run((o, e) => InfoCommand.Run(Preset("Plasma"), "plasma.fbk", false, o, e));
@@ -1050,7 +1050,7 @@ public class CommandTests
         var modules = document.RootElement.GetProperty("modules").EnumerateArray().ToArray();
 
         Provider("test.thing").ShouldBe("test");
-        Provider(NodeCatalog.OutputTypeId).ShouldBe(NodeCatalog.BuiltInProvider.Id);
+        Provider(OutputModule.TypeId).ShouldBe(NodeCatalog.BuiltInProvider.Id);
 
         document.RootElement.GetProperty("providers").EnumerateArray()
             .Select(provider => provider.GetProperty("id").GetString())
@@ -1071,7 +1071,7 @@ public class CommandTests
         using var document = JsonDocument.Parse(output);
 
         document.RootElement.GetProperty("modules").EnumerateArray()
-            .Single(module => module.GetProperty("typeId").GetString() == NodeCatalog.OutputTypeId)
+            .Single(module => module.GetProperty("typeId").GetString() == OutputModule.TypeId)
             .GetProperty("inputs")
             .EnumerateArray()
             .Select(port => port.GetString())
@@ -1134,7 +1134,7 @@ public class CommandTests
     [Fact]
     public void A_described_module_says_what_each_socket_is_for()
     {
-        var filter = NodeCatalog.BuiltIn.Require(NodeCatalog.FilterTypeId);
+        var filter = NodeCatalog.BuiltIn.Require(FilterModule.TypeId);
 
         var (_, prose, _) = Run((o, e) => ModulesCommand.Describe(NodeCatalog.BuiltIn, filter.TypeId, false, o, e));
         var (_, json, _) = Run((o, e) => ModulesCommand.Describe(NodeCatalog.BuiltIn, filter.TypeId, true, o, e));
@@ -1158,10 +1158,10 @@ public class CommandTests
     [Fact]
     public void A_described_module_says_what_each_setting_is_for()
     {
-        var formula = NodeCatalog.BuiltIn.Require(NodeCatalog.ExpressionTypeId).Extras.Single().Fields.Single();
+        var formula = NodeCatalog.BuiltIn.Require(MathModules.ExpressionTypeId).Extras.Single().Fields.Single();
 
-        var (_, prose, _) = Run((o, e) => ModulesCommand.Describe(NodeCatalog.BuiltIn, NodeCatalog.ExpressionTypeId, false, o, e));
-        var (_, json, _) = Run((o, e) => ModulesCommand.Describe(NodeCatalog.BuiltIn, NodeCatalog.ExpressionTypeId, true, o, e));
+        var (_, prose, _) = Run((o, e) => ModulesCommand.Describe(NodeCatalog.BuiltIn, MathModules.ExpressionTypeId, false, o, e));
+        var (_, json, _) = Run((o, e) => ModulesCommand.Describe(NodeCatalog.BuiltIn, MathModules.ExpressionTypeId, true, o, e));
 
         using var document = JsonDocument.Parse(json);
 
@@ -1215,7 +1215,7 @@ public class CommandTests
     {
         var wrong = new List<string>();
 
-        foreach (var def in NodeCatalog.BuiltIn.All.Where(def => def.Inputs.Count > 0 && def.TypeId != NodeCatalog.OutputTypeId))
+        foreach (var def in NodeCatalog.BuiltIn.All.Where(def => def.Inputs.Count > 0 && def.TypeId != OutputModule.TypeId))
         {
             var (_, output, _) = Run((o, e) => ModulesCommand.Describe(NodeCatalog.BuiltIn, def.TypeId, true, o, e));
 
@@ -1299,11 +1299,11 @@ public class CommandTests
         WritePicture(picture);
 
         var patch = Preset("Plasma");
-        var shown = NodeInstance.Create(NodeCatalog.BuiltIn.Require(NodeCatalog.PictureTypeId), 0, 0);
+        var shown = NodeInstance.Create(NodeCatalog.BuiltIn.Require(SourceModules.PictureTypeId), 0, 0);
 
         PictureExtra.Set(shown, "moon.png");
         patch.Nodes.Add(shown);
-        patch.Connect(shown.Id, 0, patch.Output.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(shown.Id, 0, patch.Output.Id, OutputModule.ColorPort);
 
         var file = made.File("shown.fbk");
         File.WriteAllText(file.FullName, PatchIO.ToJson(patch, NodeCatalog.BuiltIn));
@@ -1363,11 +1363,11 @@ public class CommandTests
         using var scratch = new Scratch();
 
         var patch = Preset("Plasma");
-        var shown = NodeInstance.Create(NodeCatalog.BuiltIn.Require(NodeCatalog.PictureTypeId), 0, 0);
+        var shown = NodeInstance.Create(NodeCatalog.BuiltIn.Require(SourceModules.PictureTypeId), 0, 0);
 
         PictureExtra.Set(shown, "gone.png");
         patch.Nodes.Add(shown);
-        patch.Connect(shown.Id, 0, patch.Output.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(shown.Id, 0, patch.Output.Id, OutputModule.ColorPort);
 
         var file = scratch.File("shown.fbk");
         File.WriteAllText(file.FullName, PatchIO.ToJson(patch, NodeCatalog.BuiltIn));
@@ -1395,11 +1395,11 @@ public class CommandTests
         WritePicture(picture);
 
         var patch = Preset("Plasma");
-        var shown = NodeInstance.Create(NodeCatalog.BuiltIn.Require(NodeCatalog.PictureTypeId), 0, 0);
+        var shown = NodeInstance.Create(NodeCatalog.BuiltIn.Require(SourceModules.PictureTypeId), 0, 0);
 
         PictureExtra.Set(shown, "moon.png");
         patch.Nodes.Add(shown);
-        patch.Connect(shown.Id, 0, patch.Output.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(shown.Id, 0, patch.Output.Id, OutputModule.ColorPort);
 
         var file = scratch.File("shown.fbk");
         File.WriteAllText(file.FullName, PatchIO.ToJson(patch, NodeCatalog.BuiltIn));

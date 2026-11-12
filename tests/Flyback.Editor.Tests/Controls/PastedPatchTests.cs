@@ -45,8 +45,8 @@ public class PastedPatchTests
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         var tone = builder.Add("osc.sine", 0, 0);
-        var speaker = builder.Add(NodeCatalog.OutputTypeId, 0, 0);
-        var patch = builder.Wire(tone, 0, speaker, NodeCatalog.OutputLeftPort).Patch;
+        var speaker = builder.Add(OutputModule.TypeId, 0, 0);
+        var patch = builder.Wire(tone, 0, speaker, OutputModule.LeftPort).Patch;
 
         var written = PastedPatch.Written(PatchIO.ToJson(patch), "", out var refused);
 

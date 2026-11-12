@@ -36,7 +36,7 @@ internal static class ValueWell
         port < def.Inputs.Count
         && port < node.InputValues.Length
         && SocketDial.HasOwnKnob(patch, node, port, def.Inputs[port])
-        && (NodeCatalog.FormulaOf(node) is not { } formula || FormulaLayout.Reads(formula, port));
+        && (MathModules.FormulaOf(node) is not { } formula || FormulaLayout.Reads(formula, port));
 
     /// <summary>The tint across a row whose well is hovered, turning or typed into, and the ring round one that has the keys.</summary>
     public static void DrawRow(DrawingContext context, Rect bounds, Point center, WellState state)

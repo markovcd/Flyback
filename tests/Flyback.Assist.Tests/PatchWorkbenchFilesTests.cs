@@ -22,7 +22,7 @@ public class PatchWorkbenchFilesTests
         var set = await Write(bench, "let clip1 = sample(\"drums.wav\")");
 
         set.Ok.ShouldBeTrue(set.Text);
-        SampleExtra.Of(bench.Snapshot().Nodes.Single(n => n.TypeId == NodeCatalog.SampleTypeId))
+        SampleExtra.Of(bench.Snapshot().Nodes.Single(n => n.TypeId == SourceModules.SampleTypeId))
             .ShouldBe("drums.wav");
     }
 
@@ -90,13 +90,13 @@ public class PatchWorkbenchFilesTests
         var set = await Write(bench, "let shown1 = picture(\"moon.png\")");
 
         set.Ok.ShouldBeTrue(set.Text);
-        PictureExtra.Of(bench.Snapshot().Nodes.Single(n => n.TypeId == NodeCatalog.PictureTypeId))
+        PictureExtra.Of(bench.Snapshot().Nodes.Single(n => n.TypeId == SourceModules.PictureTypeId))
             .ShouldBe("moon.png");
 
         var wrong = await Write(bench, "let tone1 = sine(\"moon.png\")");
 
         wrong.Ok.ShouldBeFalse();
-        PictureExtra.Of(bench.Snapshot().Nodes.Single(n => n.TypeId == NodeCatalog.PictureTypeId))
+        PictureExtra.Of(bench.Snapshot().Nodes.Single(n => n.TypeId == SourceModules.PictureTypeId))
             .ShouldBe("moon.png");
     }
 

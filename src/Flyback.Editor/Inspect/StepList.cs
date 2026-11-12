@@ -199,7 +199,7 @@ internal sealed class StepList
     /// </summary>
     private Control Inserter(int at)
     {
-        var room = notes.Count < NodeCatalog.MaxSteps;
+        var room = notes.Count < SequencerModules.MaxSteps;
 
         var line = new Border
         {
@@ -220,7 +220,7 @@ internal sealed class StepList
 
         if (!room)
         {
-            ToolTip.SetTip(strip, $"A sequence holds at most {NodeCatalog.MaxSteps} notes.");
+            ToolTip.SetTip(strip, $"A sequence holds at most {SequencerModules.MaxSteps} notes.");
             return strip;
         }
 

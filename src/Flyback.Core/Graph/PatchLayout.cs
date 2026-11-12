@@ -286,7 +286,7 @@ internal static class PatchLayout
             }
         }
 
-        var sink = patch.FirstOf(NodeCatalog.OutputTypeId) is { } output
+        var sink = patch.FirstOf(OutputModule.TypeId) is { } output
             ? of.GetValueOrDefault(output.Id, -1)
             : -1;
 

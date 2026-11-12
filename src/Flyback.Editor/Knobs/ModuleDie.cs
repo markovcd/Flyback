@@ -33,7 +33,7 @@ internal sealed class ModuleDie(
     /// <summary>The inputs of <paramref name="node"/> a roll moves.</summary>
     public static IEnumerable<(int Port, PortSpec Spec)> Rollable(Patch patch, NodeInstance node)
     {
-        if (NodeCatalog.IsSink(node.TypeId) || NodeCatalog.Get(node.TypeId) is not { } def) yield break;
+        if (OutputModule.IsSink(node.TypeId) || NodeCatalog.Get(node.TypeId) is not { } def) yield break;
 
         for (var port = 0; port < def.Inputs.Count && port < node.InputValues.Length; port++)
         {

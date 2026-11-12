@@ -56,7 +56,7 @@ public sealed class SpeechSteps
         var b = new PatchBuilder(Modules);
 
         var mouth = b.Add(Mouth, (def.Inputs.ToList().FindIndex(p => p.Name == "open"), open), (def.Inputs.ToList().FindIndex(p => p.Name == "size"), 1f));
-        b.Wire(mouth, 0, b.Add(NodeCatalog.OutputTypeId), NodeCatalog.OutputColorPort);
+        b.Wire(mouth, 0, b.Add(OutputModule.TypeId), OutputModule.ColorPort);
 
         var buffer = new byte[Width * 4 * Height];
         new SynthRenderer().Render(b.Build().CompileForVideo(Modules).Program, 0f, Width, Height, buffer, Width * 4);
@@ -131,8 +131,8 @@ public sealed class SpeechSteps
         var b = new PatchBuilder(Modules);
         b.Patch.Nodes.Add(speak);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
-        b.Wire(speak, 0, output, NodeCatalog.OutputLeftPort);
+        var output = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
+        b.Wire(speak, 0, output, OutputModule.LeftPort);
 
         // The trigger arrives as x, the one input a step can vary per sample.
         if (trigger is not null) b.Wire(b.Add("coord"), 0, speak, 4);

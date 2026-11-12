@@ -30,7 +30,7 @@ public class PatchIoTests
         var coords = builder.Add("coord", 40, 12);
         var tint = builder.Add("color.hsv", -180.5, 260, (1, 0.25f), (2, 0.75f));
         var gain = builder.Add("color.gain", 90, 300, (1, 1.5f), (2, -0.125f));
-        var screen = builder.Add(NodeCatalog.OutputTypeId, 520, 140);
+        var screen = builder.Add(OutputModule.TypeId, 520, 140);
 
         builder
             .Wire(coords, 0, tint, 0)
@@ -137,10 +137,10 @@ public class PatchIoTests
         var sequencer = builder.Add("seq.values", 0, 0);
 
         StepsExtra.Set(
-            sequencer, [.. Enumerable.Range(0, NodeCatalog.MaxSteps).Select(s => new Step(s / 32f))]);
+            sequencer, [.. Enumerable.Range(0, SequencerModules.MaxSteps).Select(s => new Step(s / 32f))]);
 
         StepsExtra.Of(RoundTrip(builder.Patch).Nodes.Single(n => n.TypeId == "seq.values"))
-            .Count.ShouldBe(NodeCatalog.MaxSteps);
+            .Count.ShouldBe(SequencerModules.MaxSteps);
     }
 
     /// <summary>
@@ -170,7 +170,7 @@ public class PatchIoTests
     public void What_a_module_carries_is_written_under_its_key()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        builder.Add(NodeCatalog.QuantiserTypeId, 0, 0);
+        builder.Add(PitchModules.QuantiserTypeId, 0, 0);
 
         var json = PatchIO.ToJson(builder.Patch, NodeCatalog.BuiltIn);
 
@@ -187,11 +187,11 @@ public class PatchIoTests
     public void A_quantisers_scale_survives_the_trip()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        var quantiser = builder.Add(NodeCatalog.QuantiserTypeId, 0, 0);
+        var quantiser = builder.Add(PitchModules.QuantiserTypeId, 0, 0);
 
         ScaleExtra.Set(quantiser, [0, 3, 5, 7, 10]);
 
-        var after = RoundTrip(builder.Patch).Nodes.Single(n => n.TypeId == NodeCatalog.QuantiserTypeId);
+        var after = RoundTrip(builder.Patch).Nodes.Single(n => n.TypeId == PitchModules.QuantiserTypeId);
 
         ScaleExtra.Of(after).ShouldBe(ScaleExtra.Of(quantiser));
     }
@@ -205,13 +205,13 @@ public class PatchIoTests
     public void An_empty_scale_comes_back_empty_rather_than_as_the_default()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        var quantiser = builder.Add(NodeCatalog.QuantiserTypeId, 0, 0);
+        var quantiser = builder.Add(PitchModules.QuantiserTypeId, 0, 0);
 
         ScaleExtra.Of(quantiser).Count.ShouldBeGreaterThan(0);
         ScaleExtra.Set(quantiser, []);
 
         ScaleExtra.Of(RoundTrip(builder.Patch).Nodes
-            .Single(n => n.TypeId == NodeCatalog.QuantiserTypeId)).ShouldBeEmpty();
+            .Single(n => n.TypeId == PitchModules.QuantiserTypeId)).ShouldBeEmpty();
     }
 
     /// <summary>
@@ -224,7 +224,7 @@ public class PatchIoTests
     {
         var after = RoundTrip(new Patch());
 
-        after.Nodes.ShouldHaveSingleItem().TypeId.ShouldBe(NodeCatalog.OutputTypeId);
+        after.Nodes.ShouldHaveSingleItem().TypeId.ShouldBe(OutputModule.TypeId);
         after.Connections.ShouldBeEmpty();
     }
 

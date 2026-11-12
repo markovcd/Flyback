@@ -51,8 +51,8 @@ public class BlurTests
     public void At_nought_it_is_the_wire_it_says_it_is()
     {
         var straight = new PatchBuilder(NodeCatalog.BuiltIn);
-        var sink = straight.Add(NodeCatalog.OutputTypeId);
-        straight.Wire(Edge(straight), 0, sink, NodeCatalog.OutputColorPort);
+        var sink = straight.Add(OutputModule.TypeId);
+        straight.Wire(Edge(straight), 0, sink, OutputModule.ColorPort);
 
         Rendered(Blurred(0.02f, 0f), 8).ShouldBe(Rendered(straight.Patch, 8));
     }
@@ -86,9 +86,9 @@ public class BlurTests
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var white = b.Add("color.rgb");
         var blur = b.Add(Blur, (Radius, 0.05f), (Amount, 0.9f));
-        var sink = b.Add(NodeCatalog.OutputTypeId);
+        var sink = b.Add(OutputModule.TypeId);
 
-        b.Wire(white, 0, blur, In).Wire(blur, Color, sink, NodeCatalog.OutputColorPort);
+        b.Wire(white, 0, blur, In).Wire(blur, Color, sink, OutputModule.ColorPort);
 
         Darkest(Rendered(b.Patch, 60)).ShouldBeGreaterThan(250);
     }
@@ -99,9 +99,9 @@ public class BlurTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var blur = b.Add(Blur);
-        var sink = b.Add(NodeCatalog.OutputTypeId);
+        var sink = b.Add(OutputModule.TypeId);
 
-        b.Wire(Edge(b), 0, blur, In).Wire(blur, Soft, sink, NodeCatalog.OutputColorPort);
+        b.Wire(Edge(b), 0, blur, In).Wire(blur, Soft, sink, OutputModule.ColorPort);
 
         // Nothing but the average reaches the screen, so there is never a frame
         // for it to be the average of.
@@ -113,10 +113,10 @@ public class BlurTests
     /// <summary>A hard vertical edge: white right of the middle, black left of it.</summary>
     private static NodeInstance Edge(PatchBuilder b)
     {
-        var where = b.Add(NodeCatalog.CoordTypeId);
+        var where = b.Add(SourceModules.CoordTypeId);
         var edge = b.Add("math.step", (0, 0f));
 
-        b.Wire(where, NodeCatalog.CoordXPort, edge, 1);
+        b.Wire(where, SourceModules.CoordXPort, edge, 1);
 
         return edge;
     }
@@ -125,9 +125,9 @@ public class BlurTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var blur = b.Add(Blur, (Radius, radius), (Amount, amount));
-        var sink = b.Add(NodeCatalog.OutputTypeId);
+        var sink = b.Add(OutputModule.TypeId);
 
-        b.Wire(Edge(b), 0, blur, In).Wire(blur, Color, sink, NodeCatalog.OutputColorPort);
+        b.Wire(Edge(b), 0, blur, In).Wire(blur, Color, sink, OutputModule.ColorPort);
 
         return b.Patch;
     }

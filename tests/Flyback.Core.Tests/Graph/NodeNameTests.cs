@@ -103,8 +103,8 @@ public class NodeNameTests
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
         var sine = b.Add("osc.sine", 40, 20);
-        var screen = b.Add(NodeCatalog.OutputTypeId, 400, 20);
-        b.Wire(sine, 0, screen, NodeCatalog.OutputColorPort);
+        var screen = b.Add(OutputModule.TypeId, 400, 20);
+        b.Wire(sine, 0, screen, OutputModule.ColorPort);
 
         sine.Rename(Sine, "Wobble");
 
@@ -124,7 +124,7 @@ public class NodeNameTests
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
         b.Add("osc.sine", 40, 20);
-        b.Add(NodeCatalog.OutputTypeId, 400, 20);
+        b.Add(OutputModule.TypeId, 400, 20);
 
         using var document = JsonDocument.Parse(PatchIO.ToJson(b.Patch, NodeCatalog.BuiltIn));
 
@@ -138,7 +138,7 @@ public class NodeNameTests
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
         var sine = b.Add("osc.sine", 40, 20);
-        b.Add(NodeCatalog.OutputTypeId, 400, 20);
+        b.Add(OutputModule.TypeId, 400, 20);
         sine.Rename(Sine, "Wobble");
 
         var fragment = PatchClipboard.Copy(b.Patch, [sine.Id]);

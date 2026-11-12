@@ -52,7 +52,7 @@ public static class MovieRenderer
             settings.FramesPerSecond,
             settings.Quality,
             audio is null ? 0 : GlobalConstants.SampleRate,
-            audio is null ? 0 : NodeCatalog.AudioChannels,
+            audio is null ? 0 : OutputModule.AudioChannels,
             settings.Ffmpeg));
 
         return Render(clip, video, audio, settings, frames, progress, loudness, cancellation);
@@ -95,7 +95,7 @@ public static class MovieRenderer
             settings.FramesPerSecond,
             settings.Quality,
             audio is null ? 0 : GlobalConstants.SampleRate,
-            audio is null ? 0 : NodeCatalog.AudioChannels));
+            audio is null ? 0 : OutputModule.AudioChannels));
 
         return Render(clip, video, audio, settings, new SynthRenderer(), progress, null, cancellation);
     }
@@ -171,7 +171,7 @@ public static class MovieRenderer
 
                 if (count > 0)
                 {
-                    sounded = count * NodeCatalog.AudioChannels;
+                    sounded = count * OutputModule.AudioChannels;
                     if (samples.Length < sounded) samples = new float[sounded];
 
                     speaker.Render(audio, samples.AsSpan(0, sounded));

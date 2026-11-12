@@ -24,9 +24,9 @@ public class SocketKnobTests : EditorTest
 
         var clock = builder.Add("time", 0, 0);
         osc = builder.Add("osc.sine", 300, 0);
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 700, 0);
+        var sink = builder.Add(OutputModule.TypeId, 700, 0);
 
-        builder.Wire(clock, 0, osc, 0).Wire(osc, 0, sink, NodeCatalog.OutputLeftPort);
+        builder.Wire(clock, 0, osc, 0).Wire(osc, 0, sink, OutputModule.LeftPort);
 
         return builder.Patch;
     }

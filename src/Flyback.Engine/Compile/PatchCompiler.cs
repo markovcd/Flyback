@@ -18,7 +18,7 @@ public static class PatchCompiler
         ISampleLibrary? samples = null,
         IImageLibrary? pictures = null,
         bool played = false) =>
-        Compile(patch, NodeCatalog.Screen, modules, samples: samples, pictures: pictures, played: played);
+        Compile(patch, OutputModule.Screen, modules, samples: samples, pictures: pictures, played: played);
 
     /// <summary>Compiles the program the speakers play, reading the Output's left and right.</summary>
     public static CompileResult CompileForAudio(
@@ -27,7 +27,7 @@ public static class PatchCompiler
         ISampleLibrary? samples = null,
         IImageLibrary? pictures = null,
         bool played = false) =>
-        Compile(patch, NodeCatalog.Speakers, modules, samples: samples, pictures: pictures, played: played);
+        Compile(patch, OutputModule.Speakers, modules, samples: samples, pictures: pictures, played: played);
 
     /// <summary>
     /// Compiles the program a Probe shows, rooted at the probe rather than at the
@@ -51,7 +51,7 @@ public static class PatchCompiler
         ISampleLibrary? samples = null,
         IImageLibrary? pictures = null,
         bool played = false) =>
-        Compile(patch, NodeCatalog.Screen, modules, probe, samples, pictures, played);
+        Compile(patch, OutputModule.Screen, modules, probe, samples, pictures, played);
 
     /// <summary>
     /// Compiles one program rooted at every output of <paramref name="measured"/>,
@@ -76,7 +76,7 @@ public static class PatchCompiler
 
         var compiled = Compile(
             patch,
-            sound ? NodeCatalog.Speakers : NodeCatalog.Screen,
+            sound ? OutputModule.Speakers : OutputModule.Screen,
             modules,
             samples: samples,
             pictures: pictures,
@@ -88,7 +88,7 @@ public static class PatchCompiler
     /// <summary>Lowers <paramref name="patch"/> as <see cref="PatchWalk"/> describes.</summary>
     private static CompileResult Compile(
         Patch patch,
-        NodeCatalog.SinkKind sink,
+        OutputModule.SinkKind sink,
         ModuleCatalog? modules,
         Guid? probe = null,
         ISampleLibrary? samples = null,

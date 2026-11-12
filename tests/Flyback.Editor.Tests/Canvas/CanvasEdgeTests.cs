@@ -21,7 +21,7 @@ namespace Flyback.Editor.Tests.Canvas;
 /// Read off the rendered frame, because none of this is a property to ask — the
 /// grid, the ground and the edge are three draw calls and what they add up to is
 /// only visible in the pixels. Skia is under the headless platform for these,
-/// the same as the tests of draw order in <see cref="NodeEditorTests"/>.
+/// the same as the tests of draw order in <see cref="NodeEditorDragTests"/>.
 /// </remarks>
 public class CanvasEdgeTests : EditorTest
 {
@@ -39,7 +39,7 @@ public class CanvasEdgeTests : EditorTest
     private (NodeEditor Editor, Window Window) AtTheRightEdge()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        builder.Add(NodeCatalog.OutputTypeId, Edge - 4000, 0);
+        builder.Add(OutputModule.TypeId, Edge - 4000, 0);
 
         var editor = NewCanvas(Wide, Tall);
         var window = Show(editor, Wide);
@@ -166,7 +166,7 @@ public class CanvasEdgeTests : EditorTest
     public void In_the_middle_the_canvas_fills_the_view()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        builder.Add(NodeCatalog.OutputTypeId, 0, 0);
+        builder.Add(OutputModule.TypeId, 0, 0);
 
         var editor = NewCanvas(Wide, Tall);
         var window = Show(editor, Wide);

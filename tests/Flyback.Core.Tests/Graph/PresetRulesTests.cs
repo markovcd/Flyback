@@ -84,7 +84,7 @@ public class PresetRulesTests
         var preset = Preset(name);
 
         var waits = preset.Build(NodeCatalog.BuiltIn).Nodes
-            .Any(n => n.TypeId is NodeCatalog.SampleTypeId or NodeCatalog.PictureTypeId);
+            .Any(n => n.TypeId is SourceModules.SampleTypeId or SourceModules.PictureTypeId);
 
         if (waits)
             preset.Kind.ShouldBe(PresetKind.Blank, $"'{name}' plays a file and ships none");
@@ -144,10 +144,10 @@ public class PresetRulesTests
             wire.TargetNode == Sink(patch).Id && ports.Contains(wire.TargetPort));
 
     private static NodeInstance Sink(Patch patch) =>
-        patch.Nodes.Single(n => NodeCatalog.IsSink(n.TypeId));
+        patch.Nodes.Single(n => OutputModule.IsSink(n.TypeId));
 
-    private static bool Draws(Patch patch) => Driven(patch, NodeCatalog.OutputColorPort);
+    private static bool Draws(Patch patch) => Driven(patch, OutputModule.ColorPort);
 
     private static bool Sounds(Patch patch) =>
-        Driven(patch, NodeCatalog.OutputLeftPort, NodeCatalog.OutputRightPort);
+        Driven(patch, OutputModule.LeftPort, OutputModule.RightPort);
 }

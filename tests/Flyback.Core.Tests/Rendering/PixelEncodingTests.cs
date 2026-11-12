@@ -19,7 +19,7 @@ public class PixelEncodingTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        b.Wire(b.Add("value", (0, level)), 0, b.Add(NodeCatalog.OutputTypeId), NodeCatalog.OutputColorPort);
+        b.Wire(b.Add("value", (0, level)), 0, b.Add(OutputModule.TypeId), OutputModule.ColorPort);
 
         const int width = 4, height = 4, stride = width * 4;
         var pixels = new byte[stride * height];

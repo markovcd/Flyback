@@ -15,7 +15,7 @@ public class PatchWorkbenchOutputTests
         var patch = (await Lit()).Snapshot();
 
         var knob = patch.Nodes.Single(n => n.TypeId == "value");
-        var screen = patch.Nodes.Single(n => n.TypeId == NodeCatalog.OutputTypeId);
+        var screen = patch.Nodes.Single(n => n.TypeId == OutputModule.TypeId);
 
         screen.X.ShouldBeGreaterThan(knob.X);
     }

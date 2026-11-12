@@ -83,7 +83,7 @@ internal sealed class RemapMarks(CanvasHistory history, CanvasSelection selectio
     /// <summary>Puts an Auto remap into <paramref name="wire"/>, centered on its mark and selected, as one edit.</summary>
     public NodeInstance Splice(Connection wire, Point at)
     {
-        var def = NodeCatalog.Require(NodeCatalog.AutoRemapTypeId);
+        var def = NodeCatalog.Require(MathModules.AutoRemapTypeId);
         var node = NodeInstance.Create(def, at.X - NodeGeometry.Width / 2, at.Y - geometry.Height(def) / 2);
 
         Patch.Nodes.Add(node);

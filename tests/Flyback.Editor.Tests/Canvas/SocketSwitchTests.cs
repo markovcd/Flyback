@@ -29,7 +29,7 @@ public class SocketSwitchTests : EditorTest
     private (NodeEditor Editor, Window Window, NodeInstance Sine) Board(double width = 1200, double height = 800)
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        var sine = builder.Add(NodeCatalog.SineTypeId, 300, 200);
+        var sine = builder.Add(OscillatorModules.SineTypeId, 300, 200);
         var (editor, window) = Editing(builder.Patch, width, height, services => services.AddSingleton<IPointerAnchors>(new Free()));
 
         return (editor, window, sine);
@@ -247,7 +247,7 @@ public class SocketSwitchTests : EditorTest
     public void A_finger_held_on_a_module_with_no_values_mutes_nothing()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        var clock = builder.Add(NodeCatalog.TimeTypeId, 300, 200);
+        var clock = builder.Add(SourceModules.TimeTypeId, 300, 200);
         var (editor, _) = Editing(builder.Patch);
         var at = editor.GraphToScreen.Transform(Body(clock));
         var finger = Finger();

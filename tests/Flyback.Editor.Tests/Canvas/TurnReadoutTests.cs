@@ -23,7 +23,7 @@ public class TurnReadoutTests : EditorTest
     private (NodeEditor Editor, Window Window, NodeInstance Sine, int Port) Turning(double y)
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        var sine = builder.Add(NodeCatalog.SineTypeId, 300, y);
+        var sine = builder.Add(OscillatorModules.SineTypeId, 300, y);
         var def = NodeCatalog.Get(sine.TypeId)!;
         var port = Enumerable.Range(0, def.Inputs.Count).First(i => ValueWell.Has(builder.Patch, sine, def, i));
 
@@ -114,7 +114,7 @@ public class TurnReadoutTests : EditorTest
     [AvaloniaFact]
     public void Every_hint_is_written_in_characters_every_font_has()
     {
-        var spec = NodeCatalog.Get(NodeCatalog.SineTypeId)!.Inputs[1];
+        var spec = NodeCatalog.Get(OscillatorModules.SineTypeId)!.Inputs[1];
         var turns = new[] { WellState.Turn, WellState.Focus }
             .SelectMany(state => new[] { true, false }.SelectMany(finger => new[] { null, "1" }
                 .Select(typed => new TurnReadout.Turn("freq", "Sine", spec, 1, 1, 0, 2, state, typed, finger))));

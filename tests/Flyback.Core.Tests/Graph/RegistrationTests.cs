@@ -13,21 +13,29 @@ public class RegistrationTests
 {
     private const BindingFlags Statics = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
 
-    public static TheoryData<string> ModuleMethods => [.. Methods(typeof(NodeCatalog), DefinesModules)];
+    public static TheoryData<string> ModuleMethods =>
+    [
+        .. typeof(NodeCatalog).Assembly.GetTypes()
+            .Where(type => type.Namespace == typeof(NodeCatalog).Namespace)
+            .SelectMany(type => Methods(type, DefinesModules).Select(method => $"{type.Name}.{method}")),
+    ];
 
     public static TheoryData<string> PresetBuilders => [.. Methods(typeof(Presets), BuildsAPatch)];
 
     /// <summary>
-    /// Every parameterless method on <see cref="NodeCatalog"/> that makes a module
+    /// Every parameterless method in the catalog's namespace that makes a module
     /// or a group of them has each of its modules in <see cref="NodeCatalog.BuiltIn"/>.
     /// </summary>
     [Theory]
     [MemberData(nameof(ModuleMethods))]
     public void Every_module_the_catalog_defines_is_in_it(string method)
     {
+        var (typeName, methodName) = (method[..method.IndexOf('.')], method[(method.IndexOf('.') + 1)..]);
+        var type = typeof(NodeCatalog).Assembly.GetTypes()
+            .Single(t => t.Namespace == typeof(NodeCatalog).Namespace && t.Name == typeName);
         var listed = NodeCatalog.BuiltIn.All.Select(d => d.TypeId).ToHashSet();
 
-        var made = typeof(NodeCatalog).GetMethod(method, Statics, Type.EmptyTypes)!.Invoke(null, null) switch
+        var made = type.GetMethod(methodName, Statics, Type.EmptyTypes)!.Invoke(null, null) switch
         {
             NodeDef one => [one],
             IEnumerable<NodeDef> many => many,
@@ -35,7 +43,7 @@ public class RegistrationTests
         };
 
         made.Select(d => d.TypeId).Where(id => !listed.Contains(id)).ShouldBeEmpty(
-            $"NodeCatalog.{method}() makes modules the static constructor never adds");
+            $"{method}() makes modules the static constructor never adds");
     }
 
     /// <summary>Every <c>Patch X(ModuleCatalog)</c> on <see cref="Presets"/> is the build of a shipped preset.</summary>

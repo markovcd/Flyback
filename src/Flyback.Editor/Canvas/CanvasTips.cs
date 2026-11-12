@@ -113,7 +113,7 @@ internal sealed class CanvasTips(
             // matters here, not the ink it would be drawn in.
             if (FormulaLayout.FormulaBlock(Patch, node, def, bounds, geometry.Compact, static _ => CanvasText.ValueBrush) is { Cut: true, Area: var area }
                 && area.Contains(graph)
-                && NodeCatalog.FormulaOf(node) is { } formula)
+                && MathModules.FormulaOf(node) is { } formula)
             {
                 return ((node.Id, "formula"), formula);
             }

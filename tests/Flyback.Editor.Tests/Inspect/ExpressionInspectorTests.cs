@@ -28,13 +28,13 @@ public class ExpressionInspectorTests : EditorTest
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var coord = b.Add(NodeCatalog.CoordTypeId, 40, 40);
-        var formula = b.Add(NodeCatalog.ExpressionTypeId, 360, 40);
+        var coord = b.Add(SourceModules.CoordTypeId, 40, 40);
+        var formula = b.Add(MathModules.ExpressionTypeId, 360, 40);
 
         if (written is not null) formula.SetState("expression", new JsonObject { ["formula"] = written });
 
-        var screen = b.Add(NodeCatalog.OutputTypeId, 700, 40);
-        b.Wire(coord, 0, formula, 0).Wire(formula, 0, screen, NodeCatalog.OutputColorPort);
+        var screen = b.Add(OutputModule.TypeId, 700, 40);
+        b.Wire(coord, 0, formula, 0).Wire(formula, 0, screen, OutputModule.ColorPort);
 
         var window = NewMainWindow();
 

@@ -102,7 +102,7 @@ internal static class CompareCommand
             return Exit.Problems;
 
         var frames = (int)Math.Round(options.Seconds * options.Fps);
-        var channels = NodeCatalog.AudioChannels;
+        var channels = OutputModule.AudioChannels;
 
         Parting? sound = null;
         Parting? picture = null;
@@ -210,7 +210,7 @@ internal static class CompareCommand
             if (double.IsNaN(most)) most = double.PositiveInfinity;
 
             var sample = offset + i;
-            var frame = sample / NodeCatalog.AudioChannels;
+            var frame = sample / OutputModule.AudioChannels;
             parting = parting is null
                 ? new Parting((double)frame / rate, most, 1, Channel: Channel(sample))
                 : parting with { Most = Math.Max(parting.Most, most), Count = parting.Count + 1 };
@@ -219,7 +219,7 @@ internal static class CompareCommand
         return parting;
 
         static string Channel(long sample) =>
-            (sample % NodeCatalog.AudioChannels, NodeCatalog.AudioChannels) switch
+            (sample % OutputModule.AudioChannels, OutputModule.AudioChannels) switch
             {
                 (0, 2) => "left",
                 (1, 2) => "right",

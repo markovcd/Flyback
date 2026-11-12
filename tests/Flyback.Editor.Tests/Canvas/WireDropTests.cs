@@ -204,7 +204,7 @@ public class WireDropTests : EditorTest
         DragFrom(window, NodeGeometry.OutputPort(time, 0), Bare(window));
         Pick(window, "Probe");
 
-        var added = editor.History.Patch.Nodes.Last(n => n.TypeId == NodeCatalog.ProbeTypeId);
+        var added = editor.History.Patch.Nodes.Last(n => n.TypeId == ChartModules.ProbeTypeId);
 
         editor.History.Patch.IncomingTo(added.Id, 0).ShouldNotBeNull("'in' is the swept port");
         editor.History.Patch.IncomingTo(added.Id, 1).ShouldBeNull("'window' is the timebase");
@@ -246,18 +246,18 @@ public class WireDropTests : EditorTest
         var window = Open();
         var editor = Editor(window);
         var sink = editor.History.Patch.Output;
-        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.OutputTypeId);
+        var def = NodeCatalog.BuiltIn.Require(OutputModule.TypeId);
 
         // Dragged backwards, out of the Output's color socket.
         DragFrom(
             window,
-            Geometry.InputPort(sink, def, NodeCatalog.OutputColorPort),
+            Geometry.InputPort(sink, def, OutputModule.ColorPort),
             Bare(window));
 
         Pick(window, "Scan");
 
-        var added = editor.History.Patch.Nodes.Last(n => n.TypeId == NodeCatalog.ScanTypeId);
-        var wire = editor.History.Patch.IncomingTo(sink.Id, NodeCatalog.OutputColorPort).ShouldNotBeNull();
+        var added = editor.History.Patch.Nodes.Last(n => n.TypeId == ScanModule.TypeId);
+        var wire = editor.History.Patch.IncomingTo(sink.Id, OutputModule.ColorPort).ShouldNotBeNull();
 
         wire.SourceNode.ShouldBe(added.Id);
         wire.SourcePort.ShouldBe(1, "'view' is the color one; 'out' is a scalar");

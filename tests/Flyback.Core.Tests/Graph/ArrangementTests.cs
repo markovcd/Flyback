@@ -27,7 +27,7 @@ public class ArrangementTests
         float rate = 1f,
         float loop = 1f)
     {
-        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId);
+        var def = NodeCatalog.BuiltIn.Require(SequencerModules.ArrangementTypeId);
         var emitter = new Emitter();
 
         Slot[] inputs = Inputs(emitter, emitter.Load(OpCode.LoadX), rate, fade, before, loop);
@@ -133,13 +133,13 @@ public class ArrangementTests
         var tidy = ArrangementExtra.Tidy(many);
 
         tidy.Count.ShouldBe(NodeCatalog.MaxParts);
-        tidy.ShouldAllBe(part => part.Count == NodeCatalog.MaxSections);
+        tidy.ShouldAllBe(part => part.Count == SequencerModules.MaxSections);
     }
 
     [Fact]
     public void A_fresh_one_carries_parts_that_come_in_one_after_another()
     {
-        var node = NodeInstance.Create(NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId), 0, 0);
+        var node = NodeInstance.Create(NodeCatalog.BuiltIn.Require(SequencerModules.ArrangementTypeId), 0, 0);
 
         var parts = ArrangementExtra.Of(node);
 
@@ -151,7 +151,7 @@ public class ArrangementTests
     [Fact]
     public void A_part_that_never_changes_costs_only_its_level()
     {
-        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId);
+        var def = NodeCatalog.BuiltIn.Require(SequencerModules.ArrangementTypeId);
 
         int Ops(PartLevel[][] parts)
         {
@@ -206,7 +206,7 @@ public class ArrangementTests
     [Fact]
     public void A_chained_one_picks_up_where_the_one_before_ends()
     {
-        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId);
+        var def = NodeCatalog.BuiltIn.Require(SequencerModules.ArrangementTypeId);
         var emitter = new Emitter();
         PartLevel[][] second = [[new(0.25f), new(0.25f), new(0.75f), new(0.75f)]];
 

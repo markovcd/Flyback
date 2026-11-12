@@ -14,8 +14,8 @@ public sealed class CanvasReportTests : EditorTest
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         var first = builder.Add("osc.sine", 300, 0);
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 900, 0);
-        builder.Wire(first, 0, sink, NodeCatalog.OutputLeftPort);
+        var sink = builder.Add(OutputModule.TypeId, 900, 0);
+        builder.Wire(first, 0, sink, OutputModule.LeftPort);
 
         var window = Open(builder.Patch);
         var editor = Editor(window);

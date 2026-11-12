@@ -44,7 +44,7 @@ internal static class FormulaLayout
     internal static (FormattedText Text, Point At, Rect Area, bool Cut)? FormulaBlock(
         Patch patch, NodeInstance node, NodeDef def, Rect bounds, bool compact, Func<double, IBrush> ink)
     {
-        if (NodeCatalog.FormulaOf(node) is not { } formula || string.IsNullOrWhiteSpace(formula)) return null;
+        if (MathModules.FormulaOf(node) is not { } formula || string.IsNullOrWhiteSpace(formula)) return null;
 
         var reserve = Reserve(patch, node, def, bounds, formula, compact);
 

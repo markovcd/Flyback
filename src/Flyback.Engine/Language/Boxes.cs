@@ -90,7 +90,7 @@ internal sealed class Boxes(Patch patch, Issues issues, SourceSites sites)
 
         foreach (var (name, id, members, _) in calls)
         {
-            var left = members.Where(member => !blocked.Contains(member) && patch.Find(member) is { } node && !NodeCatalog.IsSink(node.TypeId)).ToList();
+            var left = members.Where(member => !blocked.Contains(member) && patch.Find(member) is { } node && !OutputModule.IsSink(node.TypeId)).ToList();
 
             if (left.Count < 2 || patch.Group(left) is not { } made) continue;
 

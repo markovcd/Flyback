@@ -419,7 +419,7 @@ internal static class RenderCommand
         // Measured as it is written, so a loudness report costs no second pass
         // over a sound that may be an hour long.
         var loudness = options.Loudness && audio is not null
-            ? new LoudnessMeter(GlobalConstants.SampleRate, NodeCatalog.AudioChannels)
+            ? new LoudnessMeter(GlobalConstants.SampleRate, OutputModule.AudioChannels)
             : null;
 
         int code;
@@ -574,10 +574,10 @@ internal static class RenderCommand
     {
         // A second at a time, so a start an hour in does not hold the hour.
         var left = (long)Math.Round(seconds * speaker.SampleRate);
-        var chunk = new float[speaker.SampleRate * NodeCatalog.AudioChannels];
+        var chunk = new float[speaker.SampleRate * OutputModule.AudioChannels];
 
         for (; left > 0; left -= speaker.SampleRate)
-            speaker.Render(program, chunk.AsSpan(0, (int)Math.Min(left, speaker.SampleRate) * NodeCatalog.AudioChannels));
+            speaker.Render(program, chunk.AsSpan(0, (int)Math.Min(left, speaker.SampleRate) * OutputModule.AudioChannels));
     }
 
     private static void Sound(
@@ -590,7 +590,7 @@ internal static class RenderCommand
         Play(renderer, program, options.From);
 
         var frames = (int)Math.Round(renderer.SampleRate * options.Seconds);
-        var samples = new float[frames * NodeCatalog.AudioChannels];
+        var samples = new float[frames * OutputModule.AudioChannels];
 
         renderer.Render(program, samples);
         loudness?.Add(samples);
@@ -602,7 +602,7 @@ internal static class RenderCommand
             options.Out.FullName,
             format,
             SampleRate: renderer.SampleRate,
-            Channels: NodeCatalog.AudioChannels,
+            Channels: OutputModule.AudioChannels,
             Ffmpeg: ffmpeg));
 
         clip.WriteAudio(samples);

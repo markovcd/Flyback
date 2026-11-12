@@ -117,7 +117,7 @@ internal static class ModuleFace
     /// </summary>
     internal static string Heading(NodeInstance node, NodeDef def)
     {
-        if (NodeCatalog.BusOf(node) is not { } bus) return node.Title(def);
+        if (BusModules.BusOf(node) is not { } bus) return node.Title(def);
 
         var title = string.Equals(node.Title(def), bus, StringComparison.OrdinalIgnoreCase) ? def.Name : node.Title(def);
 
@@ -132,7 +132,7 @@ internal static class ModuleFace
     {
         if (node.Name is not { } name || string.Equals(name, def.Name, StringComparison.OrdinalIgnoreCase)) return null;
 
-        return NodeCatalog.BusOf(node) is { } bus && string.Equals(name, bus, StringComparison.OrdinalIgnoreCase) ? null : def.Name;
+        return BusModules.BusOf(node) is { } bus && string.Equals(name, bus, StringComparison.OrdinalIgnoreCase) ? null : def.Name;
     }
 
     /// <summary>What the inspector says a module is: its family, after its type where a rename hides that.</summary>

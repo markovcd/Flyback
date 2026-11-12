@@ -138,9 +138,9 @@ public class PickerTests : EditorTest
     public void A_letter_at_a_focused_list_still_plays()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var output = b.Add(NodeCatalog.OutputTypeId, 700, 40);
-        var midi = b.Add(NodeCatalog.MidiTypeId, 200, 40);
-        b.Wire(midi, 0, output, NodeCatalog.OutputColorPort);
+        var output = b.Add(OutputModule.TypeId, 700, 40);
+        var midi = b.Add(MidiModules.MidiTypeId, 200, 40);
+        b.Wire(midi, 0, output, OutputModule.ColorPort);
 
         var window = Open();
 
@@ -176,9 +176,9 @@ public class PickerTests : EditorTest
     public void The_other_lists_in_the_window_are_pickers_as_well()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var output = b.Add(NodeCatalog.OutputTypeId, 700, 40);
-        var midi = b.Add(NodeCatalog.MidiTypeId, 200, 40);
-        b.Wire(midi, 0, output, NodeCatalog.OutputColorPort);
+        var output = b.Add(OutputModule.TypeId, 700, 40);
+        var midi = b.Add(MidiModules.MidiTypeId, 200, 40);
+        b.Wire(midi, 0, output, OutputModule.ColorPort);
 
         var window = Open();
 

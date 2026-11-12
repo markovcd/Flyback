@@ -38,7 +38,7 @@ internal static class Figures
         int from,
         int into,
         int? triggerPort = 0,
-        int triggerFrom = NodeCatalog.CoordXPort,
+        int triggerFrom = SourceModules.CoordXPort,
         params (int Port, float Value)[] knobs)
     {
         var patch = new Patch();
@@ -46,8 +46,8 @@ internal static class Figures
         var module = NodeInstance.Create(Catalog.Require(typeId), 0, 0);
         foreach (var (port, value) in knobs) module.InputValues[port] = value;
 
-        var sink = NodeInstance.Create(Catalog.Require(NodeCatalog.OutputTypeId), 0, 0);
-        sink.InputValues[NodeCatalog.OutputVolumePort] = 1f;
+        var sink = NodeInstance.Create(Catalog.Require(OutputModule.TypeId), 0, 0);
+        sink.InputValues[OutputModule.VolumePort] = 1f;
 
         patch.Nodes.Add(module);
         patch.Nodes.Add(sink);

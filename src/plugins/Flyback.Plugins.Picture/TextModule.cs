@@ -118,7 +118,7 @@ internal static class TextModule
         public override IReadOnlyList<ExtraField> Fields =>
         [
             new ExtraField.Text(LinesKey, "lines", Greeting, Multiline: true) { Help = "The text, a line to a row. 'line' picks which one shows." },
-            new ExtraField.Choice(FontKey, "font", Fonts, BitmapFont.Pixel.Id) { Help = "Pixel, or Tiny: blockier, and one case." },
+            new ExtraField.Choice(FontKey, "font", Fonts, PixelFont.Font.Id) { Help = "Pixel, or Tiny: blockier, and one case." },
         ];
 
         private static IReadOnlyList<ChoiceOption> Fonts { get; } =
@@ -134,7 +134,7 @@ internal static class TextModule
             // so, and still names its own font when it is saved again.
             if (BitmapFont.Find(chosen) is not { } font)
             {
-                font = BitmapFont.Pixel;
+                font = PixelFont.Font;
 
                 env.Report(new CompileIssue(
                     node.Id,

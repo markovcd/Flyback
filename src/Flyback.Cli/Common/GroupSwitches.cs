@@ -21,11 +21,11 @@ internal static class GroupSwitches
         {
             var keep = Kept(patch, soloed);
 
-            foreach (var node in patch.Nodes.Where(n => !keep.Contains(n.Id) && !NodeCatalog.IsSink(n.TypeId)))
+            foreach (var node in patch.Nodes.Where(n => !keep.Contains(n.Id) && !OutputModule.IsSink(n.TypeId)))
                 node.Off = true;
         }
 
-        foreach (var node in patch.Nodes.Where(n => muted.Contains(n.Id) && !NodeCatalog.IsSink(n.TypeId)))
+        foreach (var node in patch.Nodes.Where(n => muted.Contains(n.Id) && !OutputModule.IsSink(n.TypeId)))
             node.Off = true;
 
         return true;
@@ -63,16 +63,16 @@ internal static class GroupSwitches
         var feeds = patch.Connections.Select(c => (From: c.SourceNode, To: c.TargetNode)).ToList();
 
         // A Send is heard wherever a Receive on its bus is.
-        foreach (var send in patch.Nodes.Where(n => n.TypeId == NodeCatalog.SendTypeId))
+        foreach (var send in patch.Nodes.Where(n => n.TypeId == BusModules.SendTypeId))
         {
-            foreach (var receive in patch.Nodes.Where(n => n.TypeId == NodeCatalog.ReceiveTypeId
-                && string.Equals(NodeCatalog.BusOf(n), NodeCatalog.BusOf(send), StringComparison.OrdinalIgnoreCase)))
+            foreach (var receive in patch.Nodes.Where(n => n.TypeId == BusModules.ReceiveTypeId
+                && string.Equals(BusModules.BusOf(n), BusModules.BusOf(send), StringComparison.OrdinalIgnoreCase)))
                 feeds.Add((send.Id, receive.Id));
         }
 
         var upstream = Reach(members, feeds.Select(f => (f.To, f.From)));
         var downstream = Reach(members, feeds);
-        var sinks = patch.Nodes.Where(n => NodeCatalog.IsSink(n.TypeId)).Select(n => n.Id);
+        var sinks = patch.Nodes.Where(n => OutputModule.IsSink(n.TypeId)).Select(n => n.Id);
         var toOutput = Reach(sinks, feeds.Select(f => (f.To, f.From)));
 
         downstream.IntersectWith(toOutput);

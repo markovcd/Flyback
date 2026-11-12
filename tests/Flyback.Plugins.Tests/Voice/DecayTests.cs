@@ -108,7 +108,7 @@ public class DecayTests
     [Fact]
     public void On_the_picture_it_passes_the_trigger_through()
     {
-        var program = Wired(NodeCatalog.OutputColorPort).CompileForVideo(Catalog).Program;
+        var program = Wired(OutputModule.ColorPort).CompileForVideo(Catalog).Program;
         var registers = program.AllocateRegisters();
 
         foreach (var x in new[] { 0f, 0.25f, 1f })
@@ -121,9 +121,9 @@ public class DecayTests
     // --- harness -----------------------------------------------------------------
 
     private static float[] Through(float[] trigger, params (int Port, float Value)[] knobs) =>
-        Interpreted.Heard(Wired(NodeCatalog.OutputLeftPort, knobs), trigger);
+        Interpreted.Heard(Wired(OutputModule.LeftPort, knobs), trigger);
 
-    private static Patch Wired(int into = NodeCatalog.OutputLeftPort, params (int Port, float Value)[] knobs)
+    private static Patch Wired(int into = OutputModule.LeftPort, params (int Port, float Value)[] knobs)
     {
         var patch = new Patch();
 
@@ -131,8 +131,8 @@ public class DecayTests
         var decay = NodeInstance.Create(Catalog.Require(DecayType), 0, 0);
         foreach (var (port, value) in knobs) decay.InputValues[port] = value;
 
-        var sink = NodeInstance.Create(Catalog.Require(NodeCatalog.OutputTypeId), 0, 0);
-        sink.InputValues[NodeCatalog.OutputVolumePort] = 1f;
+        var sink = NodeInstance.Create(Catalog.Require(OutputModule.TypeId), 0, 0);
+        sink.InputValues[OutputModule.VolumePort] = 1f;
 
         patch.Nodes.Add(coord);
         patch.Nodes.Add(decay);

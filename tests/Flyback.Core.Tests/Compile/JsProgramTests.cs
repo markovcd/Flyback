@@ -68,9 +68,9 @@ public class JsProgramTests
         TestCategory.Node.Require(NodeJs.Path is not null, "no Node on this machine");
 
         var builder = new PatchBuilder();
-        var line = builder.Add(NodeCatalog.LineInTypeId, 0, 0, (0, 0.8f));
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
-        builder.Wire(line, 0, sink, NodeCatalog.OutputLeftPort).Wire(line, 1, sink, NodeCatalog.OutputRightPort);
+        var line = builder.Add(SourceModules.LineInTypeId, 0, 0, (0, 0.8f));
+        var sink = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
+        builder.Wire(line, 0, sink, OutputModule.LeftPort).Wire(line, 1, sink, OutputModule.RightPort);
 
         var program = builder.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
         var heard = new float[2_000 * 2];
@@ -92,8 +92,8 @@ public class JsProgramTests
     {
         var b = new PatchBuilder(NodeCatalog.Current);
         var sine = b.Add("osc.sine", (1, 220f));
-        var output = b.Add(NodeCatalog.OutputTypeId);
-        b.Wire(sine, 0, output, NodeCatalog.OutputLeftPort);
+        var output = b.Add(OutputModule.TypeId);
+        b.Wire(sine, 0, output, OutputModule.LeftPort);
 
         var before = b.Patch.CompileForAudio().Program;
         sine.InputValues[1] = 331f;

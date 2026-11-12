@@ -30,7 +30,7 @@ public class TempoTests
     [InlineData(174f, 2.9f)]
     public void A_tempo_in_beats_a_minute_comes_out_in_beats_a_second(float bpm, float expected)
     {
-        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.TempoTypeId);
+        var def = NodeCatalog.BuiltIn.Require(SequencerModules.TempoTypeId);
         var emitter = new Emitter();
 
         var outputs = def.Emit(emitter, new EmitContext([emitter.Constant(bpm), emitter.Constant(0f)]));
@@ -46,5 +46,5 @@ public class TempoTests
     /// <summary>The knob it opens on, which is what the Kick preset is set to.</summary>
     [Fact]
     public void It_opens_at_a_hundred_and_twenty() =>
-        NodeCatalog.BuiltIn.Require(NodeCatalog.TempoTypeId).Inputs[0].Default.ShouldBe(120f);
+        NodeCatalog.BuiltIn.Require(SequencerModules.TempoTypeId).Inputs[0].Default.ShouldBe(120f);
 }

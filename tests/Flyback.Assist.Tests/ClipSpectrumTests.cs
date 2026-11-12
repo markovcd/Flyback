@@ -34,7 +34,7 @@ public sealed partial class ClipSpectrumTests
     public void Noise_has_no_distinct_tones()
     {
         var random = new Random(7);
-        var samples = new float[Rate * 2 * NodeCatalog.AudioChannels];
+        var samples = new float[Rate * 2 * OutputModule.AudioChannels];
 
         for (var i = 0; i < samples.Length; i++) samples[i] = (float)(random.NextDouble() * 2 - 1) * 0.3f;
 
@@ -81,7 +81,7 @@ public sealed partial class ClipSpectrumTests
 
     private static float[] Sum(int frames, params (double Hertz, double Amplitude)[] partials)
     {
-        var samples = new float[frames * NodeCatalog.AudioChannels];
+        var samples = new float[frames * OutputModule.AudioChannels];
 
         for (var i = 0; i < frames; i++)
         {

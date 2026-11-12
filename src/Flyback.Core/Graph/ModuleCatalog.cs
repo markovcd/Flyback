@@ -52,14 +52,14 @@ public sealed class ModuleCatalog
         .ThenBy(name => name, StringComparer.Ordinal);
 
     /// <remarks>
-    /// Falls back to <see cref="NodeCatalog.LegacyTypeIds"/> where the exact id is
+    /// Falls back to <see cref="LegacyTypeIds.Renamed"/> where the exact id is
     /// not one this catalog has, so an id a module answered to before it moved
     /// still resolves — from a file <c>PatchIO</c> has not yet rewritten, from the
     /// text language written out in full, or from an assistant's tool call.
     /// </remarks>
     internal NodeDef? Get(string typeId) =>
         index.GetValueOrDefault(typeId)
-        ?? (NodeCatalog.LegacyTypeIds.TryGetValue(typeId, out var renamed) ? index.GetValueOrDefault(renamed) : null);
+        ?? (LegacyTypeIds.Renamed.TryGetValue(typeId, out var renamed) ? index.GetValueOrDefault(renamed) : null);
 
     /// <summary>
     /// The module with <paramref name="typeId"/>; throws <see cref="KeyNotFoundException"/>

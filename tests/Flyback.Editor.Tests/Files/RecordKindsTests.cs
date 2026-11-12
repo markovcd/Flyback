@@ -19,10 +19,10 @@ public class RecordKindsTests
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         var source = builder.Add("value", 0, 0);
-        var output = builder.Add(NodeCatalog.OutputTypeId, 400, 0);
+        var output = builder.Add(OutputModule.TypeId, 400, 0);
 
-        if (picture) builder.Wire(source, 0, output, NodeCatalog.OutputColorPort);
-        if (sound) builder.Wire(source, 0, output, NodeCatalog.OutputLeftPort);
+        if (picture) builder.Wire(source, 0, output, OutputModule.ColorPort);
+        if (sound) builder.Wire(source, 0, output, OutputModule.LeftPort);
 
         return builder.Patch;
     }

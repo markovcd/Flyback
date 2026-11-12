@@ -37,7 +37,7 @@ public class GuardedArithmeticTests
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
         var maths = b.Add(typeId, [.. knobs.Select(k => (def.Inputs.ToList().FindIndex(p => p.Name == k.Socket), k.Value))]);
-        b.Wire(maths, 0, b.Add(NodeCatalog.OutputTypeId), NodeCatalog.OutputColorPort);
+        b.Wire(maths, 0, b.Add(OutputModule.TypeId), OutputModule.ColorPort);
 
         var program = b.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program;
         var registers = program.AllocateRegisters();

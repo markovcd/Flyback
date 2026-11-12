@@ -41,9 +41,9 @@ public class RenamedTypeTests : EditorTest
     public void A_Send_named_after_its_bus_already_says_Send()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var send = b.Add(NodeCatalog.SendTypeId, 0, 0);
+        var send = b.Add(BusModules.SendTypeId, 0, 0);
         send.SetState("bus", new JsonObject { ["bus"] = "kick" });
-        var def = NodeCatalog.Get(NodeCatalog.SendTypeId)!;
+        var def = NodeCatalog.Get(BusModules.SendTypeId)!;
 
         send.Name = "kick";
         ModuleFace.HiddenType(send, def).ShouldBeNull();

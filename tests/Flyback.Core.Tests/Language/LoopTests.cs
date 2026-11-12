@@ -175,7 +175,7 @@ public class LoopTests
             sum(for file in ["kick.wav", "snare.wav"] { sample(file) }) |> out.left
             """);
 
-        patch.Nodes.Where(n => n.TypeId == NodeCatalog.SampleTypeId).Select(SampleExtra.Of)
+        patch.Nodes.Where(n => n.TypeId == SourceModules.SampleTypeId).Select(SampleExtra.Of)
             .ShouldBe(["kick.wav", "snare.wav"]);
     }
 
@@ -184,7 +184,7 @@ public class LoopTests
         SampleExtra.Of(Built("""
             def hit(file) = sample(file)
             hit("kick.wav") |> out.left
-            """).Nodes.Single(n => n.TypeId == NodeCatalog.SampleTypeId)).ShouldBe("kick.wav");
+            """).Nodes.Single(n => n.TypeId == SourceModules.SampleTypeId)).ShouldBe("kick.wav");
 
     [Fact]
     public void A_rebuild_gives_every_pass_the_same_modules_and_each_pass_its_own()

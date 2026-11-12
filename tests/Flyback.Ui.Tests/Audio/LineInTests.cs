@@ -73,17 +73,17 @@ public class LineInTests
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var line = builder.Add(NodeCatalog.LineInTypeId, 0, 0);
-        var speaker = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var line = builder.Add(SourceModules.LineInTypeId, 0, 0);
+        var speaker = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
 
-        return builder.Wire(line, 0, speaker, NodeCatalog.OutputLeftPort).Patch;
+        return builder.Wire(line, 0, speaker, OutputModule.LeftPort).Patch;
     }
 
     private static Patch Silent()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
+        builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
 
         return builder.Patch;
     }

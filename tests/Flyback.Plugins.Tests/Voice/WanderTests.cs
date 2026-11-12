@@ -100,10 +100,10 @@ public class WanderTests
         var drift = b.Add("math.mul", (1, 0.06f));
         var mood = b.Add("pattern.clouds", (3, 1f));
         var hang = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.24f), (4, 0.6f));
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
         b.Wire(clock, 0, drift, 0).Wire(lane, 0, mood, 0).Wire(lane, 0, mood, 1).Wire(drift, 0, mood, 2)
-         .Wire(mood, 0, hang, 0).Wire(hang, 0, sink, NodeCatalog.OutputLeftPort);
+         .Wire(mood, 0, hang, 0).Wire(hang, 0, sink, OutputModule.LeftPort);
 
         var byHand = Exact(b.Patch, false, 0f, 0f);
         var module = Exact(
@@ -128,9 +128,9 @@ public class WanderTests
     {
         var b = new PatchBuilder(Catalog);
         var wander = b.Add(WanderType, knobs);
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
-        b.Wire(wander, 0, sink, video ? NodeCatalog.OutputColorPort : NodeCatalog.OutputLeftPort);
+        b.Wire(wander, 0, sink, video ? OutputModule.ColorPort : OutputModule.LeftPort);
 
         return b.Patch;
     }

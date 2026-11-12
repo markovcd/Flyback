@@ -19,7 +19,7 @@ public class UsageCountingTests : EditorTest
 
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var osc = b.Add("osc.sine", 0, 0);
-        b.Add(NodeCatalog.OutputTypeId, 420, 0);
+        b.Add(OutputModule.TypeId, 420, 0);
 
         var window = Open(b.Patch, new EditorSetup { Usage = usage });
         var editor = Editor(window);

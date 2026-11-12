@@ -72,17 +72,17 @@ public class BellTests
     {
         var b = new PatchBuilder(Catalog);
         var level = b.Add("coord");
-        var hz = b.Add(NodeCatalog.ValueTypeId, (0, 277.2f));
+        var hz = b.Add(SourceModules.ValueTypeId, (0, 277.2f));
         var above = b.Add("math.mul", (1, ratio));
         var lean = b.Add("math.mul", (1, index));
         var partial = b.Add("osc.sine");
         var bell = b.Add("osc.sine");
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
         b.Wire(hz, 0, above, 0).Wire(level, 0, lean, 0)
          .Wire(above, 0, partial, 1).Wire(lean, 0, partial, 3)
          .Wire(hz, 0, bell, 1).Wire(level, 0, bell, 3).Wire(partial, 0, bell, 2)
-         .Wire(bell, 0, sink, NodeCatalog.OutputLeftPort);
+         .Wire(bell, 0, sink, OutputModule.LeftPort);
 
         var envelope = Falling(Rate / 2);
 
@@ -104,9 +104,9 @@ public class BellTests
         var b = new PatchBuilder(Catalog);
         var coord = b.Add("coord");
         var bell = b.Add(BellType, knobs);
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
-        b.Wire(coord, 0, bell, LevelPort).Wire(bell, 0, sink, NodeCatalog.OutputLeftPort);
+        b.Wire(coord, 0, bell, LevelPort).Wire(bell, 0, sink, OutputModule.LeftPort);
 
         return Interpreted.Run(b.Patch, level);
     }

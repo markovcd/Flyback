@@ -23,7 +23,7 @@ public class TouchButtonsTests : EditorTest
 
         clock = builder.Add("time", 500, 300);
         sine = builder.Add("osc.sine", 100, 100);
-        output = builder.Add(NodeCatalog.OutputTypeId, 900, 100);
+        output = builder.Add(OutputModule.TypeId, 900, 100);
         builder.Wire(clock, 0, sine, 0);
 
         return builder.Patch;

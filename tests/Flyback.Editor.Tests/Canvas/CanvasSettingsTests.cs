@@ -126,7 +126,7 @@ public sealed class CanvasSettingsTests : EditorTest
     {
         var window = Open(settingsPath);
         var dialog = OpenSettings(window, CanvasTab);
-        var filter = NodeCatalog.Require(NodeCatalog.FilterTypeId);
+        var filter = NodeCatalog.Require(FilterModule.TypeId);
         var node = NodeInstance.Create(filter, 0, 0);
 
         Compact(dialog).IsChecked = true;

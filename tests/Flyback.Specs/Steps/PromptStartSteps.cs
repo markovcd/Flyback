@@ -91,7 +91,7 @@ public sealed class PromptStartSteps(EditorDriver editor, PatchContext context) 
 
     [Then("the canvas holds only the Output")]
     public void ThenOnlyTheOutput() =>
-        context.Patch.Nodes.ShouldHaveSingleItem().TypeId.ShouldBe(NodeCatalog.OutputTypeId);
+        context.Patch.Nodes.ShouldHaveSingleItem().TypeId.ShouldBe(OutputModule.TypeId);
 
     [Then("the assistant's column is open")]
     public void ThenTheColumnIsOpen() => editor.AssistantColumnOpen.ShouldBeTrue();

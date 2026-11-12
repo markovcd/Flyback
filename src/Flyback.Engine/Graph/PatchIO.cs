@@ -162,7 +162,7 @@ public static class PatchIO
     }
 
     /// <summary>
-    /// Rewrites every node using one of <see cref="NodeCatalog.LegacyTypeIds"/> to
+    /// Rewrites every node using one of <see cref="LegacyTypeIds.Renamed"/> to
     /// its new id, so a patch saved under the old one is saved under the new one
     /// the next time it is written. Answers whether anything changed, which is what
     /// tells the caller <c>Requires</c> is now stale and has to be worked out again.
@@ -175,7 +175,7 @@ public static class PatchIO
         {
             var node = patch.Nodes[i];
 
-            if (!NodeCatalog.LegacyTypeIds.TryGetValue(node.TypeId, out var renamed)) continue;
+            if (!LegacyTypeIds.Renamed.TryGetValue(node.TypeId, out var renamed)) continue;
 
             patch.Nodes[i] = new NodeInstance
             {

@@ -33,14 +33,14 @@ public class QuantiserTests
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var quantiser = builder.Add(NodeCatalog.QuantiserTypeId, 0, 0, (0, value));
+        var quantiser = builder.Add(PitchModules.QuantiserTypeId, 0, 0, (0, value));
         // Null is the module carrying no scale at all, which a hand-edited file
         // can be and the store says by holding nothing under the key.
         if (scale is null) quantiser.SetState(ScaleExtra.Name, null);
         else ScaleExtra.Set(quantiser, scale);
 
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
-        builder.Wire(quantiser, 0, sink, NodeCatalog.OutputLeftPort);
+        var sink = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
+        builder.Wire(quantiser, 0, sink, OutputModule.LeftPort);
 
         var program = builder.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
         var registers = program.AllocateRegisters();
@@ -202,7 +202,7 @@ public class QuantiserTests
     [Fact]
     public void A_new_one_arrives_with_a_major_scale_on_it()
     {
-        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.QuantiserTypeId);
+        var def = NodeCatalog.BuiltIn.Require(PitchModules.QuantiserTypeId);
         var node = NodeInstance.Create(def, 0, 0);
 
         ScaleExtra.Of(node).ShouldBe(Major);
@@ -242,15 +242,15 @@ public class QuantiserTests
             signal = b.Add("value", 0, 0);
             gate = b.Add("value", 0, 100, (0, 0f));
 
-            var quantiser = b.Add(NodeCatalog.QuantiserTypeId, 200, 0);
+            var quantiser = b.Add(PitchModules.QuantiserTypeId, 200, 0);
             ScaleExtra.Set(quantiser, [.. scale]);
 
-            var sink = b.Add(NodeCatalog.OutputTypeId, 400, 0, (NodeCatalog.OutputVolumePort, 1f));
+            var sink = b.Add(OutputModule.TypeId, 400, 0, (OutputModule.VolumePort, 1f));
 
             b.Wire(signal, 0, quantiser, 0)
              .Wire(gate, 0, quantiser, 1)
-             .Wire(quantiser, 0, sink, NodeCatalog.OutputLeftPort)
-             .Wire(quantiser, 0, sink, NodeCatalog.OutputColorPort);
+             .Wire(quantiser, 0, sink, OutputModule.LeftPort)
+             .Wire(quantiser, 0, sink, OutputModule.ColorPort);
 
             patch = b.Patch;
 
@@ -369,8 +369,8 @@ public class QuantiserTests
         var node = patch.Nodes.Single(n => n.TypeId == typeId);
         var sink = patch.Output;
 
-        sink.InputValues[NodeCatalog.OutputVolumePort] = 1f;
-        patch.Connect(node.Id, 0, sink.Id, NodeCatalog.OutputLeftPort);
+        sink.InputValues[OutputModule.VolumePort] = 1f;
+        patch.Connect(node.Id, 0, sink.Id, OutputModule.LeftPort);
 
         var program = patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
         program.Attach(IlProgram.Compile(program, IlParts.Whole));
@@ -390,9 +390,9 @@ public class QuantiserTests
         const int rate = 4_000;
 
         var scale = ScaleExtra.Of(Presets.InKey(NodeCatalog.BuiltIn).Nodes
-            .Single(n => n.TypeId == NodeCatalog.QuantiserTypeId));
+            .Single(n => n.TypeId == PitchModules.QuantiserTypeId));
 
-        var program = Audible(NodeCatalog.QuantiserTypeId);
+        var program = Audible(PitchModules.QuantiserTypeId);
         var registers = program.AllocateRegisters();
         var memory = new DelayState(program.DelayLengths, rate, program.PhaseCount, program.UnitCount);
 
@@ -438,9 +438,9 @@ public class QuantiserTests
         // evaluation it starts.
         const double onset = 0.01;
 
-        var pitch = Audible(NodeCatalog.QuantiserTypeId);
+        var pitch = Audible(PitchModules.QuantiserTypeId);
         var gate = Audible("osc.pulse");
-        var level = Audible(NodeCatalog.AdsrTypeId);
+        var level = Audible(EnvelopeModules.AdsrTypeId);
 
         var pitchRegisters = pitch.AllocateRegisters();
         var gateRegisters = gate.AllocateRegisters();
@@ -505,12 +505,12 @@ public class QuantiserTests
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var quantiser = builder.Add(NodeCatalog.QuantiserTypeId, 0, 0, (0, 61.4f));
+        var quantiser = builder.Add(PitchModules.QuantiserTypeId, 0, 0, (0, 61.4f));
         ScaleExtra.Set(quantiser, [.. Major]);
 
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
-        builder.Wire(quantiser, 0, sink, NodeCatalog.OutputLeftPort);
-        builder.Wire(quantiser, 0, sink, NodeCatalog.OutputColorPort);
+        var sink = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
+        builder.Wire(quantiser, 0, sink, OutputModule.LeftPort);
+        builder.Wire(quantiser, 0, sink, OutputModule.ColorPort);
 
         var audio = builder.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
         var video = builder.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program;

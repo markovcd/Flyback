@@ -15,7 +15,7 @@ public sealed class LinkingSteps(PatchContext context, EditorDriver editor)
 
     private NodeInstance Sine => context.Node("sine");
 
-    private static int Freq => NodeCatalog.BuiltIn.Require(NodeCatalog.SineTypeId).Inputs.ToList().FindIndex(port => port.Name == "freq");
+    private static int Freq => NodeCatalog.BuiltIn.Require(OscillatorModules.SineTypeId).Inputs.ToList().FindIndex(port => port.Name == "freq");
 
     [Given("the sine's freq is linked to a new panel knob")]
     public void GivenLinked()

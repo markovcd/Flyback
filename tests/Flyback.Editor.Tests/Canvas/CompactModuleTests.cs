@@ -14,7 +14,7 @@ namespace Flyback.Editor.Tests.Canvas;
 /// </summary>
 public class CompactModuleTests : EditorTest
 {
-    private static readonly NodeDef Filter = NodeCatalog.BuiltIn.Require(NodeCatalog.FilterTypeId);
+    private static readonly NodeDef Filter = NodeCatalog.BuiltIn.Require(FilterModule.TypeId);
 
     [AvaloniaFact]
     public void A_compact_module_is_as_tall_as_its_longer_side()
@@ -41,8 +41,8 @@ public class CompactModuleTests : EditorTest
         var editor = Editor(window);
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        b.Add(NodeCatalog.OutputTypeId, 900, 40);
-        var module = b.Add(NodeCatalog.FilterTypeId, 300, 100);
+        b.Add(OutputModule.TypeId, 900, 40);
+        var module = b.Add(FilterModule.TypeId, 300, 100);
 
         editor.Geometry.Compact = true;
         editor.History.Open(b.Patch);

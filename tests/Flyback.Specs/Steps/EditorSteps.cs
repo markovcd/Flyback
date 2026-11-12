@@ -15,8 +15,8 @@ public sealed class EditorSteps(PatchContext context, EditorDriver editor)
     [Given("a sine driven by Time")]
     public void GivenASineDrivenByTime()
     {
-        context.Add("Sine", NodeCatalog.SineTypeId);
-        context.Add("Time", NodeCatalog.TimeTypeId);
+        context.Add("Sine", OscillatorModules.SineTypeId);
+        context.Add("Time", SourceModules.TimeTypeId);
         context.Wire("Time", "t", "Sine", "freq");
     }
 

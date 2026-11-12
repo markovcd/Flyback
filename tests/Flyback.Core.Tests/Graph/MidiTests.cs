@@ -31,12 +31,12 @@ public class MidiTests
     private static Patch Built(int port, string? device)
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        var midi = builder.Add(NodeCatalog.MidiTypeId, 0, 0);
+        var midi = builder.Add(MidiModules.MidiTypeId, 0, 0);
         midi.SetState(MidiExtra.StateKey, new System.Text.Json.Nodes.JsonObject
         {
             [MidiExtra.IndexField] = 1f,
         });
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
 
         if (device is not null)
             midi.SetState(MidiExtra.StateKey, new System.Text.Json.Nodes.JsonObject
@@ -48,8 +48,8 @@ public class MidiTests
         // Both sinks at once: the same signal into the color and into the left
         // channel, so one patch answers for the eye and the ear and neither is a
         // different patch that happens to look alike.
-        builder.Wire(midi, port, sink, NodeCatalog.OutputColorPort);
-        builder.Wire(midi, port, sink, NodeCatalog.OutputLeftPort);
+        builder.Wire(midi, port, sink, OutputModule.ColorPort);
+        builder.Wire(midi, port, sink, OutputModule.LeftPort);
 
         return builder.Patch;
     }
@@ -115,15 +115,15 @@ public class MidiTests
     public void A_module_on_a_channel_asks_for_that_channel()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        var midi = builder.Add(NodeCatalog.MidiTypeId, 0, 0);
+        var midi = builder.Add(MidiModules.MidiTypeId, 0, 0);
         midi.SetState(MidiExtra.StateKey, new System.Text.Json.Nodes.JsonObject
         {
             [MidiExtra.DeviceField] = "midi:box",
             [MidiExtra.IndexField] = 1f,
             [MidiExtra.ChannelField] = 3f,
         });
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
-        builder.Wire(midi, Gate, sink, NodeCatalog.OutputLeftPort);
+        var sink = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
+        builder.Wire(midi, Gate, sink, OutputModule.LeftPort);
 
         var result = builder.Patch.CompileForAudio(NodeCatalog.BuiltIn);
 
@@ -137,14 +137,14 @@ public class MidiTests
     public void A_channel_asked_of_the_keyboard_is_reported_and_the_keys_still_heard()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        var midi = builder.Add(NodeCatalog.MidiTypeId, 0, 0);
+        var midi = builder.Add(MidiModules.MidiTypeId, 0, 0);
         midi.SetState(MidiExtra.StateKey, new System.Text.Json.Nodes.JsonObject
         {
             [MidiExtra.IndexField] = 1f,
             [MidiExtra.ChannelField] = 3f,
         });
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
-        builder.Wire(midi, Gate, sink, NodeCatalog.OutputLeftPort);
+        var sink = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
+        builder.Wire(midi, Gate, sink, OutputModule.LeftPort);
 
         var result = builder.Patch.CompileForAudio(NodeCatalog.BuiltIn);
 
@@ -158,8 +158,8 @@ public class MidiTests
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         var saw = builder.Add("osc.saw", 0, 0);
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
-        builder.Wire(saw, 0, sink, NodeCatalog.OutputLeftPort);
+        var sink = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
+        builder.Wire(saw, 0, sink, OutputModule.LeftPort);
 
         builder.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program.LiveInputs.ShouldBeEmpty();
     }
@@ -306,8 +306,8 @@ public class MidiTests
     public void Two_modules_listening_to_one_instrument_ask_for_it_once()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        var first = builder.Add(NodeCatalog.MidiTypeId, 0, 0);
-        var second = builder.Add(NodeCatalog.MidiTypeId, 0, 0);
+        var first = builder.Add(MidiModules.MidiTypeId, 0, 0);
+        var second = builder.Add(MidiModules.MidiTypeId, 0, 0);
         first.SetState(MidiExtra.StateKey, new System.Text.Json.Nodes.JsonObject
         {
             [MidiExtra.IndexField] = 1f,
@@ -316,10 +316,10 @@ public class MidiTests
         {
             [MidiExtra.IndexField] = 1f,
         });
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
 
-        builder.Wire(first, Pitch, sink, NodeCatalog.OutputLeftPort);
-        builder.Wire(second, Pitch, sink, NodeCatalog.OutputRightPort);
+        builder.Wire(first, Pitch, sink, OutputModule.LeftPort);
+        builder.Wire(second, Pitch, sink, OutputModule.RightPort);
 
         var program = builder.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
 
@@ -352,7 +352,7 @@ public class MidiTests
     public void Which_instrument_it_listens_to_is_in_the_file()
     {
         var patch = new Patch();
-        var midi = NodeInstance.Create(NodeCatalog.BuiltIn.Require(NodeCatalog.MidiTypeId), 0, 0);
+        var midi = NodeInstance.Create(NodeCatalog.BuiltIn.Require(MidiModules.MidiTypeId), 0, 0);
 
         patch.Nodes.Add(midi);
 
@@ -366,7 +366,7 @@ public class MidiTests
 
         var reopened = PatchIO.Read(PatchIO.ToJson(patch, NodeCatalog.BuiltIn), NodeCatalog.BuiltIn);
 
-        reopened.Patch.Nodes.Single(node => node.TypeId == NodeCatalog.MidiTypeId)
+        reopened.Patch.Nodes.Single(node => node.TypeId == MidiModules.MidiTypeId)
             .StateOf(MidiExtra.StateKey)?[MidiExtra.DeviceField]
             ?.GetValue<string>()
             .ShouldBe("usb:some-keyboard");

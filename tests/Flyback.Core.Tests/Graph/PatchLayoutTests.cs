@@ -208,7 +208,7 @@ public class PatchLayoutTests
     public void The_output_is_the_rightmost_module(string name)
     {
         var patch = Arranged(Preset(name));
-        var sink = patch.FirstOf(NodeCatalog.OutputTypeId).ShouldNotBeNull();
+        var sink = patch.FirstOf(OutputModule.TypeId).ShouldNotBeNull();
 
         foreach (var drawn in Drawing(patch))
             drawn.Left.ShouldBeLessThanOrEqualTo(sink.X, $"{drawn.What} is drawn past the Output");
@@ -270,7 +270,7 @@ public class PatchLayoutTests
     public void A_drawing_too_wide_with_its_boxes_open_has_boxes_shut_until_it_fits()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var output = b.Add(NodeCatalog.OutputTypeId);
+        var output = b.Add(OutputModule.TypeId);
         NodeInstance? last = null;
 
         for (var chain = 0; chain < 8; chain++)
@@ -290,7 +290,7 @@ public class PatchLayoutTests
             b.Patch.Group(made.Select(node => node.Id))?.Rename($"Chain {chain}");
         }
 
-        b.Wire(last!, 0, output, NodeCatalog.OutputLeftPort);
+        b.Wire(last!, 0, output, OutputModule.LeftPort);
 
         foreach (var group in b.Patch.Groups!) group.Collapsed = false;
 
@@ -371,13 +371,13 @@ public class PatchLayoutTests
         var osc = b.Add("osc.sine", 0, 0, (1, 220f));
         var mix = b.Add("math.add", 0, 0);
         var half = b.Add("math.mul", 0, 0, (1, 0.5f));
-        var output = b.Add(NodeCatalog.OutputTypeId, 0, 0);
+        var output = b.Add(OutputModule.TypeId, 0, 0);
 
         b.Wire(time, 0, osc, 0)
          .Wire(osc, 0, mix, 0)
          .Wire(mix, 0, half, 0)
          .Wire(half, 0, mix, 1)
-         .Wire(mix, 0, output, NodeCatalog.OutputLeftPort);
+         .Wire(mix, 0, output, OutputModule.LeftPort);
 
         PatchLayout.Arrange(b.Patch, NodeCatalog.BuiltIn);
 
@@ -409,7 +409,7 @@ public class PatchLayoutTests
         var first = b.Add("math.mul", 0, 0);
         var second = b.Add("math.mul", 0, 0);
         var sum = b.Add("math.add", 0, 0);
-        var output = b.Add(NodeCatalog.OutputTypeId, 0, 0);
+        var output = b.Add(OutputModule.TypeId, 0, 0);
 
         b.Wire(time, 0, top, 0)
          .Wire(time, 0, bottom, 0)
@@ -417,7 +417,7 @@ public class PatchLayoutTests
          .Wire(top, 0, second, 0)
          .Wire(first, 0, sum, 0)
          .Wire(second, 0, sum, 1)
-         .Wire(sum, 0, output, NodeCatalog.OutputLeftPort);
+         .Wire(sum, 0, output, OutputModule.LeftPort);
 
         PatchLayout.Arrange(b.Patch, NodeCatalog.BuiltIn);
 
@@ -521,14 +521,14 @@ public class PatchLayoutTests
         var apart = b.Add("osc.sine", 0, 0, (1, 330f));
         stranger = b.Add("math.mul", 0, 0);
 
-        var sink = b.Add(NodeCatalog.OutputTypeId, 0, 0);
+        var sink = b.Add(OutputModule.TypeId, 0, 0);
 
         b.Wire(time, 0, head, 0)
          .Wire(time, 0, apart, 0)
          .Wire(apart, 0, stranger, 0)
          .Wire(head, 0, tail, 0)
          .Wire(stranger, 0, tail, 1)
-         .Wire(tail, 0, sink, NodeCatalog.OutputLeftPort);
+         .Wire(tail, 0, sink, OutputModule.LeftPort);
 
         b.Patch.Group([head.Id, tail.Id])?.Rename("Ends");
 
@@ -562,13 +562,13 @@ public class PatchLayoutTests
         var coord = b.Add("coord", 2400, 1600);
         var rings = b.Add("pattern.rings", 1800, 2200);
 
-        var sink = b.Add(NodeCatalog.OutputTypeId, 3000, 0);
+        var sink = b.Add(OutputModule.TypeId, 3000, 0);
 
         b.Wire(time, 0, osc, 0)
          .Wire(osc, 0, gain, 0)
-         .Wire(gain, 0, sink, NodeCatalog.OutputLeftPort)
+         .Wire(gain, 0, sink, OutputModule.LeftPort)
          .Wire(coord, 0, rings, 0)
-         .Wire(rings, 0, sink, NodeCatalog.OutputColorPort);
+         .Wire(rings, 0, sink, OutputModule.ColorPort);
 
         near = [time, osc, gain];
         far = [coord, rings];

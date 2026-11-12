@@ -30,11 +30,11 @@ public class PatchClipboardTests
         time = b.Add("time", 0, 0);
         osc = b.Add("osc.sine", 300, 0, (1, 220f));
         gain = b.Add("math.mul", 600, 0, (1, 0.5f));
-        sink = b.Add(NodeCatalog.OutputTypeId, 900, 0);
+        sink = b.Add(OutputModule.TypeId, 900, 0);
 
         b.Wire(time, 0, osc, 0)
          .Wire(osc, 0, gain, 0)
-         .Wire(gain, 0, sink, NodeCatalog.OutputLeftPort);
+         .Wire(gain, 0, sink, OutputModule.LeftPort);
 
         return b.Patch;
     }
@@ -183,10 +183,10 @@ public class PatchClipboardTests
     public void Pasted_modules_carry_what_is_not_a_knob()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        builder.Add(NodeCatalog.OutputTypeId, 0, 0);
+        builder.Add(OutputModule.TypeId, 0, 0);
 
         var sequencer = builder.Add("seq.notes", 0, 0);
-        var quantiser = builder.Add(NodeCatalog.QuantiserTypeId, 0, 0);
+        var quantiser = builder.Add(PitchModules.QuantiserTypeId, 0, 0);
 
         StepsExtra.Set(sequencer, [new Step(60f), new Step(64f, 2f)]);
         ScaleExtra.Set(quantiser, [0, 3, 7]);
@@ -195,7 +195,7 @@ public class PatchClipboardTests
         var pasted = PatchClipboard.Paste(builder.Patch, fragment);
 
         var pastedSequencer = pasted.Single(n => n.TypeId == "seq.notes");
-        var pastedQuantiser = pasted.Single(n => n.TypeId == NodeCatalog.QuantiserTypeId);
+        var pastedQuantiser = pasted.Single(n => n.TypeId == PitchModules.QuantiserTypeId);
 
         StepsExtra.Of(pastedSequencer).ShouldBe(StepsExtra.Of(sequencer));
         ScaleExtra.Of(pastedQuantiser).ShouldBe(ScaleExtra.Of(quantiser));
@@ -217,14 +217,14 @@ public class PatchClipboardTests
     public void Pasting_a_whole_patch_takes_everything_but_its_output()
     {
         var into = new PatchBuilder(NodeCatalog.BuiltIn);
-        into.Add(NodeCatalog.OutputTypeId, 0, 0);
+        into.Add(OutputModule.TypeId, 0, 0);
 
         var whole = Presets.Drone(NodeCatalog.BuiltIn);
         var added = PatchClipboard.Paste(into.Patch, whole);
 
         added.Count.ShouldBe(whole.Nodes.Count - 1);
-        added.ShouldNotContain(n => NodeCatalog.IsSink(n.TypeId));
-        into.Patch.Nodes.Count(n => NodeCatalog.IsSink(n.TypeId)).ShouldBe(1);
+        added.ShouldNotContain(n => OutputModule.IsSink(n.TypeId));
+        into.Patch.Nodes.Count(n => OutputModule.IsSink(n.TypeId)).ShouldBe(1);
     }
 
     /// <summary>
@@ -243,14 +243,14 @@ public class PatchClipboardTests
         loaded.IsComplete.ShouldBeTrue();
 
         var fresh = new PatchBuilder(NodeCatalog.BuiltIn);
-        var sink = fresh.Add(NodeCatalog.OutputTypeId, 900, 0);
+        var sink = fresh.Add(OutputModule.TypeId, 900, 0);
 
         var added = PatchClipboard.Paste(fresh.Patch, loaded.Patch);
         added.Select(n => n.TypeId).Order().ShouldBe(["math.mul", "osc.sine", "time"]);
 
         // And what arrived is a working chain: wired to the sink it compiles to
         // the same instructions the original did.
-        fresh.Wire(added.Single(n => n.TypeId == "math.mul"), 0, sink, NodeCatalog.OutputLeftPort);
+        fresh.Wire(added.Single(n => n.TypeId == "math.mul"), 0, sink, OutputModule.LeftPort);
 
         fresh.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program.Ops
             .ShouldBe(patch.CompileForAudio(NodeCatalog.BuiltIn).Program.Ops);
@@ -402,7 +402,7 @@ public class PatchClipboardTests
         loaded.IsComplete.ShouldBeTrue();
 
         var fresh = new PatchBuilder(NodeCatalog.BuiltIn);
-        fresh.Add(NodeCatalog.OutputTypeId, 900, 0);
+        fresh.Add(OutputModule.TypeId, 900, 0);
 
         var added = PatchClipboard.Paste(fresh.Patch, loaded.Patch);
         var pasted = fresh.Patch.GroupOf(added[0].Id).ShouldNotBeNull();
@@ -445,12 +445,12 @@ public class PatchClipboardTests
         patch.Group([time.Id, osc.Id]);
 
         var fresh = new PatchBuilder(NodeCatalog.BuiltIn);
-        var sink = fresh.Add(NodeCatalog.OutputTypeId, 900, 0);
+        var sink = fresh.Add(OutputModule.TypeId, 900, 0);
 
         var added = PatchClipboard.Paste(
             fresh.Patch, PatchClipboard.Copy(patch, [time.Id, osc.Id, gain.Id]));
 
-        fresh.Wire(added.Single(n => n.TypeId == "math.mul"), 0, sink, NodeCatalog.OutputLeftPort);
+        fresh.Wire(added.Single(n => n.TypeId == "math.mul"), 0, sink, OutputModule.LeftPort);
 
         fresh.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program.Ops
             .ShouldBe(patch.CompileForAudio(NodeCatalog.BuiltIn).Program.Ops);

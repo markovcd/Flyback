@@ -22,7 +22,7 @@ internal static class AutoRemap
     {
         ArgumentNullException.ThrowIfNull(patch);
 
-        var remaps = patch.Nodes.Where(n => n.TypeId == NodeCatalog.AutoRemapTypeId).ToList();
+        var remaps = patch.Nodes.Where(n => n.TypeId == MathModules.AutoRemapTypeId).ToList();
         if (remaps.Count == 0) return new Dictionary<Guid, RemapSpans>();
 
         var joined = Buses.Joined(patch);
@@ -69,7 +69,7 @@ internal static class AutoRemap
 
         if (patch.Find(wire.SourceNode) is not { } source || catalog.Get(source.TypeId) is not { } from) return false;
         if (patch.Find(wire.TargetNode) is not { } target || catalog.Get(target.TypeId) is not { } into) return false;
-        if (source.TypeId == NodeCatalog.AutoRemapTypeId || target.TypeId == NodeCatalog.AutoRemapTypeId) return false;
+        if (source.TypeId == MathModules.AutoRemapTypeId || target.TypeId == MathModules.AutoRemapTypeId) return false;
         if (wire.SourcePort >= from.Outputs.Count || wire.TargetPort >= into.Inputs.Count) return false;
 
         return Emitted(patch, source, from, wire.SourcePort).Span is { } given

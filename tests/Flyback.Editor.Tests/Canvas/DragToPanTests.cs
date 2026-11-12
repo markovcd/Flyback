@@ -21,7 +21,7 @@ public class DragToPanTests : EditorTest
 
         a = builder.Add("value", 0, 0);
         builder.Add("time", 0, 200);
-        builder.Add(NodeCatalog.OutputTypeId, 700, 200);
+        builder.Add(OutputModule.TypeId, 700, 200);
 
         return builder.Patch;
     }

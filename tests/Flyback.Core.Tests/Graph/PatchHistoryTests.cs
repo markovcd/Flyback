@@ -22,9 +22,9 @@ public class PatchHistoryTests
         var builder = new PatchBuilder(Catalog);
 
         source = builder.Add("value", 0, 0, (0, 0.25f));
-        sink = builder.Add(NodeCatalog.OutputTypeId, 400, 0);
+        sink = builder.Add(OutputModule.TypeId, 400, 0);
 
-        builder.Wire(source, 0, sink, NodeCatalog.OutputLeftPort);
+        builder.Wire(source, 0, sink, OutputModule.LeftPort);
 
         return builder.Patch;
     }
@@ -96,12 +96,12 @@ public class PatchHistoryTests
         var patch = Wired(out var source, out var sink);
         var history = Opened(patch);
 
-        patch.Connect(source.Id, 0, sink.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(source.Id, 0, sink.Id, OutputModule.ColorPort);
         history.Record(patch);
 
         var back = history.Undo().ShouldNotBeNull();
 
-        back.Connections.ShouldHaveSingleItem().TargetPort.ShouldBe(NodeCatalog.OutputLeftPort);
+        back.Connections.ShouldHaveSingleItem().TargetPort.ShouldBe(OutputModule.LeftPort);
     }
 
     /// <summary>
@@ -113,13 +113,13 @@ public class PatchHistoryTests
     {
         var patch = Wired(out var source, out var sink);
 
-        patch.Connect(source.Id, 0, sink.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(source.Id, 0, sink.Id, OutputModule.ColorPort);
 
         var history = Opened(patch);
         var before = patch.Connections.ToArray();
 
         // The first of the two, which taken off and put back would be the last.
-        patch.Connect(source.Id, 0, sink.Id, NodeCatalog.OutputLeftPort);
+        patch.Connect(source.Id, 0, sink.Id, OutputModule.LeftPort);
 
         patch.Connections.ShouldBe(before);
         history.Record(patch).ShouldBeFalse();
@@ -405,7 +405,7 @@ public class PatchHistoryTests
     {
         var builder = new PatchBuilder(Catalog);
         var sequencer = builder.Add("seq.values", 0, 0);
-        builder.Add(NodeCatalog.OutputTypeId, 400, 0);
+        builder.Add(OutputModule.TypeId, 400, 0);
 
         var patch = builder.Patch;
         var history = Opened(patch);

@@ -59,7 +59,7 @@ public class PatchWorkbenchPuttingAwayTests
 
         await Call(restored, "reset");
 
-        restored.Snapshot().Nodes.ShouldHaveSingleItem().TypeId.ShouldBe(NodeCatalog.OutputTypeId);
+        restored.Snapshot().Nodes.ShouldHaveSingleItem().TypeId.ShouldBe(OutputModule.TypeId);
     }
 
     [Fact]

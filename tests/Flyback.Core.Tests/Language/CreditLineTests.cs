@@ -49,7 +49,7 @@ public class CreditLineTests
 
         patch.Author.ShouldBeNull();
         patch.Tags.ShouldBeNull();
-        patch.Nodes.ShouldContain(n => n.TypeId == NodeCatalog.SineTypeId);
+        patch.Nodes.ShouldContain(n => n.TypeId == OscillatorModules.SineTypeId);
     }
 
     [Fact]

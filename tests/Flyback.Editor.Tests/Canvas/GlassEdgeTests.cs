@@ -12,7 +12,7 @@ public class GlassEdgeTests : EditorTest
     public void Over_the_picture_a_module_edge_is_dark_outside_and_light_inside()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        var sine = builder.Add(NodeCatalog.SineTypeId, 300, 200);
+        var sine = builder.Add(OscillatorModules.SineTypeId, 300, 200);
         var (editor, window) = Editing(builder.Patch);
         var bounds = editor.Geometry.Bounds(sine, NodeCatalog.Get(sine.TypeId)!);
         var across = bounds.Center.X - 40;

@@ -25,10 +25,10 @@ public class KnobRandomizeTests : EditorTest
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 700, 40);
+        var output = b.Add(OutputModule.TypeId, 700, 40);
         var value = b.Add("value", 200, 40, (0, 0.25f));
 
-        b.Wire(value, 0, output, NodeCatalog.OutputColorPort);
+        b.Wire(value, 0, output, OutputModule.ColorPort);
 
         for (var i = 0; i < knobs; i++) b.Patch.AddControl($"Knob {i + 1}", 0.25f);
 

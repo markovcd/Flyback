@@ -20,7 +20,7 @@ public class FilterTests
     [Fact]
     public void It_is_offered_under_shaping_for_audio()
     {
-        var def = Modules.Get(NodeCatalog.FilterTypeId).ShouldNotBeNull();
+        var def = Modules.Get(FilterModule.TypeId).ShouldNotBeNull();
 
         def.Name.ShouldBe("Filter");
         def.Category.ShouldBe(ModuleCategories.Shaping);
@@ -163,13 +163,13 @@ public class FilterTests
         var patch = new Patch();
 
         var coord = Add(patch, "coord");
-        var first = Add(patch, NodeCatalog.FilterTypeId, (1, 1_000f), (2, 0f));
-        var second = Add(patch, NodeCatalog.FilterTypeId, (1, 1_000f), (2, 0f));
-        var sink = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var first = Add(patch, FilterModule.TypeId, (1, 1_000f), (2, 0f));
+        var second = Add(patch, FilterModule.TypeId, (1, 1_000f), (2, 0f));
+        var sink = Add(patch, OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
         patch.Connect(coord.Id, 0, first.Id, 0);
         patch.Connect(first.Id, 0, second.Id, 0);
-        patch.Connect(second.Id, 0, sink.Id, NodeCatalog.OutputLeftPort);
+        patch.Connect(second.Id, 0, sink.Id, OutputModule.LeftPort);
 
         var program = patch.CompileForAudio(Modules).Program;
         program.UnitCount.ShouldBe(6);
@@ -215,11 +215,11 @@ public class FilterTests
         var patch = new Patch();
 
         var coord = Add(patch, "coord");
-        var effect = Add(patch, NodeCatalog.FilterTypeId, knobs);
-        var sink = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var effect = Add(patch, FilterModule.TypeId, knobs);
+        var sink = Add(patch, OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
         patch.Connect(coord.Id, 0, effect.Id, 0);
-        patch.Connect(effect.Id, port, sink.Id, NodeCatalog.OutputLeftPort);
+        patch.Connect(effect.Id, port, sink.Id, OutputModule.LeftPort);
 
         var program = patch.CompileForAudio(Modules).Program;
         var delays = new DelayState(
@@ -243,11 +243,11 @@ public class FilterTests
         var patch = new Patch();
 
         var coord = Add(patch, "coord");
-        var effect = Add(patch, NodeCatalog.FilterTypeId, knobs);
-        var screen = Add(patch, NodeCatalog.OutputTypeId);
+        var effect = Add(patch, FilterModule.TypeId, knobs);
+        var screen = Add(patch, OutputModule.TypeId);
 
         patch.Connect(coord.Id, 0, effect.Id, 0);
-        patch.Connect(effect.Id, port, screen.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(effect.Id, port, screen.Id, OutputModule.ColorPort);
 
         var program = patch.CompileForVideo(Modules).Program;
         var registers = program.AllocateRegisters();
@@ -268,11 +268,11 @@ public class FilterTests
         var patch = new Patch();
 
         var coord = Add(patch, "coord");
-        var effect = Add(patch, NodeCatalog.FilterTypeId);
-        var sink = Add(patch, NodeCatalog.OutputTypeId);
+        var effect = Add(patch, FilterModule.TypeId);
+        var sink = Add(patch, OutputModule.TypeId);
 
         patch.Connect(coord.Id, 0, effect.Id, 0);
-        patch.Connect(effect.Id, port, sink.Id, NodeCatalog.OutputLeftPort);
+        patch.Connect(effect.Id, port, sink.Id, OutputModule.LeftPort);
 
         return patch.CompileForAudio(Modules).Program;
     }

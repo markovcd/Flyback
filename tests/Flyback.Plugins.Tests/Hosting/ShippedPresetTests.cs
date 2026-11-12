@@ -86,7 +86,7 @@ public class ShippedPresetTests
         var patch = Should.NotThrow(() => preset.Build(loaded.Modules));
         var carried = preset.Files is { } files ? new BundleFiles(files()) : null;
 
-        patch.Nodes.ShouldContain(n => NodeCatalog.IsSink(n.TypeId), "every patch has an Output");
+        patch.Nodes.ShouldContain(n => OutputModule.IsSink(n.TypeId), "every patch has an Output");
 
         foreach (var result in new[]
                  {
@@ -273,10 +273,10 @@ public class ShippedPresetTests
         var preset = loaded.Presets.Single(p => p.Name == name);
 
         var patch = preset.Build(loaded.Modules);
-        var sink = patch.Nodes.Single(n => NodeCatalog.IsSink(n.TypeId));
+        var sink = patch.Nodes.Single(n => OutputModule.IsSink(n.TypeId));
 
-        var draws = Driven(patch, sink, NodeCatalog.OutputColorPort);
-        var sounds = Driven(patch, sink, NodeCatalog.OutputLeftPort, NodeCatalog.OutputRightPort);
+        var draws = Driven(patch, sink, OutputModule.ColorPort);
+        var sounds = Driven(patch, sink, OutputModule.LeftPort, OutputModule.RightPort);
 
         if (preset.Kind is PresetKind.Interplay)
         {

@@ -38,14 +38,14 @@ public class PlayedPresetTests
         var patch = Patch();
         var types = patch.Nodes.Select(n => n.TypeId).ToList();
 
-        types.Count(t => t == NodeCatalog.MidiTypeId).ShouldBe(1);
-        types.Count(t => t == NodeCatalog.StringTypeId).ShouldBe(1);
+        types.Count(t => t == MidiModules.MidiTypeId).ShouldBe(1);
+        types.Count(t => t == StringModule.TypeId).ShouldBe(1);
         types.Count(t => t == "audio.note").ShouldBe(1);
-        types.Count(t => t == NodeCatalog.ReverbTypeId).ShouldBe(1);
+        types.Count(t => t == ReverbModule.TypeId).ShouldBe(1);
 
         var counts = VoiceCounts.Of(patch, Loaded.Modules);
-        var pluck = patch.Nodes.Single(n => n.TypeId == NodeCatalog.StringTypeId);
-        var room = patch.Nodes.Single(n => n.TypeId == NodeCatalog.ReverbTypeId);
+        var pluck = patch.Nodes.Single(n => n.TypeId == StringModule.TypeId);
+        var room = patch.Nodes.Single(n => n.TypeId == ReverbModule.TypeId);
 
         counts[pluck.Id].ShouldBe(Voices);
         counts.ShouldNotContainKey(room.Id);
@@ -55,9 +55,9 @@ public class PlayedPresetTests
     public void It_draws_nothing()
     {
         var patch = Patch();
-        var sink = patch.FirstOf(NodeCatalog.OutputTypeId).ShouldNotBeNull();
+        var sink = patch.FirstOf(OutputModule.TypeId).ShouldNotBeNull();
 
-        patch.Connections.ShouldNotContain(w => w.TargetNode == sink.Id && w.TargetPort == NodeCatalog.OutputColorPort);
+        patch.Connections.ShouldNotContain(w => w.TargetNode == sink.Id && w.TargetPort == OutputModule.ColorPort);
     }
 
     [Fact]
@@ -81,7 +81,7 @@ public class PlayedPresetTests
     {
         var patch = Patch();
 
-        foreach (var keys in patch.Nodes.Where(n => n.TypeId == NodeCatalog.MidiTypeId))
+        foreach (var keys in patch.Nodes.Where(n => n.TypeId == MidiModules.MidiTypeId))
         {
             // 0 pitch, 1 gate, 2 velocity, 3 trigger.
             patch.Connections

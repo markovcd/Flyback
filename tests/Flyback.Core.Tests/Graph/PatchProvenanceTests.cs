@@ -71,7 +71,7 @@ public class PatchProvenanceTests
         // Two, because reading gives every patch its Output. What the plugin
         // contributed is the other one.
         loaded.Patch.Nodes.Select(n => n.TypeId)
-            .ShouldBe(["test.extras.double", NodeCatalog.OutputTypeId]);
+            .ShouldBe(["test.extras.double", OutputModule.TypeId]);
     }
 
     [Fact]

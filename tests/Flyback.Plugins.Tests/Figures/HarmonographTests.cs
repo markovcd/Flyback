@@ -27,13 +27,13 @@ public class HarmonographTests
     [Fact]
     public void It_is_silent_until_set_swinging()
     {
-        Heard(Wired(Harmonograph, Left, NodeCatalog.OutputLeftPort), new float[Rate / 10]).ShouldAllBe(s => s == 0f);
+        Heard(Wired(Harmonograph, Left, OutputModule.LeftPort), new float[Rate / 10]).ShouldAllBe(s => s == 0f);
     }
 
     [Fact]
     public void The_chord_swings_and_dies_by_its_damping()
     {
-        var heard = Heard(Wired(Harmonograph, Right, NodeCatalog.OutputLeftPort, 0, NodeCatalog.CoordXPort, (Damping, 0.5f)), Pulse(1, Rate * 2));
+        var heard = Heard(Wired(Harmonograph, Right, OutputModule.LeftPort, 0, SourceModules.CoordXPort, (Damping, 0.5f)), Pulse(1, Rate * 2));
 
         Rms(heard.AsSpan(0, Rate / 20)).ShouldBeGreaterThan(0.2);
         Rms(heard.AsSpan(Rate * 2 - Rate / 20)).ShouldBeLessThan(0.02);
@@ -43,15 +43,15 @@ public class HarmonographTests
     [Fact]
     public void The_two_axes_are_two_different_signals()
     {
-        var left = Heard(Wired(Harmonograph, Left, NodeCatalog.OutputLeftPort), Pulse(1, Rate / 10));
-        var right = Heard(Wired(Harmonograph, Right, NodeCatalog.OutputLeftPort), Pulse(1, Rate / 10));
+        var left = Heard(Wired(Harmonograph, Left, OutputModule.LeftPort), Pulse(1, Rate / 10));
+        var right = Heard(Wired(Harmonograph, Right, OutputModule.LeftPort), Pulse(1, Rate / 10));
 
         left.Zip(right).Count(pair => Math.Abs(pair.First - pair.Second) > 0.01f).ShouldBeGreaterThan(Rate / 40);
     }
 
     /// <summary>The screen's program with the strike on Coordinates' aspect, so a pixel can be struck without moving.</summary>
     private static Pixel Drawn(params (int Port, float Value)[] knobs) =>
-        new(Wired(Harmonograph, Figure, NodeCatalog.OutputColorPort, Trigger, NodeCatalog.CoordAspectPort, knobs));
+        new(Wired(Harmonograph, Figure, OutputModule.ColorPort, Trigger, SourceModules.CoordAspectPort, knobs));
 
     /// <summary>At the strike the pen stands at the top of its swing, and with no persistence only the fresh stroke is inked.</summary>
     [Fact]
@@ -100,7 +100,7 @@ public class HarmonographTests
     [Fact]
     public void The_drawing_survives_to_the_shader()
     {
-        var program = Wired(Harmonograph, Figure, NodeCatalog.OutputColorPort).CompileForVideo(Catalog).Program;
+        var program = Wired(Harmonograph, Figure, OutputModule.ColorPort).CompileForVideo(Catalog).Program;
 
         program.PlaneCount.ShouldBe(5);
         LowersToEveryDialect(program);
@@ -114,7 +114,7 @@ public class HarmonographTests
     [Fact]
     public void The_chord_keeps_its_strike_in_planes_and_no_cell()
     {
-        var program = Wired(Harmonograph, Left, NodeCatalog.OutputLeftPort).CompileForAudio(Catalog).Program;
+        var program = Wired(Harmonograph, Left, OutputModule.LeftPort).CompileForAudio(Catalog).Program;
 
         program.PlaneCount.ShouldBe(5);
         program.UnitCount.ShouldBe(0);

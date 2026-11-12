@@ -18,8 +18,8 @@ public class SpaceTests
         var loaded = ShippedPlugins.Loaded;
         var patch = loaded.Presets.Single(p => p.Name == "Echo chamber").Build(loaded.Modules);
 
-        patch.Nodes.Select(n => n.TypeId).ShouldContain(NodeCatalog.DelayTypeId);
-        patch.Nodes.Select(n => n.TypeId).ShouldContain(NodeCatalog.ReverbTypeId);
+        patch.Nodes.Select(n => n.TypeId).ShouldContain(DelayModule.TypeId);
+        patch.Nodes.Select(n => n.TypeId).ShouldContain(ReverbModule.TypeId);
 
         patch.CompileForVideo(loaded.Modules).Issues.ShouldBeEmpty();
 

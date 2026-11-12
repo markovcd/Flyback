@@ -23,7 +23,7 @@ public sealed class HelpSteps
     private IReadOnlyList<NodeDef> shipped = [];
 
     [When("the assistant looks up the Filter")]
-    public Task WhenTheAssistantLooksItUp() => Asks("describe_module", $$"""{"type_id":"{{NodeCatalog.FilterTypeId}}"}""");
+    public Task WhenTheAssistantLooksItUp() => Asks("describe_module", $$"""{"type_id":"{{FilterModule.TypeId}}"}""");
 
     [When("the assistant adds a Filter to the patch")]
     public Task WhenTheAssistantAddsOne() => Asks("write_patch", """{"source":"t |> sine() |> filter() |> out.left"}""");
@@ -54,7 +54,7 @@ public sealed class HelpSteps
         var error = new StringWriter();
 
         var code = InProcessCli.Run(
-            ["modules", NodeCatalog.FilterTypeId],
+            ["modules", FilterModule.TypeId],
             new PluginRegistry(() => PluginCatalog.Empty, Path.GetTempPath(), null),
             new InvocationConfiguration { Output = output, Error = error });
 
@@ -65,7 +65,7 @@ public sealed class HelpSteps
     [Then("it reads what each of the Filter's sockets is for, word for word")]
     public void ThenItReadsEachSocketsHelp()
     {
-        var filter = Modules.Require(NodeCatalog.FilterTypeId);
+        var filter = Modules.Require(FilterModule.TypeId);
         var helped = filter.Inputs.Select(port => port.Help)
             .Concat(filter.Outputs.Select(port => port.Help))
             .Where(help => help.Length > 0)

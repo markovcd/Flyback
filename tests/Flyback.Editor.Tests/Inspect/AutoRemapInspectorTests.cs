@@ -47,7 +47,7 @@ public class AutoRemapInspectorTests : EditorTest
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
         var from = b.Add(source, 40, 40);
-        var remap = b.Add(NodeCatalog.AutoRemapTypeId, 360, 40);
+        var remap = b.Add(MathModules.AutoRemapTypeId, 360, 40);
         b.Wire(from, 0, remap, AutoRemap.In);
 
         if (target is not null) b.Wire(remap, 0, b.Add(target, 700, 40), port);
@@ -58,7 +58,7 @@ public class AutoRemapInspectorTests : EditorTest
     [AvaloniaFact]
     public void A_source_with_no_range_outlines_the_input_pair_and_nothing_else()
     {
-        var (patch, remap) = Board(NodeCatalog.ValueTypeId);
+        var (patch, remap) = Board(SourceModules.ValueTypeId);
         var window = Open(patch);
 
         Select(window, remap);
@@ -69,7 +69,7 @@ public class AutoRemapInspectorTests : EditorTest
     [AvaloniaFact]
     public void A_fraction_reads_as_what_it_comes_to_at_the_socket_it_feeds()
     {
-        var (patch, remap) = Board(NodeCatalog.SineTypeId, NodeCatalog.FilterTypeId, 1);
+        var (patch, remap) = Board(OscillatorModules.SineTypeId, FilterModule.TypeId, 1);
         var window = Open(patch);
 
         Select(window, remap);
@@ -86,22 +86,22 @@ public class AutoRemapInspectorTests : EditorTest
     public void Clicking_a_wires_mark_puts_an_auto_remap_into_it_as_one_step()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var sine = b.Add(NodeCatalog.SineTypeId, 40, 40);
-        var filter = b.Add(NodeCatalog.FilterTypeId, 700, 40);
+        var sine = b.Add(OscillatorModules.SineTypeId, 40, 40);
+        var filter = b.Add(FilterModule.TypeId, 700, 40);
         b.Wire(sine, 0, filter, 1);
 
         var window = Open(b.Patch);
         var editor = Editor(window);
 
         var from = NodeGeometry.OutputPort(sine, 0);
-        var to = Geometry.InputPort(filter, NodeCatalog.BuiltIn.Require(NodeCatalog.FilterTypeId), 1);
+        var to = Geometry.InputPort(filter, NodeCatalog.BuiltIn.Require(FilterModule.TypeId), 1);
         var at = OnWindow(window, new Point((from.X + to.X) / 2, (from.Y + to.Y) / 2));
 
         window.MouseDown(at, MouseButton.Left);
         window.MouseUp(at, MouseButton.Left);
         Settle(window);
 
-        var remap = editor.History.Patch.Nodes.Where(n => n.TypeId == NodeCatalog.AutoRemapTypeId).ShouldHaveSingleItem();
+        var remap = editor.History.Patch.Nodes.Where(n => n.TypeId == MathModules.AutoRemapTypeId).ShouldHaveSingleItem();
         editor.History.Patch.IncomingTo(remap.Id, AutoRemap.In)!.SourceNode.ShouldBe(sine.Id);
         editor.History.Patch.IncomingTo(filter.Id, 1)!.SourceNode.ShouldBe(remap.Id);
         editor.Selection.Focused.ShouldBe(remap);
@@ -109,7 +109,7 @@ public class AutoRemapInspectorTests : EditorTest
         editor.History.Undo().ShouldBeTrue();
         Settle(window);
 
-        editor.History.Patch.Nodes.ShouldNotContain(n => n.TypeId == NodeCatalog.AutoRemapTypeId);
+        editor.History.Patch.Nodes.ShouldNotContain(n => n.TypeId == MathModules.AutoRemapTypeId);
         editor.History.Patch.IncomingTo(filter.Id, 1)!.SourceNode.ShouldBe(sine.Id);
     }
 
@@ -117,8 +117,8 @@ public class AutoRemapInspectorTests : EditorTest
     public void Patching_its_output_into_a_socket_with_no_range_outlines_the_output_pair()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var sine = b.Add(NodeCatalog.SineTypeId, 40, 40);
-        var remap = b.Add(NodeCatalog.AutoRemapTypeId, 360, 40);
+        var sine = b.Add(OscillatorModules.SineTypeId, 40, 40);
+        var remap = b.Add(MathModules.AutoRemapTypeId, 360, 40);
         var add = b.Add("math.add", 700, 40);
         b.Wire(sine, 0, remap, AutoRemap.In);
 

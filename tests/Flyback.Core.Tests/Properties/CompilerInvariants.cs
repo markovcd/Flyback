@@ -66,12 +66,12 @@ public class CompilerInvariants
     [MemberData(nameof(ModuleTypeIds))]
     public void Every_module_compiles_when_wired_to_the_output(string typeId)
     {
-        if (typeId == NodeCatalog.OutputTypeId) return;
+        if (typeId == OutputModule.TypeId) return;
 
         var def = NodeCatalog.Require(typeId);
         var builder = new PatchBuilder();
         var module = builder.Add(typeId, 0, 0);
-        var output = builder.Add(NodeCatalog.OutputTypeId, 400, 0);
+        var output = builder.Add(OutputModule.TypeId, 400, 0);
 
         if (def.Outputs.Count > 0)
             builder.Wire(module, 0, output, 0);
@@ -98,12 +98,12 @@ public class CompilerInvariants
     [MemberData(nameof(ModuleTypeIds))]
     public void Every_module_evaluates(string typeId)
     {
-        if (typeId == NodeCatalog.OutputTypeId) return;
+        if (typeId == OutputModule.TypeId) return;
 
         var def = NodeCatalog.Require(typeId);
         var builder = new PatchBuilder();
         var module = builder.Add(typeId, 0, 0);
-        var output = builder.Add(NodeCatalog.OutputTypeId, 400, 0);
+        var output = builder.Add(OutputModule.TypeId, 400, 0);
 
         if (def.Outputs.Count > 0) builder.Wire(module, 0, output, 0);
 
@@ -209,8 +209,8 @@ public class CompilerInvariants
             previous = next;
         }
 
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
-        b.Wire(previous, 0, sink, NodeCatalog.OutputLeftPort);
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
+        b.Wire(previous, 0, sink, OutputModule.LeftPort);
 
         return b.Patch;
     }

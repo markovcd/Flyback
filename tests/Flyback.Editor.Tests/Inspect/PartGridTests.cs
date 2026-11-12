@@ -16,7 +16,7 @@ public class PartGridTests : EditorTest
 {
     private Window Showing(out NodeInstance node, out List<string?> changes)
     {
-        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId);
+        var def = NodeCatalog.BuiltIn.Require(SequencerModules.ArrangementTypeId);
         node = NodeInstance.Create(def, 0, 0);
 
         var said = new List<string?>();
@@ -43,7 +43,7 @@ public class PartGridTests : EditorTest
     [AvaloniaFact]
     public void A_level_is_shaded_the_same_whatever_else_its_part_holds()
     {
-        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId);
+        var def = NodeCatalog.BuiltIn.Require(SequencerModules.ArrangementTypeId);
 
         Avalonia.Media.Color ShadeOf(params float[] levels)
         {
@@ -111,7 +111,7 @@ public class PartGridTests : EditorTest
     [AvaloniaFact]
     public void Clicking_a_cell_switches_it_off_and_back_on_at_the_parts_level()
     {
-        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId);
+        var def = NodeCatalog.BuiltIn.Require(SequencerModules.ArrangementTypeId);
         var node = NodeInstance.Create(def, 0, 0);
         var changes = new List<string?>();
 
@@ -134,7 +134,7 @@ public class PartGridTests : EditorTest
     [AvaloniaFact]
     public void Double_clicking_a_cell_makes_its_level_glide_and_again_hold()
     {
-        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId);
+        var def = NodeCatalog.BuiltIn.Require(SequencerModules.ArrangementTypeId);
         var node = NodeInstance.Create(def, 0, 0);
         var changes = new List<string?>();
 
@@ -155,7 +155,7 @@ public class PartGridTests : EditorTest
     [AvaloniaFact]
     public void Dragging_a_cell_turns_its_level_up_and_down_holding_at_nought_on_the_way()
     {
-        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId);
+        var def = NodeCatalog.BuiltIn.Require(SequencerModules.ArrangementTypeId);
         var node = NodeInstance.Create(def, 0, 0);
         var changes = new List<string?>();
 
@@ -184,7 +184,7 @@ public class PartGridTests : EditorTest
     [AvaloniaFact]
     public void A_drag_tells_the_patch_once_when_it_is_let_go()
     {
-        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId);
+        var def = NodeCatalog.BuiltIn.Require(SequencerModules.ArrangementTypeId);
         var node = NodeInstance.Create(def, 0, 0);
         var changes = new List<string?>();
 
@@ -213,7 +213,7 @@ public class PartGridTests : EditorTest
     [AvaloniaFact]
     public void A_held_pointer_turns_a_level_all_the_way_on_a_short_stretch()
     {
-        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId);
+        var def = NodeCatalog.BuiltIn.Require(SequencerModules.ArrangementTypeId);
         var node = NodeInstance.Create(def, 0, 0);
         var anchor = new Anchor();
 
@@ -244,7 +244,7 @@ public class PartGridTests : EditorTest
     [AvaloniaFact]
     public void A_finger_that_wobbles_while_tapping_a_cell_still_switches_it()
     {
-        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId);
+        var def = NodeCatalog.BuiltIn.Require(SequencerModules.ArrangementTypeId);
         var node = NodeInstance.Create(def, 0, 0);
 
         ArrangementExtra.Set(node, [[new PartLevel(0.8f), new PartLevel(0.5f)]]);
@@ -258,7 +258,7 @@ public class PartGridTests : EditorTest
     [AvaloniaFact]
     public void A_finger_swiping_up_over_a_cell_leaves_its_level_to_the_scroll()
     {
-        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId);
+        var def = NodeCatalog.BuiltIn.Require(SequencerModules.ArrangementTypeId);
         var node = NodeInstance.Create(def, 0, 0);
         var changes = new List<string?>();
 
@@ -276,7 +276,7 @@ public class PartGridTests : EditorTest
     [AvaloniaFact]
     public void A_finger_sliding_right_along_a_cell_turns_its_level_up()
     {
-        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId);
+        var def = NodeCatalog.BuiltIn.Require(SequencerModules.ArrangementTypeId);
         var node = NodeInstance.Create(def, 0, 0);
 
         ArrangementExtra.Set(node, [[new PartLevel(0.5f), new PartLevel(0.5f)]]);

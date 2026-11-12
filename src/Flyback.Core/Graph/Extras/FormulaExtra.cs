@@ -52,6 +52,6 @@ public sealed record FormulaExtra(IReadOnlyDictionary<string, NodeDef> Functions
     private static readonly ExtraField.Text FieldOf = new ExtraField.Text(FormulaField, "formula", Fresh)
     {
         Help = "The formula over 'a' to 'd', as typed. One that does not read gives 0.",
-        Problem = NodeCatalog.FormulaProblem,
+        Problem = MathModules.FormulaProblem,
     };
 }

@@ -24,7 +24,7 @@ public class FingersTests : EditorTest
 
         clock = builder.Add("time", 100, 100);
         sine = builder.Add("osc.sine", 500, 100);
-        builder.Add(NodeCatalog.OutputTypeId, 900, 100);
+        builder.Add(OutputModule.TypeId, 900, 100);
 
         return builder.Patch;
     }

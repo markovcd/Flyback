@@ -28,10 +28,10 @@ public class StageKnobTests : EditorTest
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 700, 40);
+        var output = b.Add(OutputModule.TypeId, 700, 40);
         var value = b.Add("value", 200, 40, (0, 0.2f));
 
-        b.Wire(value, 0, output, NodeCatalog.OutputColorPort);
+        b.Wire(value, 0, output, OutputModule.ColorPort);
 
         if (!knob) return (b.Patch, null);
 

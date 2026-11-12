@@ -640,9 +640,9 @@ public class ShapesTests
         var patch = new Patch();
 
         var shape = Add(patch, typeId, knobs);
-        var sink = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = Add(patch, OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
-        patch.Connect(shape.Id, 0, sink.Id, NodeCatalog.OutputLeftPort);
+        patch.Connect(shape.Id, 0, sink.Id, OutputModule.LeftPort);
 
         return new Reading(patch.CompileForAudio(Catalog).Program);
     }
@@ -656,10 +656,10 @@ public class ShapesTests
         // that a knob cannot stand in for.
         var coord = Add(patch, "coord");
         var fill = Add(patch, FillType, knobs);
-        var screen = Add(patch, NodeCatalog.OutputTypeId);
+        var screen = Add(patch, OutputModule.TypeId);
 
         patch.Connect(coord.Id, 0, fill.Id, 0);
-        patch.Connect(fill.Id, port, screen.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(fill.Id, port, screen.Id, OutputModule.ColorPort);
 
         var reading = new Reading(patch.CompileForVideo(Catalog).Program);
 
@@ -677,10 +677,10 @@ public class ShapesTests
 
         var combine = Add(patch, CombineType, (0, a), (1, b), (2, smoothness));
         var channels = Add(patch, "color.rgb");
-        var screen = Add(patch, NodeCatalog.OutputTypeId);
+        var screen = Add(patch, OutputModule.TypeId);
 
         for (var port = 0; port < 3; port++) patch.Connect(combine.Id, port, channels.Id, port);
-        patch.Connect(channels.Id, 0, screen.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(channels.Id, 0, screen.Id, OutputModule.ColorPort);
 
         var program = patch.CompileForVideo(Catalog).Program;
         var registers = program.AllocateRegisters();
@@ -695,9 +695,9 @@ public class ShapesTests
         var patch = new Patch();
 
         var shape = Add(patch, typeId, knobs);
-        var screen = Add(patch, NodeCatalog.OutputTypeId);
+        var screen = Add(patch, OutputModule.TypeId);
 
-        patch.Connect(shape.Id, port, screen.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(shape.Id, port, screen.Id, OutputModule.ColorPort);
 
         return patch.CompileForVideo(Catalog).Program;
     }

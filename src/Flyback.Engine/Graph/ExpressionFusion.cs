@@ -46,7 +46,7 @@ internal static class ExpressionFusion
     /// </summary>
     public static bool Retired(NodeDef def) =>
         def.TypeId.StartsWith("math.", StringComparison.Ordinal)
-        && def.TypeId != NodeCatalog.ExpressionTypeId
+        && def.TypeId != MathModules.ExpressionTypeId
         && def.Inputs.Count <= MostInputs
         && def.Outputs.Count == 1
         && def.Extras.Count == 0;
@@ -72,7 +72,7 @@ internal static class ExpressionFusion
     /// </summary>
     public static NodeInstance? Standing(NodeDef retired, ModuleCatalog modules, double x, double y)
     {
-        if (!Retired(retired) || modules.Get(NodeCatalog.ExpressionTypeId) is not { } expression) return null;
+        if (!Retired(retired) || modules.Get(MathModules.ExpressionTypeId) is not { } expression) return null;
 
         var node = NodeInstance.Create(expression, x, y);
         node.SetState(FormulaExtra.StateKey, new JsonObject { [FormulaExtra.FormulaField] = Template(retired) });
@@ -91,7 +91,7 @@ internal static class ExpressionFusion
     /// </summary>
     internal static Patch Fuse(Patch patch, ModuleCatalog modules, Dictionary<Guid, Guid>? into)
     {
-        if (modules.Get(NodeCatalog.ExpressionTypeId) is { } expression
+        if (modules.Get(MathModules.ExpressionTypeId) is { } expression
             && expression.Extra<FormulaExtra>() is { } extra)
         {
             new Pass(patch, modules, expression, extra).Run(into);
@@ -126,7 +126,7 @@ internal static class ExpressionFusion
 
                 // An Expression nothing folded into is left as it was written, and what
                 // it turned away is folded on its own.
-                if (root.TypeId == NodeCatalog.ExpressionTypeId && branch.Taken.Count == 0)
+                if (root.TypeId == MathModules.ExpressionTypeId && branch.Taken.Count == 0)
                 {
                     foreach (var node in branch.Left) roots.Enqueue(node);
                     continue;
@@ -170,7 +170,7 @@ internal static class ExpressionFusion
         private bool Candidate(NodeInstance node) =>
             !node.Off
             && node.InputValues.All(float.IsFinite)
-            && (node.TypeId == NodeCatalog.ExpressionTypeId
+            && (node.TypeId == MathModules.ExpressionTypeId
                 ? FormulaOf(node) is not null
                     && Reads(node, expression.Inputs.Count) is var reads
                     && !patch.Connections.Any(c => c.TargetNode == node.Id && reads[c.TargetPort] == 0)
@@ -210,7 +210,7 @@ internal static class ExpressionFusion
         /// </summary>
         private Branch Grow(NodeInstance node)
         {
-            var count = node.TypeId == NodeCatalog.ExpressionTypeId
+            var count = node.TypeId == MathModules.ExpressionTypeId
                 ? expression.Inputs.Count
                 : modules.Require(node.TypeId).Inputs.Count;
 
@@ -327,7 +327,7 @@ internal static class ExpressionFusion
         /// <summary>A node's value built from what each of its inputs is read as.</summary>
         private Term Build(NodeInstance node, Func<int, Term> input)
         {
-            if (node.TypeId != NodeCatalog.ExpressionTypeId)
+            if (node.TypeId != MathModules.ExpressionTypeId)
                 return Make(node.TypeId, [.. Enumerable.Range(0, modules.Require(node.TypeId).Inputs.Count).Select(input)]);
 
             return FormulaOf(node)!.Walk(
@@ -341,7 +341,7 @@ internal static class ExpressionFusion
         {
             var reads = new int[count];
 
-            if (node.TypeId != NodeCatalog.ExpressionTypeId)
+            if (node.TypeId != MathModules.ExpressionTypeId)
             {
                 Array.Fill(reads, 1);
                 return reads;

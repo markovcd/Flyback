@@ -75,11 +75,11 @@ public class WidthTests
     public void On_the_picture_width_still_works()
     {
         var b = new PatchBuilder(Catalog);
-        var coord = b.Add(NodeCatalog.CoordTypeId);
+        var coord = b.Add(SourceModules.CoordTypeId);
         var width = b.Add(Type, (Width, 0f), (MonoBelow, 200f));
-        var sink = b.Add(NodeCatalog.OutputTypeId);
+        var sink = b.Add(OutputModule.TypeId);
 
-        b.Wire(coord, 0, width, 0).Wire(coord, 1, width, 1).Wire(width, 0, sink, NodeCatalog.OutputColorPort);
+        b.Wire(coord, 0, width, 0).Wire(coord, 1, width, 1).Wire(width, 0, sink, OutputModule.ColorPort);
 
         var program = b.Patch.CompileForVideo(Catalog).Program;
         var registers = program.AllocateRegisters();

@@ -45,9 +45,9 @@ public class SavedGroupTests : EditorTest
 
         var time = b.Add("time", 40, 200);
         var osc = b.Add("osc.sine", 300, 60);
-        var screen = b.Add(NodeCatalog.OutputTypeId, 900, 200);
+        var screen = b.Add(OutputModule.TypeId, 900, 200);
 
-        b.Wire(time, 0, osc, 1).Wire(osc, 0, screen, NodeCatalog.OutputLeftPort);
+        b.Wire(time, 0, osc, 1).Wire(osc, 0, screen, OutputModule.LeftPort);
 
         var window = NewMainWindow(new EditorSetup { Folders = new() { GroupFolder = folder } });
 

@@ -116,9 +116,9 @@ public class FmTests
         var b = new PatchBuilder(Catalog);
         var level = b.Add("coord");
         var bell = b.Add("flyback.voice.bell", (FreqPort, 277.2f), (3, ratio), (4, index));
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
-        b.Wire(level, 0, bell, LevelPort).Wire(bell, 0, sink, NodeCatalog.OutputLeftPort);
+        b.Wire(level, 0, bell, LevelPort).Wire(bell, 0, sink, OutputModule.LeftPort);
 
         var envelope = Falling(Rate / 2);
 
@@ -142,9 +142,9 @@ public class FmTests
         var coord = b.Add("coord");
         var fm = b.Add(FmType, knobs);
         fm.SetState("fm", new JsonObject { ["algorithm"] = algorithm });
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
-        b.Wire(coord, 0, fm, LevelPort).Wire(fm, 0, sink, NodeCatalog.OutputLeftPort);
+        b.Wire(coord, 0, fm, LevelPort).Wire(fm, 0, sink, OutputModule.LeftPort);
 
         return Interpreted.Run(b.Patch, level);
     }

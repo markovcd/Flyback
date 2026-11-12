@@ -27,8 +27,8 @@ public class InstrumentScaffoldTests
     {
         var fragment = InstrumentScaffold.Build(Device, Syntakt());
 
-        fragment.Nodes.Count(node => node.TypeId == NodeCatalog.ClockTypeId).ShouldBe(1);
-        fragment.Nodes.Count(node => node.TypeId == NodeCatalog.MidiTypeId).ShouldBe(13);
+        fragment.Nodes.Count(node => node.TypeId == MidiModules.ClockTypeId).ShouldBe(1);
+        fragment.Nodes.Count(node => node.TypeId == MidiModules.MidiTypeId).ShouldBe(13);
         fragment.Connections.ShouldBeEmpty();
     }
 
@@ -47,7 +47,7 @@ public class InstrumentScaffoldTests
             state.Number(MidiExtra.ChannelField).ShouldBe(track.Channel);
         }
 
-        var clock = fragment.Nodes.Single(node => node.TypeId == NodeCatalog.ClockTypeId);
+        var clock = fragment.Nodes.Single(node => node.TypeId == MidiModules.ClockTypeId);
         new ExtraState(new MidiClockExtra().Fields, clock.StateOf(MidiClockExtra.StateKey)).Chosen(MidiClockExtra.DeviceField).ShouldBe(Device);
     }
 
@@ -95,7 +95,7 @@ public class InstrumentScaffoldTests
 
         var fragment = InstrumentScaffold.Build("midi:keys", keyboard);
 
-        fragment.Nodes.Select(node => node.TypeId).ShouldBe([NodeCatalog.MidiTypeId]);
+        fragment.Nodes.Select(node => node.TypeId).ShouldBe([MidiModules.MidiTypeId]);
     }
 
     /// <summary>What lands compiles as it is, so the first sound is one wire away.</summary>
@@ -104,12 +104,12 @@ public class InstrumentScaffoldTests
     {
         var fragment = InstrumentScaffold.Build(Device, Syntakt());
         var patch = new PatchBuilder(NodeCatalog.BuiltIn);
-        var output = patch.Add(NodeCatalog.OutputTypeId, 400, 0);
+        var output = patch.Add(OutputModule.TypeId, 400, 0);
 
         PatchClipboard.Paste(patch.Patch, fragment);
 
         var track = patch.Patch.Nodes.Single(node => node.Name == "Track 1");
-        patch.Patch.Connect(track.Id, 1, output.Id, NodeCatalog.OutputLeftPort);
+        patch.Patch.Connect(track.Id, 1, output.Id, OutputModule.LeftPort);
 
         patch.Patch.CompileForAudio(NodeCatalog.BuiltIn).Issues.ShouldAllBe(issue => issue.Severity != IssueSeverity.Error);
     }

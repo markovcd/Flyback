@@ -14,7 +14,7 @@ public class ChordTests
     [Fact]
     public void A_chord_is_a_pitch_module_with_four_frequencies()
     {
-        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ChordTypeId);
+        var def = NodeCatalog.BuiltIn.Require(ChordModules.ChordTypeId);
 
         def.Name.ShouldBe("Chord");
         def.Category.ShouldBe(ModuleCategories.Pitch);
@@ -28,7 +28,7 @@ public class ChordTests
     [InlineData(0f, "5th")]
     [InlineData(99f, "7sus4")]
     public void The_chord_knob_says_which_chord_it_picks(float value, string shown) =>
-        NodeCatalog.BuiltIn.Require(NodeCatalog.ChordTypeId).Inputs[1].Format(value).ShouldBe(shown);
+        NodeCatalog.BuiltIn.Require(ChordModules.ChordTypeId).Inputs[1].Format(value).ShouldBe(shown);
 
     [Fact]
     public void Every_chord_plays_its_four_notes_above_the_root()
@@ -37,7 +37,7 @@ public class ChordTests
         {
             var picked = index;
 
-            Heard(b => b.Add(NodeCatalog.ChordTypeId, (0, 57f), (1, picked)), 0).ShouldBe(Notes(57, Chords.Voiced(index)), 1e-3, Chords.All[index].Name);
+            Heard(b => b.Add(ChordModules.ChordTypeId, (0, 57f), (1, picked)), 0).ShouldBe(Notes(57, Chords.Voiced(index)), 1e-3, Chords.All[index].Name);
         }
     }
 
@@ -58,7 +58,7 @@ public class ChordTests
     {
         Heard(b =>
         {
-            var chord = b.Add(NodeCatalog.ChordTypeId, (0, 60f));
+            var chord = b.Add(ChordModules.ChordTypeId, (0, 60f));
             b.Wire(b.Add("coord"), 0, chord, 1);
             return chord;
         }, patched).ShouldBe(Notes(60, Chords.Voiced(played)), 1e-3);
@@ -67,7 +67,7 @@ public class ChordTests
     [Fact]
     public void An_auto_chord_offers_the_modes_and_starts_in_major()
     {
-        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.AutoChordTypeId);
+        var def = NodeCatalog.BuiltIn.Require(ChordModules.AutoChordTypeId);
 
         def.Inputs.Select(p => p.Name).ShouldBe(["tonic", "root", "note"]);
         def.Outputs.Select(p => p.Name).ShouldBe(["hz1", "hz2", "hz3", "hz4"]);
@@ -110,7 +110,7 @@ public class ChordTests
     {
         Heard(b =>
         {
-            var chord = b.Add(NodeCatalog.AutoChordTypeId, (0, tonic), (1, root));
+            var chord = b.Add(ChordModules.AutoChordTypeId, (0, tonic), (1, root));
             Scaled(chord, scale);
             return chord;
         }, 0).ShouldBe(notes.Select(n => (double)Hertz.Of(n)).ToArray(), 1e-3);
@@ -123,7 +123,7 @@ public class ChordTests
         {
             var program = Compiled(b =>
             {
-                var chord = b.Add(NodeCatalog.AutoChordTypeId, (0, 62f));
+                var chord = b.Add(ChordModules.AutoChordTypeId, (0, 62f));
                 Scaled(chord, scale.Id);
                 b.Wire(b.Add("coord"), 0, chord, 1);
                 return chord;
@@ -149,7 +149,7 @@ public class ChordTests
     {
         Heard(b =>
         {
-            var chord = b.Add(NodeCatalog.AutoChordTypeId, (0, tonic), (1, root), (2, note));
+            var chord = b.Add(ChordModules.AutoChordTypeId, (0, tonic), (1, root), (2, note));
             b.Wire(b.Add("value", (0, note)), 0, chord, 2);
             Scaled(chord, scale);
             return chord;
@@ -163,7 +163,7 @@ public class ChordTests
         {
             var program = Compiled(b =>
             {
-                var chord = b.Add(NodeCatalog.AutoChordTypeId, (0, 62f));
+                var chord = b.Add(ChordModules.AutoChordTypeId, (0, 62f));
                 Scaled(chord, scale.Id);
                 b.Wire(b.Add("coord"), 0, chord, 2);
                 return chord;
@@ -193,7 +193,7 @@ public class ChordTests
     public void A_patched_root_is_rounded_to_a_step() =>
         Heard(b =>
         {
-            var chord = b.Add(NodeCatalog.AutoChordTypeId, (0, 60f));
+            var chord = b.Add(ChordModules.AutoChordTypeId, (0, 60f));
             b.Wire(b.Add("coord"), 0, chord, 1);
             return chord;
         }, 0.6).ShouldBe(Notes(60, [2, 5, 9, 12]), 1e-3);
@@ -201,7 +201,7 @@ public class ChordTests
     // --- harness -----------------------------------------------------------------
 
     private static void Scaled(NodeInstance chord, string scale) =>
-        chord.SetState(NodeCatalog.AutoChordStateKey, new JsonObject { [NodeCatalog.AutoChordScaleField] = scale });
+        chord.SetState(ChordModules.AutoChordStateKey, new JsonObject { [ChordModules.AutoChordScaleField] = scale });
 
     private static double[] Notes(int root, int[] above) =>
         [.. above.Select(n => (double)Hertz.Of(root + n))];
@@ -215,8 +215,8 @@ public class ChordTests
         {
             var b = new PatchBuilder(NodeCatalog.BuiltIn);
             var module = build(b);
-            var speakers = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
-            b.Wire(module, output, speakers, NodeCatalog.OutputLeftPort);
+            var speakers = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
+            b.Wire(module, output, speakers, OutputModule.LeftPort);
 
             var result = b.Patch.CompileForAudio(NodeCatalog.BuiltIn);
             result.HasErrors.ShouldBeFalse(string.Join("; ", result.Issues.Select(i => i.Message)));

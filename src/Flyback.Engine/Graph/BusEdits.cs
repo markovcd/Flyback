@@ -29,27 +29,27 @@ public static class BusEdits
         ArgumentNullException.ThrowIfNull(patch);
         ArgumentNullException.ThrowIfNull(send);
 
-        var from = NodeCatalog.BusOf(send);
+        var from = BusModules.BusOf(send);
 
-        NodeCatalog.PutOnBus(send, bus);
+        BusModules.PutOnBus(send, bus);
 
-        var to = NodeCatalog.BusOf(send);
+        var to = BusModules.BusOf(send);
 
-        if (send.TypeId != NodeCatalog.SendTypeId || from is null || to is null || Same(from, to)) return [];
+        if (send.TypeId != BusModules.SendTypeId || from is null || to is null || Same(from, to)) return [];
 
-        var others = patch.Nodes.Where(n => n.TypeId == NodeCatalog.SendTypeId && n.Id != send.Id).ToList();
+        var others = patch.Nodes.Where(n => n.TypeId == BusModules.SendTypeId && n.Id != send.Id).ToList();
 
         // The Send a bus is heard from is the first by id, which is Buses' rule.
-        var wasHeard = !others.Any(other => Same(NodeCatalog.BusOf(other)!, from) && other.Id.CompareTo(send.Id) < 0);
-        var lands = !others.Any(other => Same(NodeCatalog.BusOf(other)!, to));
+        var wasHeard = !others.Any(other => Same(BusModules.BusOf(other)!, from) && other.Id.CompareTo(send.Id) < 0);
+        var lands = !others.Any(other => Same(BusModules.BusOf(other)!, to));
 
         if (!wasHeard || !lands) return [];
 
         var moved = patch.Nodes
-            .Where(n => n.TypeId == NodeCatalog.ReceiveTypeId && Same(NodeCatalog.BusOf(n)!, from))
+            .Where(n => n.TypeId == BusModules.ReceiveTypeId && Same(BusModules.BusOf(n)!, from))
             .ToList();
 
-        foreach (var receive in moved) NodeCatalog.PutOnBus(receive, to);
+        foreach (var receive in moved) BusModules.PutOnBus(receive, to);
 
         return moved;
     }
@@ -70,8 +70,8 @@ public static class BusEdits
         ArgumentNullException.ThrowIfNull(arrived);
 
         var brought = arrived
-            .Where(n => n.TypeId == NodeCatalog.SendTypeId)
-            .Select(n => NodeCatalog.BusOf(n)!)
+            .Where(n => n.TypeId == BusModules.SendTypeId)
+            .Select(n => BusModules.BusOf(n)!)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
@@ -82,13 +82,13 @@ public static class BusEdits
         // Every bus either end is on, so a new name lands on nobody's.
         var taken = patch.Nodes
             .Where(n => !fresh.Contains(n.Id))
-            .Select(NodeCatalog.BusOf)
+            .Select(BusModules.BusOf)
             .OfType<string>()
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var sentOn = patch.Nodes
-            .Where(n => n.TypeId == NodeCatalog.SendTypeId && !fresh.Contains(n.Id))
-            .Select(n => NodeCatalog.BusOf(n)!)
+            .Where(n => n.TypeId == BusModules.SendTypeId && !fresh.Contains(n.Id))
+            .Select(n => BusModules.BusOf(n)!)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         foreach (var bus in brought)
@@ -100,8 +100,8 @@ public static class BusEdits
             taken.Add(own);
 
             foreach (var node in arrived)
-                if (NodeCatalog.BusOf(node) is { } on && Same(on, bus))
-                    NodeCatalog.PutOnBus(node, own);
+                if (BusModules.BusOf(node) is { } on && Same(on, bus))
+                    BusModules.PutOnBus(node, own);
         }
     }
 

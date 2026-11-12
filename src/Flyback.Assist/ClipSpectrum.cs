@@ -50,7 +50,7 @@ internal static class ClipSpectrum
     /// </remarks>
     public static string Described(ReadOnlySpan<float> samples, int sampleRate)
     {
-        var frames = samples.Length / NodeCatalog.AudioChannels;
+        var frames = samples.Length / OutputModule.AudioChannels;
         var length = 1 << BitOperations.Log2((uint)Math.Min(frames, Segment));
 
         if (length < ShortestSegment) return string.Empty;
@@ -74,18 +74,18 @@ internal static class ClipSpectrum
     /// <summary>The power in each bin, both channels averaged.</summary>
     private static double[] Power(ReadOnlySpan<float> samples, int length)
     {
-        var frames = samples.Length / NodeCatalog.AudioChannels;
+        var frames = samples.Length / OutputModule.AudioChannels;
         var power = new double[length / 2 + 1];
         var channel = new float[frames];
 
-        for (var c = 0; c < NodeCatalog.AudioChannels; c++)
+        for (var c = 0; c < OutputModule.AudioChannels; c++)
         {
-            for (var i = 0; i < frames; i++) channel[i] = samples[i * NodeCatalog.AudioChannels + c];
+            for (var i = 0; i < frames; i++) channel[i] = samples[i * OutputModule.AudioChannels + c];
 
             var amplitudes = Spectra.Amplitudes(channel, length);
 
             for (var k = 0; k < power.Length; k++)
-                power[k] += amplitudes[k] * amplitudes[k] / NodeCatalog.AudioChannels;
+                power[k] += amplitudes[k] * amplitudes[k] / OutputModule.AudioChannels;
         }
 
         return power;

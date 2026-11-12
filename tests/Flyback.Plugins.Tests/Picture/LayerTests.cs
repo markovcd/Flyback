@@ -142,13 +142,13 @@ public class LayerTests
         layer.InputValues[Amount] = amount;
         layer.SetState("layer", new JsonObject { ["mode"] = mode });
 
-        var screen = NodeInstance.Create(Catalog.Require(NodeCatalog.OutputTypeId), 0, 0);
+        var screen = NodeInstance.Create(Catalog.Require(OutputModule.TypeId), 0, 0);
 
         patch.Nodes.Add(layer);
         patch.Nodes.Add(screen);
         patch.Connect(under.Id, 0, layer.Id, 0);
         patch.Connect(over.Id, 0, layer.Id, 1);
-        patch.Connect(layer.Id, 0, screen.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(layer.Id, 0, screen.Id, OutputModule.ColorPort);
 
         return patch.CompileForVideo(Catalog).Program;
     }

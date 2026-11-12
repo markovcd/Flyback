@@ -21,8 +21,8 @@ public sealed class LineInSteps(PatchContext context)
     [Given("a Line In is patched into the speakers")]
     public void GivenALineIn()
     {
-        context.Add("line", NodeCatalog.LineInTypeId);
-        context.Add("screen", NodeCatalog.OutputTypeId);
+        context.Add("line", SourceModules.LineInTypeId);
+        context.Add("screen", OutputModule.TypeId);
         context.Wire("line", "left", "screen", "left");
         context.SetInput("screen", "volume", 1f);
     }

@@ -410,7 +410,7 @@ public class SourceViewUndoTests : SourceViewTest
         // An edit on the canvas, before the text view has ever been opened, so
         // nothing writes it into a printing on the way.
         editor.History.Patch.Remove(editor.History.Patch.Nodes
-            .First(node => node.TypeId != NodeCatalog.OutputTypeId).Id);
+            .First(node => node.TypeId != OutputModule.TypeId).Id);
 
         editor.History.Record();
         Settle(window);

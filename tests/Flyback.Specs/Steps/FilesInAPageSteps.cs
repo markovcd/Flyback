@@ -18,7 +18,7 @@ public sealed class FilesInAPageSteps(EditorDriver editor, PatchContext context,
     [Given("a MIDI File with no file chosen")]
     public void GivenAnEmptyMidiFile()
     {
-        context.Add("song", NodeCatalog.MidiFileTypeId);
+        context.Add("song", MidiModules.MidiFileTypeId);
         context.Add("screen", "output");
         context.Wire("song", "gate", "screen", "left");
         context.SetInput("screen", "volume", 1f);

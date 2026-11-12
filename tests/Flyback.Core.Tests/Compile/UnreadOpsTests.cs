@@ -133,9 +133,9 @@ public class UnreadOpsTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var coord = b.Add("coord", 0, 0);
-        var sink = b.Add(NodeCatalog.OutputTypeId, 400, 0);
+        var sink = b.Add(OutputModule.TypeId, 400, 0);
 
-        b.Wire(coord, 0, sink, NodeCatalog.OutputColorPort);
+        b.Wire(coord, 0, sink, OutputModule.ColorPort);
 
         var program = b.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program;
 

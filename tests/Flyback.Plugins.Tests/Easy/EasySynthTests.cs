@@ -164,12 +164,12 @@ public class EasySynthTests
     public void With_glide_a_new_note_slides_in()
     {
         var b = new PatchBuilder(Catalog);
-        var step = b.Add(NodeCatalog.SawTypeId, (1, 1f), (3, 6f), (4, 63f));
+        var step = b.Add(OscillatorModules.SawTypeId, (1, 1f), (3, 6f), (4, 63f));
         var synth = Configure(b.Add(Synth, (Glide, 0.5f)), ("wave", "sine"), ("filter", "off"));
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var output = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
         // Up from 57 to 69 over each second, then straight back down.
-        b.Wire(step, 0, synth, Pitch).Wire(synth, Left, output, NodeCatalog.OutputLeftPort);
+        b.Wire(step, 0, synth, Pitch).Wire(synth, Left, output, OutputModule.LeftPort);
 
         var (left, _) = Played(b.Build(), 1.2);
 
@@ -200,7 +200,7 @@ public class EasySynthTests
         var node = Module();
         node.InputValues[Gate] = 1f;
 
-        var program = Wired(node, Env, NodeCatalog.OutputColorPort).CompileForVideo(Catalog).Program;
+        var program = Wired(node, Env, OutputModule.ColorPort).CompileForVideo(Catalog).Program;
         var registers = program.AllocateRegisters();
 
         program.Evaluate(0.3, -0.2, 1.5, registers, default);
@@ -212,7 +212,7 @@ public class EasySynthTests
     [MemberData(nameof(EveryWaveAndFilter))]
     public void Every_wave_lowers_to_the_screen(string wave, string filter)
     {
-        var program = Wired(Module(("wave", wave), ("filter", filter), ("lfo2_shape", "random")), Left, NodeCatalog.OutputColorPort)
+        var program = Wired(Module(("wave", wave), ("filter", filter), ("lfo2_shape", "random")), Left, OutputModule.ColorPort)
             .CompileForVideo(Catalog).Program;
 
         foreach (var dialect in Enum.GetValues<GlslDialect>())
@@ -237,7 +237,7 @@ public class EasySynthTests
         var b = new PatchBuilder(Catalog);
         b.Patch.Nodes.Add(node);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var output = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
         b.Wire(node, port, output, into);
 
         return b.Build();
@@ -249,8 +249,8 @@ public class EasySynthTests
         var b = new PatchBuilder(Catalog);
         b.Patch.Nodes.Add(node);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
-        b.Wire(node, port, output, NodeCatalog.OutputLeftPort).Wire(node, Right, output, NodeCatalog.OutputRightPort);
+        var output = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
+        b.Wire(node, port, output, OutputModule.LeftPort).Wire(node, Right, output, OutputModule.RightPort);
 
         return Played(b.Build(), seconds);
     }

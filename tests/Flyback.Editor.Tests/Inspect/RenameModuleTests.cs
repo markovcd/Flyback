@@ -31,8 +31,8 @@ public class RenameModuleTests : EditorTest
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
         var osc = b.Add("osc.sine", 360, 40);
-        var screen = b.Add(NodeCatalog.OutputTypeId, 700, 40);
-        b.Wire(osc, 0, screen, NodeCatalog.OutputColorPort);
+        var screen = b.Add(OutputModule.TypeId, 700, 40);
+        b.Wire(osc, 0, screen, OutputModule.ColorPort);
 
         var window = NewMainWindow();
 

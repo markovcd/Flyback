@@ -305,11 +305,11 @@ public sealed class DrivenBenchTests
     private (NodeInstance Lfo, int Freq) Drawn()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var output = b.Add(NodeCatalog.OutputTypeId, 600, 0);
+        var output = b.Add(OutputModule.TypeId, 600, 0);
         var lfo = b.Add("osc.sine", 0, 0);
         var saw = b.Add("osc.saw", 0, 200);
-        b.Wire(lfo, 0, output, NodeCatalog.OutputLeftPort);
-        b.Wire(saw, 0, output, NodeCatalog.OutputLeftPort + 1);
+        b.Wire(lfo, 0, output, OutputModule.LeftPort);
+        b.Wire(saw, 0, output, OutputModule.LeftPort + 1);
         editor.Current = b.Patch;
 
         var freq = NodeCatalog.BuiltIn.All.First(def => def.TypeId == "osc.sine").Inputs.ToList().FindIndex(port => port.Name == "freq");

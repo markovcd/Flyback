@@ -34,7 +34,7 @@ internal static class KeptModules
             ids.TryAdd(id, old.Id);
         }
 
-        if (built.FirstOf(NodeCatalog.OutputTypeId) is { } output && was.FirstOf(NodeCatalog.OutputTypeId) is { } before)
+        if (built.FirstOf(OutputModule.TypeId) is { } output && was.FirstOf(OutputModule.TypeId) is { } before)
             ids.TryAdd(output.Id, before.Id);
 
         // An old id the rebuild already gave to some other module stays with that one.

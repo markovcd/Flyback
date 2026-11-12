@@ -12,7 +12,7 @@ public class VoiceCountsTests
 {
     private static NodeInstance Voice(PatchBuilder b, int count)
     {
-        var node = b.Add(NodeCatalog.VoiceTypeId, 0, 0);
+        var node = b.Add(PolyphonyModules.VoiceTypeId, 0, 0);
 
         node.SetState("voices", new JsonObject { ["voices"] = (float)count });
         return node;
@@ -24,7 +24,7 @@ public class VoiceCountsTests
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var voice = Voice(b, 4);
         var add = b.Add("math.add", 0, 0);
-        var merge = b.Add(NodeCatalog.MergeTypeId, 0, 0);
+        var merge = b.Add(PolyphonyModules.MergeTypeId, 0, 0);
         var after = b.Add("math.mul", 0, 0);
         var aside = b.Add("math.sub", 0, 0);
 
@@ -57,7 +57,7 @@ public class VoiceCountsTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var voice = Voice(b, 3);
-        var merge = b.Add(NodeCatalog.MergeTypeId, 0, 0);
+        var merge = b.Add(PolyphonyModules.MergeTypeId, 0, 0);
         var after = b.Add("math.mul", 0, 0);
 
         merge.Off = true;
@@ -87,7 +87,7 @@ public class VoiceCountsTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var voice = Voice(b, 4);
-        var scope = b.Add(NodeCatalog.ScopeTypeId, 0, 0);
+        var scope = b.Add(ChartModules.ScopeTypeId, 0, 0);
 
         b.Wire(voice, 0, scope, 0);
 

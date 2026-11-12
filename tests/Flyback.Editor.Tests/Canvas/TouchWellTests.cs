@@ -23,7 +23,7 @@ public class TouchWellTests : EditorTest
     private (NodeEditor Editor, NodeInstance Sine, int Freq) Board()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        var sine = builder.Add(NodeCatalog.SineTypeId, 300, 200);
+        var sine = builder.Add(OscillatorModules.SineTypeId, 300, 200);
         var freq = NodeCatalog.Get(sine.TypeId)!.Inputs.ToList().FindIndex(port => port.Name == "freq");
         (var editor, window) = Editing(builder.Patch);
 

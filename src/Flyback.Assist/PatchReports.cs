@@ -64,7 +64,7 @@ internal sealed class PatchReports(WorkingPatch bench)
     public string Unnamed() => bench.Source is not { } source
         ? string.Empty
         : string.Join(", ", bench.Patch.Nodes
-            .Where(node => node.TypeId != NodeCatalog.OutputTypeId)
+            .Where(node => node.TypeId != OutputModule.TypeId)
             .Select(bench.Handle)
             .Where(handle => !Regex.IsMatch(source, $@"\blet\s+{Regex.Escape(handle)}\b", RegexOptions.IgnoreCase)));
 

@@ -80,7 +80,7 @@ internal static class ModulesCommand
             new Credentials(stores.Preferred),
             new ModelStore(modelsRoot ?? ModelStore.DefaultRoot));
 
-        var candidates = catalog.All.Where(d => !NodeCatalog.IsSink(d.TypeId) && !ExpressionFusion.Retired(d)).ToList();
+        var candidates = catalog.All.Where(d => !OutputModule.IsSink(d.TypeId) && !ExpressionFusion.Retired(d)).ToList();
         var spelled = candidates.Where(d => ModuleFinder.Spelled(d, phrase)).ToList();
 
         // What the phrase spells is sure and needs no model, so it leads; the model ranks the rest.

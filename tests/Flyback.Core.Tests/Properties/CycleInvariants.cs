@@ -146,13 +146,13 @@ public class CycleInvariants
         var sine = b.Add("osc.sine", 200, 0);
         var depth = b.Add("value", 200, 200, (0, index));
         var gain = b.Add("math.mul", 400, 100);
-        var sink = b.Add(NodeCatalog.OutputTypeId, 800, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = b.Add(OutputModule.TypeId, 800, 0, (OutputModule.VolumePort, 1f));
 
         b.Wire(time, 0, sine, 0)
          .Wire(sine, 0, gain, 0)
          .Wire(depth, 0, gain, 1)
          .Wire(gain, 0, sine, 2)
-         .Wire(sine, 0, sink, NodeCatalog.OutputLeftPort);
+         .Wire(sine, 0, sink, OutputModule.LeftPort);
 
         return b.Patch;
     }
@@ -180,12 +180,12 @@ public class CycleInvariants
         var coord = b.Add("coord", 0, 0);
         var add = b.Add("math.add", 200, 0);
         var half = b.Add("math.mul", 400, 0, (1, 0.5f));
-        var sink = b.Add(NodeCatalog.OutputTypeId, 600, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = b.Add(OutputModule.TypeId, 600, 0, (OutputModule.VolumePort, 1f));
 
         b.Wire(coord, 0, add, 0)
          .Wire(add, 0, half, 0)
          .Wire(half, 0, add, 1)
-         .Wire(add, 0, sink, NodeCatalog.OutputLeftPort);
+         .Wire(add, 0, sink, OutputModule.LeftPort);
 
         var result = b.Patch.CompileForAudio();
 
@@ -217,14 +217,14 @@ public class CycleInvariants
         var half = b.Add("math.mul", 200, 0, (1, 0.5f));
         var second = b.Add("math.add", 400, 0);
         var third = b.Add("math.mul", 600, 0, (1, 0.25f));
-        var sink = b.Add(NodeCatalog.OutputTypeId, 800, 0);
+        var sink = b.Add(OutputModule.TypeId, 800, 0);
 
         b.Wire(first, 0, half, 0)
          .Wire(half, 0, first, 1)
          .Wire(half, 0, second, 0)
          .Wire(second, 0, third, 0)
          .Wire(third, 0, second, 1)
-         .Wire(second, 0, sink, NodeCatalog.OutputLeftPort);
+         .Wire(second, 0, sink, OutputModule.LeftPort);
 
         var result = b.Patch.CompileForAudio();
 
@@ -250,10 +250,10 @@ public class CycleInvariants
         var b = new PatchBuilder();
 
         var add = b.Add("math.add", 200, 0, (1, 0.25f));
-        var sink = b.Add(NodeCatalog.OutputTypeId, 400, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = b.Add(OutputModule.TypeId, 400, 0, (OutputModule.VolumePort, 1f));
 
         b.Wire(add, 0, add, 0)
-         .Wire(add, 0, sink, NodeCatalog.OutputLeftPort);
+         .Wire(add, 0, sink, OutputModule.LeftPort);
 
         var result = b.Patch.CompileForAudio();
 
@@ -278,7 +278,7 @@ public class CycleInvariants
         var sum = b.Add("math.add", 400, 0);
         var half = b.Add("math.mul", 200, 0, (1, 0.5f));
         var quarter = b.Add("math.mul", 200, 200, (1, 0.25f));
-        var sink = b.Add(NodeCatalog.OutputTypeId, 600, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = b.Add(OutputModule.TypeId, 600, 0, (OutputModule.VolumePort, 1f));
 
         // Two rings off one module, each closed by a wire out of the same socket:
         // what the Add produced last time, taken twice and scaled differently.
@@ -286,7 +286,7 @@ public class CycleInvariants
          .Wire(quarter, 0, sum, 1)
          .Wire(sum, 0, half, 0)
          .Wire(sum, 0, quarter, 0)
-         .Wire(sum, 0, sink, NodeCatalog.OutputLeftPort);
+         .Wire(sum, 0, sink, OutputModule.LeftPort);
 
         var program = b.Patch.CompileForAudio().Program;
 

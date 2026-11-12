@@ -86,8 +86,8 @@ public class NodeBoundsTests
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
         var sine = b.Add("osc.sine", 40, 20);
-        var screen = b.Add(NodeCatalog.OutputTypeId, 400, 20);
-        b.Wire(sine, 0, screen, NodeCatalog.OutputColorPort);
+        var screen = b.Add(OutputModule.TypeId, 400, 20);
+        b.Wire(sine, 0, screen, OutputModule.ColorPort);
 
         // Straight into the JSON, the way a hand-edited file would arrive: the
         // object cannot be made to hold this, so the text has to be.

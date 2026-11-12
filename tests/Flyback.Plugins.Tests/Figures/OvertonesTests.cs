@@ -29,7 +29,7 @@ public class OvertonesTests
     [Fact]
     public void A_dark_picture_is_a_silent_tone()
     {
-        Heard(Wired(Overtones, Out, NodeCatalog.OutputLeftPort, triggerPort: null), new float[Rate / 20]).ShouldAllBe(s => s == 0f);
+        Heard(Wired(Overtones, Out, OutputModule.LeftPort, triggerPort: null), new float[Rate / 20]).ShouldAllBe(s => s == 0f);
     }
 
     /// <summary>Coordinates' y into 'spectrum': y is one at the top of the screen, so only the top row hears anything.</summary>
@@ -49,11 +49,11 @@ public class OvertonesTests
     public void Each_partial_is_another_copy_of_what_feeds_it()
     {
         var b = new PatchBuilder(Catalog);
-        var clouds = b.Add(NodeCatalog.CloudsTypeId);
+        var clouds = b.Add(PatternModules.CloudsTypeId);
         var overtones = b.Add(Overtones);
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var output = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
-        b.Wire(clouds, 0, overtones, Spectrum).Wire(overtones, Out, output, NodeCatalog.OutputLeftPort);
+        b.Wire(clouds, 0, overtones, Spectrum).Wire(overtones, Out, output, OutputModule.LeftPort);
 
         var program = b.Patch.CompileForAudio(Catalog).Program;
 
@@ -66,11 +66,11 @@ public class OvertonesTests
     public void What_reads_no_place_is_lowered_once_however_many_partials_read_it()
     {
         var b = new PatchBuilder(Catalog);
-        var sine = b.Add(NodeCatalog.SineTypeId, (1, 0.5f));
+        var sine = b.Add(OscillatorModules.SineTypeId, (1, 0.5f));
         var overtones = b.Add(Overtones);
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var output = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
-        b.Wire(sine, 0, overtones, Spectrum).Wire(overtones, Out, output, NodeCatalog.OutputLeftPort);
+        b.Wire(sine, 0, overtones, Spectrum).Wire(overtones, Out, output, OutputModule.LeftPort);
 
         var program = b.Patch.CompileForAudio(Catalog).Program;
 
@@ -85,14 +85,14 @@ public class OvertonesTests
     public void The_bars_stand_on_the_floor_as_tall_as_the_readings()
     {
         var b = new PatchBuilder(Catalog);
-        var coord = b.Add(NodeCatalog.CoordTypeId);
+        var coord = b.Add(SourceModules.CoordTypeId);
         var dimmed = b.Add("math.mul", (1, 0.3f));
         var overtones = b.Add(Overtones);
-        var output = b.Add(NodeCatalog.OutputTypeId);
+        var output = b.Add(OutputModule.TypeId);
 
-        b.Wire(coord, NodeCatalog.CoordXPort, dimmed, 0)
+        b.Wire(coord, SourceModules.CoordXPort, dimmed, 0)
          .Wire(dimmed, 0, overtones, Spectrum)
-         .Wire(overtones, Bars, output, NodeCatalog.OutputColorPort);
+         .Wire(overtones, Bars, output, OutputModule.ColorPort);
 
         var pixel = new Pixel(b.Patch);
         var lastBin = 16d / 9d * (1d - 1d / 16d);
@@ -103,9 +103,9 @@ public class OvertonesTests
     }
 
     [Theory]
-    [InlineData(NodeCatalog.OutputLeftPort, Out)]
-    [InlineData(NodeCatalog.OutputColorPort, Bars)]
-    [InlineData(NodeCatalog.OutputColorPort, Wave)]
+    [InlineData(OutputModule.LeftPort, Out)]
+    [InlineData(OutputModule.ColorPort, Bars)]
+    [InlineData(OutputModule.ColorPort, Wave)]
     public void Every_output_survives_to_the_shader(int into, int from)
     {
         var program = ReadingY((Row, 0.5f), from, into).CompileForVideo(Catalog).Program;
@@ -114,14 +114,14 @@ public class OvertonesTests
         LowersToEveryDialect(program);
     }
 
-    private static Patch ReadingY((int Port, float Value) knob, int from = Out, int into = NodeCatalog.OutputLeftPort)
+    private static Patch ReadingY((int Port, float Value) knob, int from = Out, int into = OutputModule.LeftPort)
     {
         var b = new PatchBuilder(Catalog);
-        var coord = b.Add(NodeCatalog.CoordTypeId);
+        var coord = b.Add(SourceModules.CoordTypeId);
         var overtones = b.Add(Overtones, knob);
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var output = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
-        b.Wire(coord, NodeCatalog.CoordYPort, overtones, Spectrum).Wire(overtones, from, output, into);
+        b.Wire(coord, SourceModules.CoordYPort, overtones, Spectrum).Wire(overtones, from, output, into);
 
         return b.Patch;
     }

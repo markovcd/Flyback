@@ -32,7 +32,7 @@ public sealed record StepsExtra(StepSpec Spec) : NodeExtra
 
     /// <inheritdoc/>
     public override string Announce() =>
-        $"  notes  a list of up to {NodeCatalog.MaxSteps} — not knobs";
+        $"  notes  a list of up to {SequencerModules.MaxSteps} — not knobs";
 
     /// <inheritdoc/>
     public override string Help => "The steps it plays in turn: add, remove and reorder them here.";

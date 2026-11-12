@@ -156,9 +156,9 @@ public class SpeakTests
         var b = new PatchBuilder(Catalog);
         var speak = b.Add(SpeakType, [.. knobs.Select(k => (def.Inputs.ToList().FindIndex(p => p.Name == k.Port), k.Value))]);
         speak.SetState("speak", state);
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
-        b.Wire(speak, output, sink, NodeCatalog.OutputLeftPort);
+        b.Wire(speak, output, sink, OutputModule.LeftPort);
 
         return Interpreted.Run(b.Patch, new float[Rate * seconds], lowered: true);
     }

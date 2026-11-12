@@ -40,9 +40,9 @@ internal static class StillFrame
             for (var due = (long)Math.Round(seconds * speaker.SampleRate); played < due;)
             {
                 var count = (int)Math.Min(due - played, speaker.SampleRate);
-                if (chunk.Length < count * NodeCatalog.AudioChannels) chunk = new float[count * NodeCatalog.AudioChannels];
+                if (chunk.Length < count * OutputModule.AudioChannels) chunk = new float[count * OutputModule.AudioChannels];
 
-                speaker.Render(sound, chunk.AsSpan(0, count * NodeCatalog.AudioChannels));
+                speaker.Render(sound, chunk.AsSpan(0, count * OutputModule.AudioChannels));
                 played += count;
             }
 

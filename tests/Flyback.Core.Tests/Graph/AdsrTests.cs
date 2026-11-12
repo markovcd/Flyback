@@ -27,7 +27,7 @@ public class AdsrTests
         bool memory = true,
         params (string Port, float Value)[] knobs)
     {
-        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.AdsrTypeId);
+        var def = NodeCatalog.BuiltIn.Require(EnvelopeModules.AdsrTypeId);
         var emitter = new Emitter();
         var inputs = new Slot[def.Inputs.Count];
 

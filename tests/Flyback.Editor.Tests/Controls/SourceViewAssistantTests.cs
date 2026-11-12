@@ -22,14 +22,14 @@ public class SourceViewAssistantTests : SourceViewTest
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 900, 40);
+        var output = b.Add(OutputModule.TypeId, 900, 40);
         var one = b.Add("osc.sine", 40, 40);
         var two = b.Add("osc.sine", 40, 240);
         var mix = b.Add("math.add", 400, 40);
 
         b.Wire(one, 0, mix, 0)
             .Wire(two, 0, mix, 1)
-            .Wire(mix, 0, output, NodeCatalog.OutputLeftPort);
+            .Wire(mix, 0, output, OutputModule.LeftPort);
 
         return b.Patch;
     }

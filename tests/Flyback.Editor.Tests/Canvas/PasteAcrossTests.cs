@@ -88,7 +88,7 @@ public class PasteAcrossTests : EditorTest
         patch = editor.History.Patch;
 
         patch.Nodes.Count.ShouldBe(modules + 2);
-        patch.Nodes.Count(n => NodeCatalog.IsSink(n.TypeId)).ShouldBe(1);
+        patch.Nodes.Count(n => OutputModule.IsSink(n.TypeId)).ShouldBe(1);
         (patch.Groups?.Count ?? 0).ShouldBe(groups + 1);
         patch.Groups!.ShouldContain(g => g.Name == "Bass");
 

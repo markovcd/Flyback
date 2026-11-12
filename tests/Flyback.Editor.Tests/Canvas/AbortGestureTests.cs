@@ -58,7 +58,7 @@ public class AbortGestureTests : EditorTest
 
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        b.Add(NodeCatalog.OutputTypeId, 900, 40);
+        b.Add(OutputModule.TypeId, 900, 40);
         var source = b.Add(Sine, 40, 40);
         var fed = b.Add(Add, 400, 40);
 

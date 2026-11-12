@@ -118,7 +118,7 @@ internal sealed class GroupInspector(
         // as a module's panel does.
         var reading = sockets.Inputs.Any(s =>
             editor.History.Patch.Find(s.Node) is { } inner && NodeCatalog.Get(inner.TypeId) is { } def
-            && (InspectorRows.Named(def.Inputs[s.Port]) || def.TypeId == NodeCatalog.AutoRemapTypeId));
+            && (InspectorRows.Named(def.Inputs[s.Port]) || def.TypeId == MathModules.AutoRemapTypeId));
 
         Edge(group, "In", sockets.Inputs, reading);
         Edge(group, "Out", sockets.Outputs, reading);

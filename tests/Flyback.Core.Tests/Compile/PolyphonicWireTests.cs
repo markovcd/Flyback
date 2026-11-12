@@ -26,7 +26,7 @@ public class PolyphonicWireTests
     }
 
     private static NodeInstance Output(PatchBuilder b) =>
-        b.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
+        b.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
 
     /// <summary>The first evaluation of the speakers' program, left side.</summary>
     private static double Heard(Patch patch)
@@ -44,9 +44,9 @@ public class PolyphonicWireTests
     public void The_output_hears_a_polyphonic_wire_with_its_voices_added()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var voice = Voices(b, NodeCatalog.VoiceTypeId, 4);
+        var voice = Voices(b, PolyphonyModules.VoiceTypeId, 4);
 
-        b.Wire(voice, 0, Output(b), NodeCatalog.OutputLeftPort);
+        b.Wire(voice, 0, Output(b), OutputModule.LeftPort);
 
         Heard(b.Patch).ShouldBe(0d + 1d + 2d + 3d);
     }
@@ -55,10 +55,10 @@ public class PolyphonicWireTests
     public void A_one_voice_wire_reaches_every_voice_of_a_module_it_meets()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var voice = Voices(b, NodeCatalog.VoiceTypeId, 3);
+        var voice = Voices(b, PolyphonyModules.VoiceTypeId, 3);
         var add = b.Add("math.add", 0, 0, (B, 10f));
 
-        b.Wire(voice, 0, add, A).Wire(add, 0, Output(b), NodeCatalog.OutputLeftPort);
+        b.Wire(voice, 0, add, A).Wire(add, 0, Output(b), OutputModule.LeftPort);
 
         Heard(b.Patch).ShouldBe(0d + 1d + 2d + 3 * 10d);
     }
@@ -68,11 +68,11 @@ public class PolyphonicWireTests
     public void Two_wires_of_different_counts_run_the_larger_and_the_shorter_is_silent_past_its_end()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var two = Voices(b, NodeCatalog.VoiceTypeId, 2);
-        var four = Voices(b, NodeCatalog.VoiceTypeId, 4);
+        var two = Voices(b, PolyphonyModules.VoiceTypeId, 2);
+        var four = Voices(b, PolyphonyModules.VoiceTypeId, 4);
         var add = b.Add("math.add", 0, 0);
 
-        b.Wire(two, 0, add, A).Wire(four, 0, add, B).Wire(add, 0, Output(b), NodeCatalog.OutputLeftPort);
+        b.Wire(two, 0, add, A).Wire(four, 0, add, B).Wire(add, 0, Output(b), OutputModule.LeftPort);
 
         Heard(b.Patch).ShouldBe((0d + 1d) + (0d + 1d + 2d + 3d));
     }
@@ -81,9 +81,9 @@ public class PolyphonicWireTests
     public void Spread_steps_each_voice_by_its_offset()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var spread = Voices(b, NodeCatalog.SpreadTypeId, 3, (0, 60f), (1, 4f));
+        var spread = Voices(b, PolyphonyModules.SpreadTypeId, 3, (0, 60f), (1, 4f));
 
-        b.Wire(spread, 0, Output(b), NodeCatalog.OutputLeftPort);
+        b.Wire(spread, 0, Output(b), OutputModule.LeftPort);
 
         Heard(b.Patch).ShouldBe(60d + 64d + 68d);
     }
@@ -96,15 +96,15 @@ public class PolyphonicWireTests
     public void A_chain_runs_once_per_voice_up_to_a_merge_and_once_after_it()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var spread = Voices(b, NodeCatalog.SpreadTypeId, 4, (0, 110f), (1, 55f));
-        var tone = b.Add(NodeCatalog.SineTypeId, 0, 0);
-        var merge = b.Add(NodeCatalog.MergeTypeId, 0, 0);
-        var wobble = b.Add(NodeCatalog.SineTypeId, 0, 0);
+        var spread = Voices(b, PolyphonyModules.SpreadTypeId, 4, (0, 110f), (1, 55f));
+        var tone = b.Add(OscillatorModules.SineTypeId, 0, 0);
+        var merge = b.Add(PolyphonyModules.MergeTypeId, 0, 0);
+        var wobble = b.Add(OscillatorModules.SineTypeId, 0, 0);
 
         b.Wire(spread, 0, tone, 1)
             .Wire(tone, 0, merge, 0)
             .Wire(merge, 0, wobble, 1)
-            .Wire(wobble, 0, Output(b), NodeCatalog.OutputLeftPort);
+            .Wire(wobble, 0, Output(b), OutputModule.LeftPort);
 
         var program = b.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
 
@@ -116,10 +116,10 @@ public class PolyphonicWireTests
     public void Each_voice_sounds_as_its_own_module_would()
     {
         var poly = new PatchBuilder(NodeCatalog.BuiltIn);
-        var spread = Voices(poly, NodeCatalog.SpreadTypeId, 4, (0, 110f), (1, 55f));
-        var tone = poly.Add(NodeCatalog.SineTypeId, 0, 0);
+        var spread = Voices(poly, PolyphonyModules.SpreadTypeId, 4, (0, 110f), (1, 55f));
+        var tone = poly.Add(OscillatorModules.SineTypeId, 0, 0);
 
-        poly.Wire(spread, 0, tone, 1).Wire(tone, 0, Output(poly), NodeCatalog.OutputLeftPort);
+        poly.Wire(spread, 0, tone, 1).Wire(tone, 0, Output(poly), OutputModule.LeftPort);
 
         var copies = new PatchBuilder(NodeCatalog.BuiltIn);
         var sum = Output(copies);
@@ -127,7 +127,7 @@ public class PolyphonicWireTests
 
         foreach (var hz in (float[])[110f, 165f, 220f, 275f])
         {
-            var sine = copies.Add(NodeCatalog.SineTypeId, 0, 0, (1, hz));
+            var sine = copies.Add(OscillatorModules.SineTypeId, 0, 0, (1, hz));
 
             if (previous is null)
             {
@@ -141,7 +141,7 @@ public class PolyphonicWireTests
             previous = add;
         }
 
-        copies.Wire(previous!, 0, sum, NodeCatalog.OutputLeftPort);
+        copies.Wire(previous!, 0, sum, OutputModule.LeftPort);
 
         var heard = Played(poly.Patch, 2_000);
         var expected = Played(copies.Patch, 2_000);
@@ -157,10 +157,10 @@ public class PolyphonicWireTests
     public void A_loop_round_a_polyphonic_chain_keeps_each_voice_apart()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var voice = Voices(b, NodeCatalog.VoiceTypeId, 3);
+        var voice = Voices(b, PolyphonyModules.VoiceTypeId, 3);
         var add = b.Add("math.add", 0, 0);
 
-        b.Wire(voice, 0, add, A).Wire(add, 0, add, B).Wire(add, 0, Output(b), NodeCatalog.OutputLeftPort);
+        b.Wire(voice, 0, add, A).Wire(add, 0, add, B).Wire(add, 0, Output(b), OutputModule.LeftPort);
 
         var heard = Played(b.Patch, 5);
 
@@ -173,15 +173,15 @@ public class PolyphonicWireTests
     {
         var mono = new PatchBuilder(NodeCatalog.BuiltIn);
         var one = mono.Add("math.add", 0, 0);
-        var room = mono.Add(NodeCatalog.ReverbTypeId, 0, 0);
+        var room = mono.Add(ReverbModule.TypeId, 0, 0);
 
-        mono.Wire(one, 0, room, 0).Wire(room, 0, Output(mono), NodeCatalog.OutputLeftPort);
+        mono.Wire(one, 0, room, 0).Wire(room, 0, Output(mono), OutputModule.LeftPort);
 
         var poly = new PatchBuilder(NodeCatalog.BuiltIn);
-        var voices = Voices(poly, NodeCatalog.VoiceTypeId, 4);
-        var polyRoom = poly.Add(NodeCatalog.ReverbTypeId, 0, 0);
+        var voices = Voices(poly, PolyphonyModules.VoiceTypeId, 4);
+        var polyRoom = poly.Add(ReverbModule.TypeId, 0, 0);
 
-        poly.Wire(voices, 0, polyRoom, 0).Wire(polyRoom, 0, Output(poly), NodeCatalog.OutputLeftPort);
+        poly.Wire(voices, 0, polyRoom, 0).Wire(polyRoom, 0, Output(poly), OutputModule.LeftPort);
 
         poly.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program.DelayLengths.Count
             .ShouldBe(mono.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program.DelayLengths.Count);
@@ -191,10 +191,10 @@ public class PolyphonicWireTests
     public void A_polyphonic_midi_in_reads_one_voice_per_voice_of_its_wire()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var midi = b.Add(NodeCatalog.MidiTypeId, 0, 0);
+        var midi = b.Add(MidiModules.MidiTypeId, 0, 0);
 
         midi.SetState(MidiExtra.StateKey, new JsonObject { [MidiExtra.VoicesField] = 3f });
-        b.Wire(midi, 0, Output(b), NodeCatalog.OutputLeftPort);
+        b.Wire(midi, 0, Output(b), OutputModule.LeftPort);
 
         var program = b.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
         var live = new LiveValues(program.LiveInputs);
@@ -214,14 +214,14 @@ public class PolyphonicWireTests
     public void A_midi_in_from_a_high_voice_counts_up_and_stops_at_the_last()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var midi = b.Add(NodeCatalog.MidiTypeId, 0, 0);
+        var midi = b.Add(MidiModules.MidiTypeId, 0, 0);
 
         midi.SetState(MidiExtra.StateKey, new JsonObject
         {
             [MidiExtra.IndexField] = 7f,
             [MidiExtra.VoicesField] = 4f,
         });
-        b.Wire(midi, 0, Output(b), NodeCatalog.OutputLeftPort);
+        b.Wire(midi, 0, Output(b), OutputModule.LeftPort);
 
         b.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program.LiveInputs
             .Where(key => key.EndsWith('/' + MidiSignal.Pitch))
@@ -238,14 +238,14 @@ public class PolyphonicWireTests
     public void A_warning_is_said_once_however_many_voices_say_it()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var midi = b.Add(NodeCatalog.MidiTypeId, 0, 0);
+        var midi = b.Add(MidiModules.MidiTypeId, 0, 0);
 
         midi.SetState(MidiExtra.StateKey, new JsonObject
         {
             [MidiExtra.DeviceField] = "midi:nowhere",
             [MidiExtra.VoicesField] = 4f,
         });
-        b.Wire(midi, 0, Output(b), NodeCatalog.OutputLeftPort);
+        b.Wire(midi, 0, Output(b), OutputModule.LeftPort);
 
         b.Patch.CompileForAudio(NodeCatalog.BuiltIn).Issues
             .Count(issue => issue.Message.Contains("midi:nowhere")).ShouldBe(1);
@@ -267,10 +267,10 @@ public class PolyphonicWireTests
         var catalog = NodeCatalog.BuiltIn.With(provider, [echo]).Catalog;
 
         var b = new PatchBuilder(catalog);
-        var voice = Voices(b, NodeCatalog.VoiceTypeId, 3);
+        var voice = Voices(b, PolyphonyModules.VoiceTypeId, 3);
         var module = b.Add("sample.echo", 0, 0);
 
-        b.Wire(voice, 0, module, 0).Wire(module, 0, Output(b), NodeCatalog.OutputLeftPort);
+        b.Wire(voice, 0, module, 0).Wire(module, 0, Output(b), OutputModule.LeftPort);
 
         b.Patch.CompileForAudio(catalog).Program.DelayLengths.Count.ShouldBe(3);
     }
@@ -279,10 +279,10 @@ public class PolyphonicWireTests
     public void The_picture_sees_a_polyphonic_wire_with_its_voices_added()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var voice = Voices(b, NodeCatalog.VoiceTypeId, 3);
+        var voice = Voices(b, PolyphonyModules.VoiceTypeId, 3);
         var add = b.Add("math.add", 0, 0, (B, 0.25f));
 
-        b.Wire(voice, 0, add, A).Wire(add, 0, Output(b), NodeCatalog.OutputColorPort);
+        b.Wire(voice, 0, add, A).Wire(add, 0, Output(b), OutputModule.ColorPort);
 
         var program = b.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program;
         var registers = program.AllocateRegisters();
@@ -299,11 +299,11 @@ public class PolyphonicWireTests
     public void The_il_plays_a_polyphonic_patch_as_the_interpreter_does()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var spread = Voices(b, NodeCatalog.SpreadTypeId, 5, (0, 110f), (1, 37f));
-        var tone = b.Add(NodeCatalog.SineTypeId, 0, 0);
-        var delay = b.Add(NodeCatalog.DelayTypeId, 0, 0, (1, 0.01f));
+        var spread = Voices(b, PolyphonyModules.SpreadTypeId, 5, (0, 110f), (1, 37f));
+        var tone = b.Add(OscillatorModules.SineTypeId, 0, 0);
+        var delay = b.Add(DelayModule.TypeId, 0, 0, (1, 0.01f));
 
-        b.Wire(spread, 0, tone, 1).Wire(tone, 0, delay, 0).Wire(delay, 0, Output(b), NodeCatalog.OutputLeftPort);
+        b.Wire(spread, 0, tone, 1).Wire(tone, 0, delay, 0).Wire(delay, 0, Output(b), OutputModule.LeftPort);
 
         var program = b.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
         var il = IlProgram.Compile(program);

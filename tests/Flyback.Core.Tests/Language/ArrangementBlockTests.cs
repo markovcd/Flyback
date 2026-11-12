@@ -18,7 +18,7 @@ public class ArrangementBlockTests
     }
 
     private static List<List<PartLevel>> Parts(LanguageLoad load) =>
-        ArrangementExtra.Of(load.Patch.Nodes.Single(n => n.TypeId == NodeCatalog.ArrangementTypeId));
+        ArrangementExtra.Of(load.Patch.Nodes.Single(n => n.TypeId == SequencerModules.ArrangementTypeId));
 
     [Fact]
     public void A_block_is_a_row_of_levels_for_each_part()

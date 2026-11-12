@@ -77,7 +77,7 @@ public class PanelTextTests
             .SelectMany(node => ControlMap.All(node).Select(linked => (node, linked.Port, linked.Link)))
             .Where(linked => Catalog.Get(linked.node.TypeId) is { } def && Catalog.Normalled(def.Inputs[linked.Port]) is null)
             .Select(linked =>
-                $"{linked.node.TypeId}:{(linked.node.TypeId == NodeCatalog.ExpressionTypeId ? "?" : linked.Port)} "
+                $"{linked.node.TypeId}:{(linked.node.TypeId == MathModules.ExpressionTypeId ? "?" : linked.Port)} "
                 + $"<- {patch.Control(linked.Link.Control)?.Name} "
                 + $"{linked.Link.Min}..{linked.Link.Max} {linked.Link.Knee}")
             .Order(StringComparer.Ordinal),

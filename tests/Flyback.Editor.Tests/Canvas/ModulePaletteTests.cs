@@ -415,8 +415,8 @@ public class ModulePaletteTests : EditorTest
 
         var added = Editor(window).Selection.Focused.ShouldNotBeNull();
 
-        added.TypeId.ShouldBe(NodeCatalog.ExpressionTypeId);
-        NodeCatalog.FormulaOf(added).ShouldBe("a * b");
+        added.TypeId.ShouldBe(MathModules.ExpressionTypeId);
+        MathModules.FormulaOf(added).ShouldBe("a * b");
     }
 
     /// <summary>

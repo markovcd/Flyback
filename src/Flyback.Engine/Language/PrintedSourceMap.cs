@@ -44,7 +44,7 @@ internal static class PrintedSourceMap
         var calls = new Dictionary<Guid, Site>();
         var values = new Dictionary<(Guid Node, string Name), Site?>();
         var placed = new Dictionary<Expr, Guid>();
-        var sink = patch.Nodes.FirstOrDefault(n => NodeCatalog.IsSink(n.TypeId));
+        var sink = patch.Nodes.FirstOrDefault(n => OutputModule.IsSink(n.TypeId));
 
         for (var i = 0; i < written.Count; i++)
         {
@@ -58,7 +58,7 @@ internal static class PrintedSourceMap
             if (patch.Find(node) is not { } instance || modules.Get(instance.TypeId) is not { } def) continue;
 
             // A function inside a sum belongs to its enclosing Expression module.
-            if (instance.TypeId == NodeCatalog.ExpressionTypeId && call.Target is not ("expression" or NodeCatalog.ExpressionTypeId)) continue;
+            if (instance.TypeId == MathModules.ExpressionTypeId && call.Target is not ("expression" or MathModules.ExpressionTypeId)) continue;
 
             calls[node] = site;
 

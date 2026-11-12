@@ -19,7 +19,7 @@ namespace Flyback.Core.Tests.Graph;
 /// </remarks>
 public class ScopeTests
 {
-    private const string Scope = NodeCatalog.ScopeTypeId;
+    private const string Scope = ChartModules.ScopeTypeId;
     private const string Sine = "osc.sine";
     private const string Value = "value";
 
@@ -56,7 +56,7 @@ public class ScopeTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        b.Add(NodeCatalog.OutputTypeId, 900, 0);
+        b.Add(OutputModule.TypeId, 900, 0);
 
         var source = b.Add(watched, 0, 0);
         var scope = b.Add(Scope, 400, 0, knobs);
@@ -299,8 +299,8 @@ public class ScopeTests
         var (patch, scope, _) = Watching(Value, (0, 0f));
 
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        b.Add(NodeCatalog.OutputTypeId, 900, 0);
-        var probe = b.Add(NodeCatalog.ProbeTypeId, 400, 0);
+        b.Add(OutputModule.TypeId, 900, 0);
+        var probe = b.Add(ChartModules.ProbeTypeId, 400, 0);
 
         // Well clear of the trace and of the horizontal axis, so what is
         // measured is the vertical rule and nothing else. The middle column is

@@ -25,7 +25,7 @@ public class BusTests
     }
 
     private static NodeInstance Sink(PatchBuilder b) =>
-        b.Add(NodeCatalog.OutputTypeId, 400, 0, (NodeCatalog.OutputVolumePort, 1f));
+        b.Add(OutputModule.TypeId, 400, 0, (OutputModule.VolumePort, 1f));
 
     /// <summary>What the speakers play over <paramref name="count"/> evaluations, with memory behind them.</summary>
     private static float[] Heard(Patch patch, int count = 1)
@@ -58,12 +58,12 @@ public class BusTests
         var b = new PatchBuilder(Modules);
 
         var value = b.Add("value", (0, 0.3f));
-        var send = b.Add(NodeCatalog.SendTypeId);
-        var receive = b.Add(NodeCatalog.ReceiveTypeId);
+        var send = b.Add(BusModules.SendTypeId);
+        var receive = b.Add(BusModules.ReceiveTypeId);
         var output = Sink(b);
 
         b.Wire(value, 0, send, 0);
-        b.Wire(receive, 0, output, NodeCatalog.OutputLeftPort);
+        b.Wire(receive, 0, output, OutputModule.LeftPort);
 
         Heard(b.Patch).ShouldBe([0.3f], 1e-6f);
         Warnings(b.Patch).ShouldBeEmpty("a fresh Send and a fresh Receive share a bus");
@@ -77,18 +77,18 @@ public class BusTests
             var sine = wired.Add("osc.sine", (1, 440f));
             var half = wired.Add("math.mul", (1, 0.5f));
             wired.Wire(sine, 0, half, 0);
-            wired.Wire(half, 0, Sink(wired), NodeCatalog.OutputLeftPort);
+            wired.Wire(half, 0, Sink(wired), OutputModule.LeftPort);
         }
 
         var bused = new PatchBuilder(Modules);
         {
             var sine = bused.Add("osc.sine", (1, 440f));
-            var send = On(bused.Add(NodeCatalog.SendTypeId), "tone");
-            var receive = On(bused.Add(NodeCatalog.ReceiveTypeId), "tone");
+            var send = On(bused.Add(BusModules.SendTypeId), "tone");
+            var receive = On(bused.Add(BusModules.ReceiveTypeId), "tone");
             var half = bused.Add("math.mul", (1, 0.5f));
             bused.Wire(sine, 0, send, 0);
             bused.Wire(receive, 0, half, 0);
-            bused.Wire(half, 0, Sink(bused), NodeCatalog.OutputLeftPort);
+            bused.Wire(half, 0, Sink(bused), OutputModule.LeftPort);
         }
 
         Heard(bused.Patch, 256).ShouldBe(Heard(wired.Patch, 256));
@@ -100,16 +100,16 @@ public class BusTests
         var b = new PatchBuilder(Modules);
 
         var value = b.Add("value", (0, 0.25f));
-        var send = On(b.Add(NodeCatalog.SendTypeId), "kick");
-        var first = On(b.Add(NodeCatalog.ReceiveTypeId), "kick");
-        var second = On(b.Add(NodeCatalog.ReceiveTypeId), "kick");
+        var send = On(b.Add(BusModules.SendTypeId), "kick");
+        var first = On(b.Add(BusModules.ReceiveTypeId), "kick");
+        var second = On(b.Add(BusModules.ReceiveTypeId), "kick");
         var sum = b.Add("math.add");
         var output = Sink(b);
 
         b.Wire(value, 0, send, 0);
         b.Wire(first, 0, sum, 0);
         b.Wire(second, 0, sum, 1);
-        b.Wire(sum, 0, output, NodeCatalog.OutputLeftPort);
+        b.Wire(sum, 0, output, OutputModule.LeftPort);
 
         Heard(b.Patch).ShouldBe([0.5f], 1e-6f);
     }
@@ -120,11 +120,11 @@ public class BusTests
         var b = new PatchBuilder(Modules);
 
         var value = b.Add("value", (0, 0.3f));
-        var send = On(b.Add(NodeCatalog.SendTypeId), "Kick");
-        var receive = On(b.Add(NodeCatalog.ReceiveTypeId), " kick ");
+        var send = On(b.Add(BusModules.SendTypeId), "Kick");
+        var receive = On(b.Add(BusModules.ReceiveTypeId), " kick ");
 
         b.Wire(value, 0, send, 0);
-        b.Wire(receive, 0, Sink(b), NodeCatalog.OutputLeftPort);
+        b.Wire(receive, 0, Sink(b), OutputModule.LeftPort);
 
         Heard(b.Patch).ShouldBe([0.3f], 1e-6f);
     }
@@ -136,14 +136,14 @@ public class BusTests
         var b = new PatchBuilder(Modules);
 
         var value = b.Add("value", (0, 0.3f));
-        var send = On(b.Add(NodeCatalog.SendTypeId), "kick");
-        var receive = On(b.Add(NodeCatalog.ReceiveTypeId), "snare");
+        var send = On(b.Add(BusModules.SendTypeId), "kick");
+        var receive = On(b.Add(BusModules.ReceiveTypeId), "snare");
         var times = b.Add("math.mul", (1, 0.5f));
 
         b.Wire(value, 0, send, 0);
         b.Wire(value, 0, times, 0);
         b.Wire(receive, 0, times, 1);
-        b.Wire(times, 0, Sink(b), NodeCatalog.OutputLeftPort);
+        b.Wire(times, 0, Sink(b), OutputModule.LeftPort);
 
         Heard(b.Patch).ShouldBe([0.15f], 1e-6f);
         Warnings(b.Patch).ShouldContain(m => m.Contains("'snare'"));
@@ -156,13 +156,13 @@ public class BusTests
 
         var low = b.Add("value", (0, 0.1f));
         var high = b.Add("value", (0, 0.9f));
-        var first = On(b.Add(NodeCatalog.SendTypeId), "kick");
-        var second = On(b.Add(NodeCatalog.SendTypeId), "kick");
-        var receive = On(b.Add(NodeCatalog.ReceiveTypeId), "kick");
+        var first = On(b.Add(BusModules.SendTypeId), "kick");
+        var second = On(b.Add(BusModules.SendTypeId), "kick");
+        var receive = On(b.Add(BusModules.ReceiveTypeId), "kick");
 
         b.Wire(low, 0, first, 0);
         b.Wire(high, 0, second, 0);
-        b.Wire(receive, 0, Sink(b), NodeCatalog.OutputLeftPort);
+        b.Wire(receive, 0, Sink(b), OutputModule.LeftPort);
 
         var heard = first.Id.CompareTo(second.Id) < 0 ? 0.1f : 0.9f;
 
@@ -176,13 +176,13 @@ public class BusTests
     {
         var b = new PatchBuilder(Modules);
 
-        var receive = b.Add(NodeCatalog.ReceiveTypeId);
+        var receive = b.Add(BusModules.ReceiveTypeId);
         var step = b.Add("math.add", (1, 0.25f));
-        var send = b.Add(NodeCatalog.SendTypeId);
+        var send = b.Add(BusModules.SendTypeId);
 
         b.Wire(receive, 0, step, 0);
         b.Wire(step, 0, send, 0);
-        b.Wire(send, 0, Sink(b), NodeCatalog.OutputLeftPort);
+        b.Wire(send, 0, Sink(b), OutputModule.LeftPort);
 
         Heard(b.Patch, 3).ShouldBe([0.25f, 0.5f, 0.75f], 1e-6f);
     }
@@ -193,13 +193,13 @@ public class BusTests
     {
         var b = new PatchBuilder(Modules);
 
-        var receive = b.Add(NodeCatalog.ReceiveTypeId);
+        var receive = b.Add(BusModules.ReceiveTypeId);
         var step = b.Add("math.add", (1, 0.25f));
-        var send = b.Add(NodeCatalog.SendTypeId);
+        var send = b.Add(BusModules.SendTypeId);
 
         b.Wire(receive, 0, step, 0);
         b.Wire(step, 0, send, 0);
-        b.Wire(send, 0, Sink(b), NodeCatalog.OutputLeftPort);
+        b.Wire(send, 0, Sink(b), OutputModule.LeftPort);
 
         Cycles.Backwards(b.Patch).ShouldBeEmpty("no wire loops on the canvas");
         Cycles.BackwardsThroughBuses(b.Patch).ShouldHaveSingleItem()
@@ -211,11 +211,11 @@ public class BusTests
     {
         var b = new PatchBuilder(Modules);
 
-        var send = On(b.Add(NodeCatalog.SendTypeId), "echo");
-        var receive = On(b.Add(NodeCatalog.ReceiveTypeId), "echo");
+        var send = On(b.Add(BusModules.SendTypeId), "echo");
+        var receive = On(b.Add(BusModules.ReceiveTypeId), "echo");
 
         b.Wire(receive, 0, send, 0);
-        b.Wire(send, 0, Sink(b), NodeCatalog.OutputLeftPort);
+        b.Wire(send, 0, Sink(b), OutputModule.LeftPort);
 
         Heard(b.Patch).ShouldBe([0f]);
         Warnings(b.Patch).ShouldHaveSingleItem().ShouldContain("'echo' is fed round from its own Receive");
@@ -227,14 +227,14 @@ public class BusTests
     {
         var b = new PatchBuilder(Modules);
 
-        var sendA = On(b.Add(NodeCatalog.SendTypeId), "a");
-        var sendB = On(b.Add(NodeCatalog.SendTypeId), "b");
-        var receiveA = On(b.Add(NodeCatalog.ReceiveTypeId), "a");
-        var receiveB = On(b.Add(NodeCatalog.ReceiveTypeId), "b");
+        var sendA = On(b.Add(BusModules.SendTypeId), "a");
+        var sendB = On(b.Add(BusModules.SendTypeId), "b");
+        var receiveA = On(b.Add(BusModules.ReceiveTypeId), "a");
+        var receiveB = On(b.Add(BusModules.ReceiveTypeId), "b");
 
         b.Wire(receiveA, 0, sendB, 0);
         b.Wire(receiveB, 0, sendA, 0);
-        b.Wire(sendA, 0, Sink(b), NodeCatalog.OutputLeftPort);
+        b.Wire(sendA, 0, Sink(b), OutputModule.LeftPort);
 
         Warnings(b.Patch).Count(m => m.Contains("is fed round from its own Receive")).ShouldBe(2);
     }
@@ -245,13 +245,13 @@ public class BusTests
         var b = new PatchBuilder(Modules);
 
         var value = b.Add("value", (0, 0.3f));
-        var send = b.Add(NodeCatalog.SendTypeId);
-        var receive = b.Add(NodeCatalog.ReceiveTypeId);
+        var send = b.Add(BusModules.SendTypeId);
+        var receive = b.Add(BusModules.ReceiveTypeId);
         var times = b.Add("math.mul", (0, 0.5f), (1, 0.5f));
 
         b.Wire(value, 0, send, 0);
         b.Wire(receive, 0, times, 1);
-        b.Wire(times, 0, Sink(b), NodeCatalog.OutputLeftPort);
+        b.Wire(times, 0, Sink(b), OutputModule.LeftPort);
 
         Heard(b.Patch).ShouldBe([0.15f], 1e-6f);
 
@@ -296,71 +296,71 @@ public class BusTests
     [Fact]
     public void A_renamed_Send_takes_every_Receive_on_its_bus_and_no_other()
     {
-        var send = Fresh(NodeCatalog.SendTypeId, "kick");
-        var first = Fresh(NodeCatalog.ReceiveTypeId, "kick");
-        var second = Fresh(NodeCatalog.ReceiveTypeId, "KICK");
-        var other = Fresh(NodeCatalog.ReceiveTypeId, "snare");
+        var send = Fresh(BusModules.SendTypeId, "kick");
+        var first = Fresh(BusModules.ReceiveTypeId, "kick");
+        var second = Fresh(BusModules.ReceiveTypeId, "KICK");
+        var other = Fresh(BusModules.ReceiveTypeId, "snare");
 
         var moved = BusEdits.Rename(Of(send, first, second, other), send, " thump ");
 
         moved.ShouldBe([first, second], ignoreOrder: true);
-        NodeCatalog.BusOf(send).ShouldBe("thump");
-        NodeCatalog.BusOf(first).ShouldBe("thump");
-        NodeCatalog.BusOf(second).ShouldBe("thump");
-        NodeCatalog.BusOf(other).ShouldBe("snare");
+        BusModules.BusOf(send).ShouldBe("thump");
+        BusModules.BusOf(first).ShouldBe("thump");
+        BusModules.BusOf(second).ShouldBe("thump");
+        BusModules.BusOf(other).ShouldBe("snare");
     }
 
     /// <summary>The Receives were playing the other Send, which is the first by id, so they stay with it.</summary>
     [Fact]
     public void A_Send_nobody_heard_is_renamed_alone()
     {
-        var a = Fresh(NodeCatalog.SendTypeId, "kick");
-        var b = Fresh(NodeCatalog.SendTypeId, "kick");
-        var receive = Fresh(NodeCatalog.ReceiveTypeId, "kick");
+        var a = Fresh(BusModules.SendTypeId, "kick");
+        var b = Fresh(BusModules.SendTypeId, "kick");
+        var receive = Fresh(BusModules.ReceiveTypeId, "kick");
 
         var unheard = a.Id.CompareTo(b.Id) < 0 ? b : a;
 
         BusEdits.Rename(Of(a, b, receive), unheard, "thump").ShouldBeEmpty();
 
-        NodeCatalog.BusOf(unheard).ShouldBe("thump");
-        NodeCatalog.BusOf(receive).ShouldBe("kick");
+        BusModules.BusOf(unheard).ShouldBe("thump");
+        BusModules.BusOf(receive).ShouldBe("kick");
     }
 
     [Fact]
     public void Renaming_a_Receive_moves_nothing_else()
     {
-        var send = Fresh(NodeCatalog.SendTypeId, "kick");
-        var receive = Fresh(NodeCatalog.ReceiveTypeId, "kick");
+        var send = Fresh(BusModules.SendTypeId, "kick");
+        var receive = Fresh(BusModules.ReceiveTypeId, "kick");
 
         BusEdits.Rename(Of(send, receive), receive, "snare").ShouldBeEmpty();
 
-        NodeCatalog.BusOf(send).ShouldBe("kick");
-        NodeCatalog.BusOf(receive).ShouldBe("snare");
+        BusModules.BusOf(send).ShouldBe("kick");
+        BusModules.BusOf(receive).ShouldBe("snare");
     }
 
     [Fact]
     public void A_pasted_pair_counts_on_past_the_buses_that_are_taken()
     {
-        var send = Fresh(NodeCatalog.SendTypeId, "kick 2");
-        var receive = Fresh(NodeCatalog.ReceiveTypeId, "kick 2");
-        var stray = Fresh(NodeCatalog.ReceiveTypeId, "kick 3");
+        var send = Fresh(BusModules.SendTypeId, "kick 2");
+        var receive = Fresh(BusModules.ReceiveTypeId, "kick 2");
+        var stray = Fresh(BusModules.ReceiveTypeId, "kick 3");
         var patch = Of(send, receive, stray);
 
         var pasted = PatchClipboard.Paste(patch, PatchClipboard.Copy(patch, [send.Id, receive.Id]));
 
-        pasted.Select(NodeCatalog.BusOf).ShouldAllBe(bus => bus == "kick 4");
-        NodeCatalog.BusOf(send).ShouldBe("kick 2");
+        pasted.Select(BusModules.BusOf).ShouldAllBe(bus => bus == "kick 4");
+        BusModules.BusOf(send).ShouldBe("kick 2");
         Warnings(patch).ShouldNotContain(w => w.Contains("Another Send", StringComparison.Ordinal));
     }
 
     [Fact]
     public void A_Send_pasted_onto_a_bus_nobody_sends_on_keeps_its_name()
     {
-        var source = Of(Fresh(NodeCatalog.SendTypeId, "kick"));
-        var into = Of(Fresh(NodeCatalog.ReceiveTypeId, "kick"));
+        var source = Of(Fresh(BusModules.SendTypeId, "kick"));
+        var into = Of(Fresh(BusModules.ReceiveTypeId, "kick"));
 
         var pasted = PatchClipboard.Paste(into, PatchClipboard.Copy(source, [source.Nodes[0].Id]));
 
-        NodeCatalog.BusOf(pasted.Single()).ShouldBe("kick");
+        BusModules.BusOf(pasted.Single()).ShouldBe("kick");
     }
 }

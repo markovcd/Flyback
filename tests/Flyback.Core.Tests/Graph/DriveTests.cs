@@ -12,7 +12,7 @@ public class DriveTests
     [Fact]
     public void It_is_offered_under_shaping_and_is_untyped()
     {
-        var def = Modules.Get(NodeCatalog.DriveTypeId).ShouldNotBeNull();
+        var def = Modules.Get(DriveModule.TypeId).ShouldNotBeNull();
 
         def.Name.ShouldBe("Drive");
         def.Category.ShouldBe(ModuleCategories.Shaping);
@@ -73,11 +73,11 @@ public class DriveTests
         var patch = new Patch();
 
         var coord = Add(patch, "coord");
-        var effect = Add(patch, NodeCatalog.DriveTypeId, knobs);
-        var sink = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var effect = Add(patch, DriveModule.TypeId, knobs);
+        var sink = Add(patch, OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
         patch.Connect(coord.Id, 0, effect.Id, 0);
-        patch.Connect(effect.Id, port, sink.Id, NodeCatalog.OutputLeftPort);
+        patch.Connect(effect.Id, port, sink.Id, OutputModule.LeftPort);
 
         var program = patch.CompileForAudio(Modules).Program;
         var registers = program.AllocateRegisters();
@@ -98,11 +98,11 @@ public class DriveTests
         var patch = new Patch();
 
         var coord = Add(patch, "coord");
-        var effect = Add(patch, NodeCatalog.DriveTypeId, knobs);
-        var screen = Add(patch, NodeCatalog.OutputTypeId);
+        var effect = Add(patch, DriveModule.TypeId, knobs);
+        var screen = Add(patch, OutputModule.TypeId);
 
         patch.Connect(coord.Id, 0, effect.Id, 0);
-        patch.Connect(effect.Id, 0, screen.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(effect.Id, 0, screen.Id, OutputModule.ColorPort);
 
         var program = patch.CompileForVideo(Modules).Program;
         var registers = program.AllocateRegisters();

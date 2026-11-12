@@ -16,12 +16,12 @@ public class LineInTests
     private static CompiledPatch Heard(float gain = 1f)
     {
         var builder = new PatchBuilder();
-        var line = builder.Add(NodeCatalog.LineInTypeId, 0, 0, (0, gain));
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var line = builder.Add(SourceModules.LineInTypeId, 0, 0, (0, gain));
+        var sink = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
 
         builder
-            .Wire(line, 0, sink, NodeCatalog.OutputLeftPort)
-            .Wire(line, 1, sink, NodeCatalog.OutputRightPort);
+            .Wire(line, 0, sink, OutputModule.LeftPort)
+            .Wire(line, 1, sink, OutputModule.RightPort);
 
         return builder.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
     }

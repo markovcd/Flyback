@@ -22,7 +22,7 @@ public class MeasurementsTests
     public void An_oscillator_wired_to_nothing_is_measured_at_its_pitch()
     {
         var b = new PatchBuilder(Modules);
-        b.Add(NodeCatalog.OutputTypeId);
+        b.Add(OutputModule.TypeId);
         var tone = b.Add("osc.sine", (1, 440f));
 
         var sound = Of(Take(b), tone).Sound.Single();
@@ -37,7 +37,7 @@ public class MeasurementsTests
     public void An_output_that_holds_still_is_given_as_its_value_in_both_halves()
     {
         var b = new PatchBuilder(Modules);
-        b.Add(NodeCatalog.OutputTypeId);
+        b.Add(OutputModule.TypeId);
         var still = b.Add("osc.sine", (3, 0f), (4, 0.25f));
 
         var measured = Of(Take(b), still);
@@ -52,7 +52,7 @@ public class MeasurementsTests
     public void A_coordinate_is_still_to_the_ear_and_spread_across_the_picture()
     {
         var b = new PatchBuilder(Modules);
-        b.Add(NodeCatalog.OutputTypeId);
+        b.Add(OutputModule.TypeId);
         var coords = b.Add("coord");
 
         var x = Of(Take(b), coords);
@@ -67,7 +67,7 @@ public class MeasurementsTests
     public void A_sequencer_is_counted_in_steps_a_second()
     {
         var b = new PatchBuilder(Modules);
-        b.Add(NodeCatalog.OutputTypeId);
+        b.Add(OutputModule.TypeId);
         var steps = b.Add("seq.values", (1, 4f));
 
         var measured = Of(Take(b, seconds: 2d), steps);
@@ -80,7 +80,7 @@ public class MeasurementsTests
     public void A_sequencer_lists_the_values_it_holds_lowest_first()
     {
         var b = new PatchBuilder(Modules);
-        b.Add(NodeCatalog.OutputTypeId);
+        b.Add(OutputModule.TypeId);
         var steps = b.Add("seq.values", (1, 4f));
 
         var held = Of(Take(b, seconds: 2d), steps).Sound.Single().Held.ShouldNotBeNull();
@@ -93,7 +93,7 @@ public class MeasurementsTests
     public void A_note_sequencer_says_its_output_is_notes()
     {
         var b = new PatchBuilder(Modules);
-        b.Add(NodeCatalog.OutputTypeId);
+        b.Add(OutputModule.TypeId);
         var riff = b.Add("seq.notes", (1, 4f));
 
         Of(Take(b, seconds: 2d), riff).Display.ShouldBe(PortDisplay.Note);
@@ -103,7 +103,7 @@ public class MeasurementsTests
     public void A_signal_that_moves_smoothly_lists_no_values()
     {
         var b = new PatchBuilder(Modules);
-        b.Add(NodeCatalog.OutputTypeId);
+        b.Add(OutputModule.TypeId);
         var tone = b.Add("osc.sine", (1, 3f));
 
         Of(Take(b), tone).Sound.Single().Held.ShouldBeNull();
@@ -122,7 +122,7 @@ public class MeasurementsTests
     public void A_color_is_measured_as_its_red_green_and_blue()
     {
         var b = new PatchBuilder(Modules);
-        b.Add(NodeCatalog.OutputTypeId);
+        b.Add(OutputModule.TypeId);
         var color = b.Add("color.hsv");
 
         var measured = Of(Take(b), color);
@@ -135,7 +135,7 @@ public class MeasurementsTests
     public void Measuring_one_module_reports_only_its_outputs()
     {
         var b = new PatchBuilder(Modules);
-        b.Add(NodeCatalog.OutputTypeId);
+        b.Add(OutputModule.TypeId);
         var tone = b.Add("osc.sine");
         b.Add("coord");
 
@@ -150,7 +150,7 @@ public class MeasurementsTests
     public void The_interpreter_and_the_IL_measure_the_same()
     {
         var b = new PatchBuilder(Modules);
-        b.Add(NodeCatalog.OutputTypeId);
+        b.Add(OutputModule.TypeId);
         b.Add("osc.sine", (1, 3f));
         b.Add("seq.values");
         b.Add("audio.noise");
@@ -169,7 +169,7 @@ public class MeasurementsTests
     public void A_window_that_is_not_a_positive_length_is_refused(double seconds)
     {
         var b = new PatchBuilder(Modules);
-        b.Add(NodeCatalog.OutputTypeId);
+        b.Add(OutputModule.TypeId);
 
         Should.Throw<ArgumentOutOfRangeException>(() => Take(b, seconds));
     }
@@ -188,7 +188,7 @@ public class MeasurementsTests
     public void A_color_keeps_its_picture_at_the_start_and_end_of_the_window()
     {
         var b = new PatchBuilder(Modules);
-        b.Add(NodeCatalog.OutputTypeId);
+        b.Add(OutputModule.TypeId);
         var coords = b.Add("coord");
         var color = b.Add("color.rgb");
         b.Wire(coords, 0, color, 0);
@@ -209,7 +209,7 @@ public class MeasurementsTests
     public void A_number_keeps_a_gray_picture_where_it_varies_across_the_screen_and_none_where_it_holds()
     {
         var b = new PatchBuilder(Modules);
-        b.Add(NodeCatalog.OutputTypeId);
+        b.Add(OutputModule.TypeId);
         var coords = b.Add("coord");
         var tone = b.Add("osc.sine", (1, 0.3f));
 
@@ -229,7 +229,7 @@ public class MeasurementsTests
     public void A_moving_color_ends_the_window_on_another_picture()
     {
         var b = new PatchBuilder(Modules);
-        b.Add(NodeCatalog.OutputTypeId);
+        b.Add(OutputModule.TypeId);
         var tone = b.Add("osc.sine", (1, 0.3f));
         var color = b.Add("color.rgb");
         b.Wire(tone, 0, color, 0);

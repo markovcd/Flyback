@@ -37,7 +37,7 @@ public sealed partial class ClipLevelsTests
     [Fact]
     public void A_constant_settling_is_silence()
     {
-        var samples = new float[Rate * NodeCatalog.AudioChannels];
+        var samples = new float[Rate * OutputModule.AudioChannels];
 
         for (var i = 0; i < samples.Length; i++)
         {
@@ -57,9 +57,9 @@ public sealed partial class ClipLevelsTests
 
     private static float[] Tone(float amplitude)
     {
-        var samples = new float[Rate * 2 * NodeCatalog.AudioChannels];
+        var samples = new float[Rate * 2 * OutputModule.AudioChannels];
 
-        for (var i = 0; i < samples.Length / NodeCatalog.AudioChannels; i++)
+        for (var i = 0; i < samples.Length / OutputModule.AudioChannels; i++)
         {
             var value = amplitude * (float)Math.Sin(2 * Math.PI * 1000 * i / Rate);
 

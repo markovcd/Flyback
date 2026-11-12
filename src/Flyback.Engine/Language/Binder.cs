@@ -340,7 +340,7 @@ public sealed class Binder
     {
         if (value is not Placed placed) return;
         if (patch.Find(placed.Id) is not { Name: null } node) return;
-        if (NodeCatalog.IsSink(node.TypeId)) return;
+        if (OutputModule.IsSink(node.TypeId)) return;
 
         node.Rename(placed.Def, name);
     }
@@ -861,7 +861,7 @@ public sealed class Binder
         var inputs = Formulas.Inputs(operation);
 
         if (Formulas.Written(operation, inputs, issues) is not { } formula) return null;
-        if (Module(NodeCatalog.ExpressionTypeId, operation.Line, operation.Column) is not { } def) return null;
+        if (Module(MathModules.ExpressionTypeId, operation.Line, operation.Column) is not { } def) return null;
 
         var placed = wiring.Place(def, [.. inputs.Select((input, socket) => (socket, input.Value))], operation.Line, operation.Column);
 
@@ -889,7 +889,7 @@ public sealed class Binder
     /// <summary>The output of the Coordinates a bare word reads, or -1 where the word is not one of them.</summary>
     private int Coordinate(string name)
     {
-        var outputs = modules.Require(NodeCatalog.CoordTypeId).Outputs;
+        var outputs = modules.Require(SourceModules.CoordTypeId).Outputs;
 
         for (var i = 0; i < outputs.Count; i++)
             if (outputs[i].Name == name) return i;
@@ -959,7 +959,7 @@ public sealed class Binder
 
         if (Module(expr.Target, expr.Line, expr.Column) is not { } def) return null;
 
-        if (NodeCatalog.IsSink(def.TypeId))
+        if (OutputModule.IsSink(def.TypeId))
         {
             return Refuse(IssueCode.OutputIsNotASource, expr.Line, expr.Column,
                 "every patch already has its Output. Wire into 'out.color' or 'out.left'.");
@@ -1763,7 +1763,7 @@ public sealed class Binder
         if (target.Name == "out")
         {
             node = patch.Output;
-            def = modules.Require(NodeCatalog.OutputTypeId);
+            def = modules.Require(OutputModule.TypeId);
         }
         else if (scope.Find(target.Name) is Placed placed && patch.Find(placed.Id) is { } found)
         {

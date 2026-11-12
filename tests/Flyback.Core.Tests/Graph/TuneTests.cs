@@ -37,7 +37,7 @@ public class TuneTests
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var line = b.Add("coord");
         var moved = b.Add("math.add", (1, 12f));
-        var snap = b.Add(NodeCatalog.QuantiserTypeId);
+        var snap = b.Add(PitchModules.QuantiserTypeId);
         ScaleExtra.Set(snap, Minor);
         var note = b.Add("audio.note");
 
@@ -70,15 +70,15 @@ public class TuneTests
     public void A_tempo_counts_beats_as_a_time_and_a_multiply_do()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var tempo = b.Add(NodeCatalog.TempoTypeId, (0, 112f));
-        var clock = b.Add(NodeCatalog.TimeTypeId);
+        var tempo = b.Add(SequencerModules.TempoTypeId, (0, 112f));
+        var clock = b.Add(SourceModules.TimeTypeId);
         var beats = b.Add("math.mul");
         b.Wire(clock, 0, beats, 0).Wire(tempo, 0, beats, 1);
 
         var wrapped = new PatchBuilder(NodeCatalog.BuiltIn);
-        var counted = wrapped.Add(NodeCatalog.TempoTypeId, (0, 112f));
+        var counted = wrapped.Add(SequencerModules.TempoTypeId, (0, 112f));
 
-        NodeCatalog.BuiltIn.Require(NodeCatalog.TempoTypeId).Outputs.Select(p => p.Name).ShouldBe(["out", "beats"]);
+        NodeCatalog.BuiltIn.Require(SequencerModules.TempoTypeId).Outputs.Select(p => p.Name).ShouldBe(["out", "beats"]);
         Played(wrapped, counted, 1).ShouldBe(Played(b, beats, 0));
     }
 
@@ -90,8 +90,8 @@ public class TuneTests
     /// </summary>
     private static double[] Played(PatchBuilder b, NodeInstance module, int output)
     {
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
-        b.Wire(module, output, sink, NodeCatalog.OutputLeftPort);
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
+        b.Wire(module, output, sink, OutputModule.LeftPort);
 
         var result = b.Patch.CompileForAudio(NodeCatalog.BuiltIn);
         result.HasErrors.ShouldBeFalse(string.Join("; ", result.Issues.Select(i => i.Message)));

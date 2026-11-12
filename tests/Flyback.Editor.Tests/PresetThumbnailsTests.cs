@@ -179,13 +179,13 @@ public sealed class PresetThumbnailsTests : IDisposable
         var preset = new PatchPreset("Missing " + Guid.NewGuid().ToString("N"), catalog =>
         {
             var patch = new Patch();
-            var image = NodeInstance.Create(catalog.Require(NodeCatalog.PictureTypeId), 0, 0);
-            var output = NodeInstance.Create(catalog.Require(NodeCatalog.OutputTypeId), 0, 0);
+            var image = NodeInstance.Create(catalog.Require(SourceModules.PictureTypeId), 0, 0);
+            var output = NodeInstance.Create(catalog.Require(OutputModule.TypeId), 0, 0);
 
             PictureExtra.Set(image, "gone.png");
             patch.Nodes.Add(image);
             patch.Nodes.Add(output);
-            patch.Connect(image.Id, 0, output.Id, NodeCatalog.OutputColorPort);
+            patch.Connect(image.Id, 0, output.Id, OutputModule.ColorPort);
 
             return patch;
         });

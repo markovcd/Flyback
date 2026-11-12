@@ -18,7 +18,7 @@ internal sealed class PatchWalk
     internal const int MostDeep = 128;
 
     private readonly Patch patch;
-    private readonly NodeCatalog.SinkKind sink;
+    private readonly OutputModule.SinkKind sink;
     private readonly ModuleCatalog catalog;
     private readonly ISampleLibrary? samples;
     private readonly IImageLibrary? pictures;
@@ -110,7 +110,7 @@ internal sealed class PatchWalk
     /// </param>
     public PatchWalk(
         Patch patch,
-        NodeCatalog.SinkKind sink,
+        OutputModule.SinkKind sink,
         ModuleCatalog? modules,
         Guid? probe,
         ISampleLibrary? samples,
@@ -135,7 +135,7 @@ internal sealed class PatchWalk
 
         foreach (var (remap, span) in spans)
         {
-            var title = patch.Find(remap)!.Title(catalog.Require(NodeCatalog.AutoRemapTypeId));
+            var title = patch.Find(remap)!.Title(catalog.Require(MathModules.AutoRemapTypeId));
 
             if (span.InWhy is { } inWhy)
                 issues.Add(new CompileIssue(remap, $"{title}'s 'in low' and 'in high' are plain numbers: {inWhy}.", IssueSeverity.Warning));
@@ -152,10 +152,10 @@ internal sealed class PatchWalk
         // walk's root differs.
         var probed = probe is { } id ? patch.Find(id) : null;
         this.probe = probed?.Id;
-        root = probed ?? patch.FirstOf(NodeCatalog.OutputTypeId);
+        root = probed ?? patch.FirstOf(OutputModule.TypeId);
 
-        plays = this.probe is null && measured is null && sink.Name == NodeCatalog.Speakers.Name;
-        hears = plays || (measured is not null && sink.Name == NodeCatalog.Speakers.Name);
+        plays = this.probe is null && measured is null && sink.Name == OutputModule.Speakers.Name;
+        hears = plays || (measured is not null && sink.Name == OutputModule.Speakers.Name);
 
         emitter = new Emitter { Length = patch.Lasts };
         backwards = Cycles.Backwards(patch);

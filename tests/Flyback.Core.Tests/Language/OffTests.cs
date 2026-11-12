@@ -102,10 +102,10 @@ public class OffTests
 
         var osc = b.Add("osc.sine");
         var turn = b.Add("space.rotate");
-        var output = b.Add(NodeCatalog.OutputTypeId);
+        var output = b.Add(OutputModule.TypeId);
 
         b.Wire(osc, 0, turn, 2);
-        b.Wire(turn, 0, output, NodeCatalog.OutputColorPort);
+        b.Wire(turn, 0, output, OutputModule.ColorPort);
 
         turn.Off = true;
 
@@ -129,19 +129,19 @@ public class OffTests
     {
         var b = new PatchBuilder(Modules);
 
-        var clock = b.Add(NodeCatalog.TimeTypeId);
+        var clock = b.Add(SourceModules.TimeTypeId);
         var osc = b.Add("osc.sine");
-        var output = b.Add(NodeCatalog.OutputTypeId);
+        var output = b.Add(OutputModule.TypeId);
 
         b.Wire(clock, 0, osc, 0);
-        b.Wire(osc, 0, output, NodeCatalog.OutputColorPort);
+        b.Wire(osc, 0, output, OutputModule.ColorPort);
 
         clock.Off = true;
 
         var again = Build(PatchPrinter.Print(b.Patch, Modules));
 
         again.Issues.ShouldBeEmpty(again.Report);
-        Only(again.Patch, NodeCatalog.TimeTypeId).Off.ShouldBeTrue();
+        Only(again.Patch, SourceModules.TimeTypeId).Off.ShouldBeTrue();
     }
 
     /// <summary>
@@ -162,7 +162,7 @@ public class OffTests
 
         load.Issues.ShouldBeEmpty(load.Report);
 
-        var expressions = load.Patch.Nodes.Where(n => n.TypeId == NodeCatalog.ExpressionTypeId).ToList();
+        var expressions = load.Patch.Nodes.Where(n => n.TypeId == MathModules.ExpressionTypeId).ToList();
 
         expressions.Count.ShouldBe(2);
         expressions.Count(n => n.Off).ShouldBe(1);

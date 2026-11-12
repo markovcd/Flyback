@@ -39,9 +39,9 @@ public class SwapPreviewTests : EditorTest
         var editor = Editor(window);
         var output = editor.History.Patch.Output;
 
-        var color = editor.History.Patch.IncomingTo(output.Id, NodeCatalog.OutputColorPort).ShouldNotBeNull();
+        var color = editor.History.Patch.IncomingTo(output.Id, OutputModule.ColorPort).ShouldNotBeNull();
 
-        editor.History.Patch.Disconnect(output.Id, NodeCatalog.OutputColorPort);
+        editor.History.Patch.Disconnect(output.Id, OutputModule.ColorPort);
         editor.History.Record();
         Settle(window);
 
@@ -223,7 +223,7 @@ public class SwapPreviewTests : EditorTest
 
         // And the picture coming back does not swap it again by itself.
         var output = editor.History.Patch.Output;
-        editor.History.Patch.Connect(color.SourceNode, color.SourcePort, output.Id, NodeCatalog.OutputColorPort);
+        editor.History.Patch.Connect(color.SourceNode, color.SourcePort, output.Id, OutputModule.ColorPort);
         editor.History.Record();
         Settle(window);
 
@@ -262,7 +262,7 @@ public class SwapPreviewTests : EditorTest
 
         var output = editor.History.Patch.Output;
         var socket = Geometry.InputPort(
-            output, NodeCatalog.BuiltIn.Require(output.TypeId), NodeCatalog.OutputColorPort);
+            output, NodeCatalog.BuiltIn.Require(output.TypeId), OutputModule.ColorPort);
 
         // Down on the socket and away over the Output's own body, where letting
         // go is a miss and the wire is simply gone.
@@ -272,7 +272,7 @@ public class SwapPreviewTests : EditorTest
         window.MouseMove(OnWindow(window, body));
         Settle(window);
 
-        editor.History.Patch.IncomingTo(output.Id, NodeCatalog.OutputColorPort)
+        editor.History.Patch.IncomingTo(output.Id, OutputModule.ColorPort)
             .ShouldBeNull("the wire comes off at the press");
         Swap(window).IsChecked.ShouldBe(true, "but nothing moves while the wire is held");
         editor.Bounds.Width.ShouldBe(swappedWidth, 0.5);

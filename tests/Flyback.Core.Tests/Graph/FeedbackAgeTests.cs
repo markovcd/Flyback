@@ -21,7 +21,7 @@ public class FeedbackAgeTests
     [Fact]
     public void Feedback_says_how_old_its_frame_is()
     {
-        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.FeedbackTypeId);
+        var def = NodeCatalog.BuiltIn.Require(FeedbackModules.FeedbackTypeId);
 
         def.Outputs.Select(p => p.Name).ShouldBe(["color", "age"]);
         def.Outputs[Age].Kind.ShouldBe(PortKind.Scalar);
@@ -35,8 +35,8 @@ public class FeedbackAgeTests
     public void A_loop_dimmed_by_its_age_draws_what_trails_draws(double fps, float persist)
     {
         var byHand = new PatchBuilder(NodeCatalog.BuiltIn);
-        var before = byHand.Add(NodeCatalog.FeedbackTypeId);
-        var sixtieths = byHand.Add("math.mul", (1, NodeCatalog.TrailsFrameRate));
+        var before = byHand.Add(FeedbackModules.FeedbackTypeId);
+        var sixtieths = byHand.Add("math.mul", (1, FeedbackModules.TrailsFrameRate));
         var dimming = byHand.Add("math.pow", (0, persist));
         var dimmed = byHand.Add("color.gain");
         var brighter = byHand.Add("math.max");
@@ -47,13 +47,13 @@ public class FeedbackAgeTests
             .Wire(dimming, 0, dimmed, 1)
             .Wire(dimmed, 0, brighter, 0)
             .Wire(Spark(byHand), 0, brighter, 1)
-            .Wire(brighter, 0, byHand.Add(NodeCatalog.OutputTypeId), NodeCatalog.OutputColorPort);
+            .Wire(brighter, 0, byHand.Add(OutputModule.TypeId), OutputModule.ColorPort);
 
         var wrapped = new PatchBuilder(NodeCatalog.BuiltIn);
         var trails = wrapped.Add("feedback.trails", (7, persist));
 
         wrapped.Wire(Spark(wrapped), 0, trails, 0)
-            .Wire(trails, 0, wrapped.Add(NodeCatalog.OutputTypeId), NodeCatalog.OutputColorPort);
+            .Wire(trails, 0, wrapped.Add(OutputModule.TypeId), OutputModule.ColorPort);
 
         Rendered(byHand.Patch, fps).ShouldBe(Rendered(wrapped.Patch, fps));
     }

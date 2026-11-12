@@ -47,7 +47,7 @@ public class PatchShotTests : EditorTest
         PatchClipboard.Paste(box.Patch, InstrumentScaffold.Build(
             "midi:elektron-syntakt",
             InstrumentLibrary.Shipped().Profiles.Single(profile => profile.Name == "Syntakt")));
-        box.Add(NodeCatalog.OutputTypeId, 2 * (NodeGeometry.Width + 14), 0, (NodeCatalog.OutputVolumePort, 0.5f));
+        box.Add(OutputModule.TypeId, 2 * (NodeGeometry.Width + 14), 0, (OutputModule.VolumePort, 0.5f));
 
         Shoot(folder, "syntakt-box", box.Patch);
 

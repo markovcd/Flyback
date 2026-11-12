@@ -259,7 +259,7 @@ internal sealed class Playback
     /// screen is doing.
     /// </remarks>
     private NodeInstance? Probed =>
-        editor.Selection.Focused is { } selected && NodeCatalog.IsChart(selected.TypeId) ? selected : null;
+        editor.Selection.Focused is { } selected && ChartModules.IsChart(selected.TypeId) ? selected : null;
 
     /// <summary>
     /// Whether there is anything for the preview to show. A chart rooted at a Probe
@@ -354,13 +354,13 @@ internal sealed class Playback
         {
             said = said.Prepend(probe.TypeId switch
             {
-                NodeCatalog.ScopeTypeId =>
+                ChartModules.ScopeTypeId =>
                     "Showing the Scope — it charts what the speakers played, so turn the Output's "
                     + "Volume up to see anything. Select another module for the picture.",
-                NodeCatalog.BeamTypeId =>
+                BeamModule.TypeId =>
                     "Showing the Beam — it draws what the speakers played on 'x' against 'y', so "
                     + "turn the Output's Volume up to see anything. Select another module for the picture.",
-                NodeCatalog.AnalyzerTypeId =>
+                ChartModules.AnalyzerTypeId =>
                     "Showing the Analyzer — it charts the spectrum of what the speakers played, so "
                     + "turn the Output's Volume up to see anything. Select another module for the picture.",
                 _ => "Showing the Probe — select another module for the picture.",

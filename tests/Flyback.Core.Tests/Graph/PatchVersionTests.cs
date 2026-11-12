@@ -18,9 +18,9 @@ public class PatchVersionTests
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
         var coords = builder.Add("coord", 10, 20);
-        var screen = builder.Add(NodeCatalog.OutputTypeId, 300, 20);
+        var screen = builder.Add(OutputModule.TypeId, 300, 20);
 
-        builder.Wire(coords, 0, screen, NodeCatalog.OutputColorPort);
+        builder.Wire(coords, 0, screen, OutputModule.ColorPort);
 
         return builder.Patch;
     }
@@ -170,7 +170,7 @@ public class PatchVersionTests
     public void A_file_from_a_newer_build_reports_only_that()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        builder.Add(NodeCatalog.OutputTypeId, 0, 0);
+        builder.Add(OutputModule.TypeId, 0, 0);
 
         var json = Stamped(PatchIO.ToJson(builder.Patch, NodeCatalog.BuiltIn), PatchIO.FormatVersion + 1)
             .Replace("\"coord\"", "\"nobody.knows.this\"", StringComparison.Ordinal);
@@ -194,7 +194,7 @@ public class PatchVersionTests
         var loaded = PatchIO.Read(json, NodeCatalog.BuiltIn);
 
         loaded.Patch.ShouldNotBeNull();
-        loaded.Patch.Nodes.ShouldContain(n => n.TypeId == NodeCatalog.OutputTypeId);
+        loaded.Patch.Nodes.ShouldContain(n => n.TypeId == OutputModule.TypeId);
     }
 
     // --- the constants themselves -------------------------------------------

@@ -33,7 +33,7 @@ public class TransformTests
         def.Inputs.Select(p => p.Name).ShouldBe(["x", "y", "zoom", "angle", "dx", "dy"]);
         def.Outputs.Select(p => p.Name).ShouldBe(["x", "y"]);
         def.Extra<SettingsExtra>().ShouldNotBeNull().Fields.ShouldHaveSingleItem().Key
-            .ShouldBe(NodeCatalog.TransformOrderKey);
+            .ShouldBe(SpaceModules.TransformOrderKey);
     }
 
     [Fact]
@@ -75,7 +75,7 @@ public class TransformTests
 
         Placed(
                 new PatchBuilder(NodeCatalog.BuiltIn),
-                NodeCatalog.TurnThenZoom,
+                SpaceModules.TurnThenZoom,
                 (Zoom, zoom), (Angle, angle), (Dx, dx), (Dy, dy))
             .ShouldBe(Seen(b, moved));
     }
@@ -87,7 +87,7 @@ public class TransformTests
         var placed = b.Add(Transform, knobs);
 
         if (order is not null)
-            placed.SetState(NodeCatalog.TransformStateKey, new JsonObject { [NodeCatalog.TransformOrderKey] = order });
+            placed.SetState(SpaceModules.TransformStateKey, new JsonObject { [SpaceModules.TransformOrderKey] = order });
 
         return Seen(b, placed);
     }
@@ -102,9 +102,9 @@ public class TransformTests
     private static double[] Seen(PatchBuilder b, NodeInstance plane)
     {
         var color = b.Add("color.rgb", (2, 0f));
-        var sink = b.Add(NodeCatalog.OutputTypeId);
+        var sink = b.Add(OutputModule.TypeId);
 
-        b.Wire(plane, 0, color, 0).Wire(plane, 1, color, 1).Wire(color, 0, sink, NodeCatalog.OutputColorPort);
+        b.Wire(plane, 0, color, 0).Wire(plane, 1, color, 1).Wire(color, 0, sink, OutputModule.ColorPort);
 
         var result = b.Patch.CompileForVideo(NodeCatalog.BuiltIn);
         result.HasErrors.ShouldBeFalse(string.Join("; ", result.Issues.Select(i => i.Message)));

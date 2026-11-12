@@ -17,7 +17,7 @@ public sealed class IdleInputSteps(PatchContext context, EditorDriver editor)
     [Given("an Expression whose formula is {string}")]
     public void GivenAnExpression(string formula)
     {
-        var node = context.Add("Expression", NodeCatalog.ExpressionTypeId);
+        var node = context.Add("Expression", MathModules.ExpressionTypeId);
         node.SetState("expression", new JsonObject { ["formula"] = formula });
     }
 

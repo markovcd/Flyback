@@ -18,8 +18,8 @@ namespace Flyback.Core.Tests.Graph;
 /// </remarks>
 public class MeterTests
 {
-    private const string Meter = NodeCatalog.MeterTypeId;
-    private const string Scope = NodeCatalog.ScopeTypeId;
+    private const string Meter = MeterModule.TypeId;
+    private const string Scope = ChartModules.ScopeTypeId;
     private const string Sine = "osc.sine";
 
     private const int In = 0;
@@ -74,7 +74,7 @@ public class MeterTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 900, 0);
+        var output = b.Add(OutputModule.TypeId, 900, 0);
         var meter = b.Add(Meter, 400, 0);
 
         // Something the picture would notice the cost of, if it were lowered.
@@ -86,7 +86,7 @@ public class MeterTests
             chain = next;
         }
 
-        b.Wire(chain, 0, meter, In).Wire(meter, Level, output, NodeCatalog.OutputColorPort);
+        b.Wire(chain, 0, meter, In).Wire(meter, Level, output, OutputModule.ColorPort);
 
         var drawn = b.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program;
 
@@ -128,14 +128,14 @@ public class MeterTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 900, 0);
+        var output = b.Add(OutputModule.TypeId, 900, 0);
         var first = b.Add(Meter, 400, 0);
         var second = b.Add(Meter, 400, 200);
         var both = b.Add("math.add", 650, 100);
 
         b.Wire(first, Level, both, 0)
          .Wire(second, Peak, both, 1)
-         .Wire(both, 0, output, NodeCatalog.OutputColorPort);
+         .Wire(both, 0, output, OutputModule.ColorPort);
 
         var drawn = b.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program;
 
@@ -271,7 +271,7 @@ public class MeterTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        b.Add(NodeCatalog.OutputTypeId, 900, 0);
+        b.Add(OutputModule.TypeId, 900, 0);
 
         var source = b.Add(Sine, 0, 0);
         var scope = b.Add(Scope, 400, 0);
@@ -303,13 +303,13 @@ public class MeterTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 900, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var output = b.Add(OutputModule.TypeId, 900, 0, (OutputModule.VolumePort, 1f));
         var source = b.Add(watched, 0, 0, (1, 220f));
         var meter = b.Add(Meter, 400, 0, knobs);
 
         b.Wire(source, 0, meter, In)
-         .Wire(source, 0, output, NodeCatalog.OutputLeftPort)
-         .Wire(meter, Level, output, NodeCatalog.OutputColorPort);
+         .Wire(source, 0, output, OutputModule.LeftPort)
+         .Wire(meter, Level, output, OutputModule.ColorPort);
 
         return b.Patch;
     }
@@ -343,12 +343,12 @@ public class MeterTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 900, 0);
+        var output = b.Add(OutputModule.TypeId, 900, 0);
         var source = b.Add(Sine, 0, 0);
         var watcher = b.Add(typeId, 400, 0);
 
         b.Wire(source, 0, watcher, In)
-         .Wire(watcher, 0, output, NodeCatalog.OutputColorPort);
+         .Wire(watcher, 0, output, OutputModule.ColorPort);
 
         return plays
             ? b.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program

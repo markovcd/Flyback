@@ -22,7 +22,7 @@ public class StringTests
     [Fact]
     public void The_engine_offers_it_beside_the_oscillators_for_audio()
     {
-        var def = Catalog.Require(NodeCatalog.StringTypeId);
+        var def = Catalog.Require(StringModule.TypeId);
 
         def.Name.ShouldBe("String");
         def.Category.ShouldBe(ModuleCategories.Oscillators);
@@ -108,7 +108,7 @@ public class StringTests
     [Fact]
     public void On_the_picture_in_passes_through()
     {
-        var program = Wired(NodeCatalog.OutputColorPort).CompileForVideo(Catalog).Program;
+        var program = Wired(OutputModule.ColorPort).CompileForVideo(Catalog).Program;
         var registers = program.AllocateRegisters();
 
         foreach (var y in new[] { -0.5f, 0f, 0.75f })
@@ -124,7 +124,7 @@ public class StringTests
     private static float[] Play(
         int length, int pluckAt = 0, int pluckFor = 1, float bow = 0f, (int Port, float Value)[]? knobs = null)
     {
-        var program = Wired(NodeCatalog.OutputLeftPort, knobs ?? []).CompileForAudio(Catalog).Program;
+        var program = Wired(OutputModule.LeftPort, knobs ?? []).CompileForAudio(Catalog).Program;
         var state = new DelayState(program.DelayLengths, Rate, program.PhaseCount, program.UnitCount);
         var registers = program.AllocateRegisters();
         var random = new Random(7);
@@ -142,22 +142,22 @@ public class StringTests
         return output;
     }
 
-    private static Patch Wired(int into = NodeCatalog.OutputLeftPort, params (int Port, float Value)[] knobs)
+    private static Patch Wired(int into = OutputModule.LeftPort, params (int Port, float Value)[] knobs)
     {
         var patch = new Patch();
 
-        var coord = NodeInstance.Create(Catalog.Require(NodeCatalog.CoordTypeId), 0, 0);
-        var pluck = NodeInstance.Create(Catalog.Require(NodeCatalog.StringTypeId), 0, 0);
+        var coord = NodeInstance.Create(Catalog.Require(SourceModules.CoordTypeId), 0, 0);
+        var pluck = NodeInstance.Create(Catalog.Require(StringModule.TypeId), 0, 0);
         foreach (var (port, value) in knobs) pluck.InputValues[port] = value;
 
-        var sink = NodeInstance.Create(Catalog.Require(NodeCatalog.OutputTypeId), 0, 0);
-        sink.InputValues[NodeCatalog.OutputVolumePort] = 1f;
+        var sink = NodeInstance.Create(Catalog.Require(OutputModule.TypeId), 0, 0);
+        sink.InputValues[OutputModule.VolumePort] = 1f;
 
         patch.Nodes.Add(coord);
         patch.Nodes.Add(pluck);
         patch.Nodes.Add(sink);
-        patch.Connect(coord.Id, NodeCatalog.CoordXPort, pluck.Id, Trigger);
-        patch.Connect(coord.Id, NodeCatalog.CoordYPort, pluck.Id, In);
+        patch.Connect(coord.Id, SourceModules.CoordXPort, pluck.Id, Trigger);
+        patch.Connect(coord.Id, SourceModules.CoordYPort, pluck.Id, In);
         patch.Connect(pluck.Id, 0, sink.Id, into);
 
         return patch;

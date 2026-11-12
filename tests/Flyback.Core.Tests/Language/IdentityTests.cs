@@ -141,8 +141,8 @@ public class IdentityTests
     [Fact]
     public void The_output_is_the_same_output_every_time()
     {
-        var first = Build(Plasma).FirstOf(NodeCatalog.OutputTypeId).ShouldNotBeNull();
-        var second = Build(Plasma).FirstOf(NodeCatalog.OutputTypeId).ShouldNotBeNull();
+        var first = Build(Plasma).FirstOf(OutputModule.TypeId).ShouldNotBeNull();
+        var second = Build(Plasma).FirstOf(OutputModule.TypeId).ShouldNotBeNull();
 
         second.Id.ShouldBe(first.Id);
     }
@@ -157,10 +157,10 @@ public class IdentityTests
         var first = Build("let a = t * 2\nlet b = t * 3\na |> add(a: _, b: b) |> out.left");
         var second = Build("let b = t * 3\nlet a = t * 2\na |> add(a: _, b: b) |> out.left");
 
-        first.Nodes.Count(n => n.TypeId == NodeCatalog.TimeTypeId).ShouldBe(1);
+        first.Nodes.Count(n => n.TypeId == SourceModules.TimeTypeId).ShouldBe(1);
 
-        first.FirstOf(NodeCatalog.TimeTypeId).ShouldNotBeNull().Id
-            .ShouldBe(second.FirstOf(NodeCatalog.TimeTypeId).ShouldNotBeNull().Id);
+        first.FirstOf(SourceModules.TimeTypeId).ShouldNotBeNull().Id
+            .ShouldBe(second.FirstOf(SourceModules.TimeTypeId).ShouldNotBeNull().Id);
     }
 
     /// <summary>

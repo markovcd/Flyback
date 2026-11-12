@@ -16,7 +16,7 @@ public class ClockOutputTests
 
         load.Issues.ShouldBeEmpty(load.Report);
 
-        var clock = load.Patch.Nodes.Single(n => n.TypeId == NodeCatalog.TimeTypeId);
+        var clock = load.Patch.Nodes.Single(n => n.TypeId == SourceModules.TimeTypeId);
         load.Patch.Connections.ShouldContain(c => c.SourceNode == clock.Id && c.SourcePort == port);
     }
 

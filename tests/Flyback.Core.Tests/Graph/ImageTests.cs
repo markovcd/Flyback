@@ -20,7 +20,7 @@ namespace Flyback.Core.Tests.Graph;
 /// </remarks>
 public class ImageTests
 {
-    private const string Image = NodeCatalog.PictureTypeId;
+    private const string Image = SourceModules.PictureTypeId;
 
     /// <summary>
     /// A picture with a known color in every corner and a different one in the
@@ -209,7 +209,7 @@ public class ImageTests
         var shelf = new Shelf(("a.png", Swatches), ("b.png", other));
 
         var patch = new Patch();
-        var output = Add(patch, NodeCatalog.OutputTypeId);
+        var output = Add(patch, OutputModule.TypeId);
         // Into a Mixer rather than all onto one socket, because a second wire
         // into the same place replaces the first and two of these would be dead
         // code rather than two pictures.
@@ -224,7 +224,7 @@ public class ImageTests
             into += 2;
         }
 
-        patch.Connect(mix.Id, 0, output.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(mix.Id, 0, output.Id, OutputModule.ColorPort);
 
         var drawn = patch.CompileForVideo(NodeCatalog.BuiltIn, pictures: shelf).Program;
 
@@ -270,7 +270,7 @@ public class ImageTests
         var shelf = new Shelf(("a.png", Swatches), ("b.png", new LoadedImage([1f, 1f, 1f], 1, 1)));
 
         var patch = new Patch();
-        var output = Add(patch, NodeCatalog.OutputTypeId);
+        var output = Add(patch, OutputModule.TypeId);
         var mix = Add(patch, "math.mixer");
         var into = 0;
 
@@ -282,7 +282,7 @@ public class ImageTests
             into += 2;
         }
 
-        patch.Connect(mix.Id, 0, output.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(mix.Id, 0, output.Id, OutputModule.ColorPort);
 
         var shader = GlslEmitter.Emit(
             patch.CompileForVideo(NodeCatalog.BuiltIn, pictures: shelf).Program,
@@ -372,8 +372,8 @@ public class ImageTests
         var node = Add(patch, Image);
         PictureExtra.Set(node, path);
 
-        var output = Add(patch, NodeCatalog.OutputTypeId);
-        patch.Connect(node.Id, 0, output.Id, NodeCatalog.OutputColorPort);
+        var output = Add(patch, OutputModule.TypeId);
+        patch.Connect(node.Id, 0, output.Id, OutputModule.ColorPort);
 
         return patch;
     }

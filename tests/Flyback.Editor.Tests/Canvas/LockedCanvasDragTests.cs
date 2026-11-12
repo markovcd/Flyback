@@ -17,9 +17,9 @@ public class LockedCanvasDragTests : EditorTest
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
         source = builder.Add("value", 0, 0);
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 420, 0);
+        var sink = builder.Add(OutputModule.TypeId, 420, 0);
 
-        builder.Wire(source, 0, sink, NodeCatalog.OutputLeftPort);
+        builder.Wire(source, 0, sink, OutputModule.LeftPort);
 
         return builder.Patch;
     }

@@ -21,7 +21,7 @@ namespace Flyback.Core.Tests.Graph;
 /// </remarks>
 public class ScanTests
 {
-    private const string Scan = NodeCatalog.ScanTypeId;
+    private const string Scan = ScanModule.TypeId;
     private const string Coordinates = "coord";
     private const string Rings = "pattern.rings";
     private const string Time = "time";
@@ -56,7 +56,7 @@ public class ScanTests
         string watched,
         int sourcePort = 0,
         int scanOutput = Out,
-        int sinkPort = NodeCatalog.OutputLeftPort,
+        int sinkPort = OutputModule.LeftPort,
         bool overCoordinates = false,
         params (int Port, float Value)[] knobs)
     {
@@ -65,7 +65,7 @@ public class ScanTests
         var clock = b.Add(Time, 0, 0, (0, 1f));
         var source = b.Add(watched, 300, 0);
         var scanner = b.Add(Scan, 600, 0, knobs);
-        var output = b.Add(NodeCatalog.OutputTypeId, 900, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var output = b.Add(OutputModule.TypeId, 900, 0, (OutputModule.VolumePort, 1f));
 
         if (overCoordinates)
         {
@@ -183,7 +183,7 @@ public class ScanTests
         var wave = b.Add("math.sin", 700, 0);
 
         var scanner = b.Add(Scan, 900, 0, (Rate, 55f), (Radius, 0.5f));
-        var output = b.Add(NodeCatalog.OutputTypeId, 1100, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var output = b.Add(OutputModule.TypeId, 1100, 0, (OutputModule.VolumePort, 1f));
 
         // Coordinates' fourth output is the angle, which inside the sweep is the
         // bearing of the point on the loop.
@@ -191,7 +191,7 @@ public class ScanTests
          .Wire(lobes, 0, wave, 0)
          .Wire(wave, 0, scanner, In)
          .Wire(clock, 0, scanner, Clock)
-         .Wire(scanner, Out, output, NodeCatalog.OutputLeftPort);
+         .Wire(scanner, Out, output, OutputModule.LeftPort);
 
         // 55 turns a second, eight cycles a turn: 440 Hz, so 880 crossings.
         Crossings(Heard(b.Patch)).ShouldBeInRange(878, 882);
@@ -234,7 +234,7 @@ public class ScanTests
         var (patch, _) = Scanning(
             Coordinates,
             scanOutput: Out,
-            sinkPort: NodeCatalog.OutputColorPort,
+            sinkPort: OutputModule.ColorPort,
             knobs: [(Radius, 0.6f)]);
 
         // Due east of the center: the loop point is (0.6, 0), so scanning x
@@ -258,7 +258,7 @@ public class ScanTests
         var (patch, _) = Scanning(
             Coordinates,
             scanOutput: View,
-            sinkPort: NodeCatalog.OutputColorPort,
+            sinkPort: OutputModule.ColorPort,
             knobs: [(Radius, 0.6f), (CenterX, 0f), (CenterY, 0f)]);
 
         // Green is the phosphor, so it carries the most of whatever ink is here.
@@ -277,7 +277,7 @@ public class ScanTests
         var (patch, _) = Scanning(
             Rings,
             scanOutput: Out,
-            sinkPort: NodeCatalog.OutputColorPort,
+            sinkPort: OutputModule.ColorPort,
             overCoordinates: true);
 
         var program = patch.CompileForVideo().Program;

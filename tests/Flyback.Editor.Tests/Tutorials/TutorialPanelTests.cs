@@ -63,7 +63,7 @@ public sealed class TutorialPanelTests : EditorTest
 
         Start(window, panel, FirstPatch);
 
-        Editor(window).History.Patch.Nodes.Select(n => n.TypeId).ShouldBe([NodeCatalog.OutputTypeId]);
+        Editor(window).History.Patch.Nodes.Select(n => n.TypeId).ShouldBe([OutputModule.TypeId]);
         panel.Step.ShouldBe(0);
         panel.Hint.ShouldBe("Add a Sine.");
     }

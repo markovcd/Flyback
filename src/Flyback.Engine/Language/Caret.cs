@@ -193,7 +193,7 @@ internal sealed class Caret
         path = chain;
         startsStatement = begins == 0 || Tokens[begins - 1].Kind is TokenKind.NewLine or TokenKind.OpenBrace;
 
-        if (chain == "out") return Modules.Get(NodeCatalog.OutputTypeId);
+        if (chain == "out") return Modules.Get(OutputModule.TypeId);
 
         return Bound(chain) is { Callee: { } bound } ? Module(bound) : null;
     }

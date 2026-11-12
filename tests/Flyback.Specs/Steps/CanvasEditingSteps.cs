@@ -56,7 +56,7 @@ public sealed class CanvasEditingSteps(PatchContext context, EditorDriver editor
     [Then("a sine is fed by the clock")]
     public void ThenASineIsFed()
     {
-        var sine = context.Patch.Nodes.Where(node => node.TypeId == NodeCatalog.SineTypeId).ShouldHaveSingleItem();
+        var sine = context.Patch.Nodes.Where(node => node.TypeId == OscillatorModules.SineTypeId).ShouldHaveSingleItem();
 
         context.Patch.Connections.ShouldContain(wire => wire.SourceNode == context.Node("clock").Id && wire.TargetNode == sine.Id);
     }
@@ -64,9 +64,9 @@ public sealed class CanvasEditingSteps(PatchContext context, EditorDriver editor
     [Given("the clock feeding a sine and then a saw, with a second clock beside it")]
     public void GivenTheClockFeedingTwo()
     {
-        Place(context.Add("clock", NodeCatalog.TimeTypeId), 40, 40);
-        Place(context.Add("second clock", NodeCatalog.TimeTypeId), 40, 300);
-        Place(context.Add("sine", NodeCatalog.SineTypeId), 400, 40);
+        Place(context.Add("clock", SourceModules.TimeTypeId), 40, 40);
+        Place(context.Add("second clock", SourceModules.TimeTypeId), 40, 300);
+        Place(context.Add("sine", OscillatorModules.SineTypeId), 400, 40);
         Place(context.Add("saw", "osc.saw"), 400, 300);
 
         context.Wire("clock", "t", "sine", "freq");

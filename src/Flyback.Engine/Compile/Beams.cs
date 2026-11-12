@@ -18,10 +18,10 @@ namespace Flyback.Engine.Compile;
 public static class Beams
 {
     /// <summary>How many texels the trace is drawn across, either way.</summary>
-    public const int Size = NodeCatalog.BeamSize;
+    public const int Size = BeamModule.BeamSize;
 
     /// <summary>How many texels the halo is drawn across, either way.</summary>
-    public const int GlowSize = NodeCatalog.BeamGlowSize;
+    public const int GlowSize = BeamModule.BeamGlowSize;
 
     /// <summary>Where the halo starts in the buffer, after the trace.</summary>
     public const int GlowStart = Size * Size;

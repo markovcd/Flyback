@@ -22,11 +22,11 @@ public class BoxRowTests : EditorTest
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 700, 40);
+        var output = b.Add(OutputModule.TypeId, 700, 40);
         var value = b.Add("value", 200, 40, (0, 0.2f));
-        var sine = b.Add(NodeCatalog.SineTypeId, 200, 200);
+        var sine = b.Add(OscillatorModules.SineTypeId, 200, 200);
 
-        b.Wire(value, 0, output, NodeCatalog.OutputColorPort);
+        b.Wire(value, 0, output, OutputModule.ColorPort);
 
         var box = b.Patch.Group([value.Id, sine.Id]).ShouldNotBeNull();
         box.Expose(new GroupSocket(value.Id, 0, IsOutput: false));

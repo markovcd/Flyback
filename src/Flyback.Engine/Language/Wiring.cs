@@ -26,10 +26,10 @@ internal sealed class Wiring(ModuleCatalog modules, Issues issues, SourceSites s
     private Guid clock;
 
     /// <summary>The one clock a bare <c>t</c> reads, placed the first time it is asked for.</summary>
-    public Placed Clock() => Shared(ref clock, NodeCatalog.TimeTypeId);
+    public Placed Clock() => Shared(ref clock, SourceModules.TimeTypeId);
 
     /// <summary>The one Coordinates a bare <c>x</c> or <c>y</c> reads, placed the first time it is asked for.</summary>
-    public Placed Coordinates() => Shared(ref coordinates, NodeCatalog.CoordTypeId);
+    public Placed Coordinates() => Shared(ref coordinates, SourceModules.CoordTypeId);
 
     /// <summary>Whether a module is the clock or the coordinates, which are the whole patch's and in no group.</summary>
     public bool IsShared(Guid id) => id == clock || id == coordinates;

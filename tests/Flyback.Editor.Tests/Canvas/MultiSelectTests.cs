@@ -25,7 +25,7 @@ public class MultiSelectTests : EditorTest
         a = builder.Add("value", 0, 0);
         b = builder.Add("time", 0, 240);
         c = builder.Add("coord", 0, 480);
-        builder.Add(NodeCatalog.OutputTypeId, 520, 240);
+        builder.Add(OutputModule.TypeId, 520, 240);
 
         return builder.Patch;
     }
@@ -249,8 +249,8 @@ public class MultiSelectTests : EditorTest
         editor.Edits.DeleteSelected();
 
         patch.Nodes.ShouldNotContain(n => n.TypeId == "value");
-        patch.FirstOf(NodeCatalog.OutputTypeId).ShouldNotBeNull();
-        Selected(editor).ShouldBe([NodeCatalog.OutputTypeId]);
+        patch.FirstOf(OutputModule.TypeId).ShouldNotBeNull();
+        Selected(editor).ShouldBe([OutputModule.TypeId]);
     }
 
     // --- everything else that names a selection -----------------------------
@@ -357,7 +357,7 @@ public class MultiSelectTests : EditorTest
 
         editor.Selection.SelectAll();
 
-        Selected(editor).ShouldBe(["coord", NodeCatalog.OutputTypeId, "time", "value"]);
+        Selected(editor).ShouldBe(["coord", OutputModule.TypeId, "time", "value"]);
         editor.Selection.Focused.ShouldNotBeNull("something has to be the one the inspector is about");
     }
 
@@ -386,7 +386,7 @@ public class MultiSelectTests : EditorTest
 
         editor.Selection.SelectAll();
 
-        Selected(editor).ShouldBe([NodeCatalog.OutputTypeId], "every patch has one (ADR-0037)");
+        Selected(editor).ShouldBe([OutputModule.TypeId], "every patch has one (ADR-0037)");
     }
 
     /// <summary>
@@ -403,10 +403,10 @@ public class MultiSelectTests : EditorTest
         editor.Selection.SelectAll();
         editor.Edits.DeleteSelected();
 
-        patch.Nodes.Select(n => n.TypeId).ShouldBe([NodeCatalog.OutputTypeId]);
+        patch.Nodes.Select(n => n.TypeId).ShouldBe([OutputModule.TypeId]);
 
         // Still selected, so its panel stays up rather than the inspector emptying.
-        Selected(editor).ShouldBe([NodeCatalog.OutputTypeId]);
+        Selected(editor).ShouldBe([OutputModule.TypeId]);
     }
 
     [AvaloniaFact]
@@ -429,7 +429,7 @@ public class MultiSelectTests : EditorTest
         editor.RaiseEvent(pressed);
 
         pressed.Handled.ShouldBeTrue();
-        Selected(editor).ShouldBe(["coord", NodeCatalog.OutputTypeId, "time", "value"]);
+        Selected(editor).ShouldBe(["coord", OutputModule.TypeId, "time", "value"]);
     }
 
     /// <summary>Plain A is not the gesture — it would fire on anyone typing.</summary>
@@ -465,8 +465,8 @@ public class MultiSelectTests : EditorTest
 
         var added = editor.Edits.AddNode("math.pow").ShouldNotBeNull();
 
-        added.TypeId.ShouldBe(NodeCatalog.ExpressionTypeId);
-        NodeCatalog.FormulaOf(added).ShouldBe("pow(a, b)");
+        added.TypeId.ShouldBe(MathModules.ExpressionTypeId);
+        MathModules.FormulaOf(added).ShouldBe("pow(a, b)");
         added.InputValues[1].ShouldBe(2f);
     }
 }

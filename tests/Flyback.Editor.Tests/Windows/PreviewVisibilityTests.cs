@@ -40,7 +40,7 @@ public class PreviewVisibilityTests : EditorTest
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var knob = b.Add("value", 0, 0);
-        var output = b.Add(NodeCatalog.OutputTypeId, 200, 0);
+        var output = b.Add(OutputModule.TypeId, 200, 0);
 
         b.Wire(knob, 0, output, port);
 
@@ -50,7 +50,7 @@ public class PreviewVisibilityTests : EditorTest
     [AvaloniaFact]
     public void The_preview_is_hidden_when_only_sound_is_wired()
     {
-        var window = Open(WiredTo(NodeCatalog.OutputLeftPort));
+        var window = Open(WiredTo(OutputModule.LeftPort));
 
         Preview(window).IsEffectivelyVisible.ShouldBeFalse();
         PreviewRow(window).RowDefinitions[0].ActualHeight.ShouldBe(0d, 0.5, "the row gives its share to the inspector");
@@ -59,7 +59,7 @@ public class PreviewVisibilityTests : EditorTest
     [AvaloniaFact]
     public void The_preview_is_shown_when_color_is_wired()
     {
-        var window = Open(WiredTo(NodeCatalog.OutputColorPort));
+        var window = Open(WiredTo(OutputModule.ColorPort));
 
         Preview(window).IsEffectivelyVisible.ShouldBeTrue();
         PreviewRow(window).RowDefinitions[0].ActualHeight.ShouldBeGreaterThan(0d);
@@ -73,14 +73,14 @@ public class PreviewVisibilityTests : EditorTest
     [AvaloniaFact]
     public void The_preview_follows_the_patch_that_is_opened_next()
     {
-        var window = Open(WiredTo(NodeCatalog.OutputColorPort));
+        var window = Open(WiredTo(OutputModule.ColorPort));
         Preview(window).IsEffectivelyVisible.ShouldBeTrue();
 
-        Editor(window).History.Open(WiredTo(NodeCatalog.OutputLeftPort));
+        Editor(window).History.Open(WiredTo(OutputModule.LeftPort));
         Settle(window);
         Preview(window).IsEffectivelyVisible.ShouldBeFalse();
 
-        Editor(window).History.Open(WiredTo(NodeCatalog.OutputColorPort));
+        Editor(window).History.Open(WiredTo(OutputModule.ColorPort));
         Settle(window);
         Preview(window).IsEffectivelyVisible.ShouldBeTrue();
     }
@@ -91,8 +91,8 @@ public class PreviewVisibilityTests : EditorTest
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var knob = b.Add("value", 0, 0);
-        var output = b.Add(NodeCatalog.OutputTypeId, 200, 0);
-        b.Wire(knob, 0, output, NodeCatalog.OutputColorPort);
+        var output = b.Add(OutputModule.TypeId, 200, 0);
+        b.Wire(knob, 0, output, OutputModule.ColorPort);
 
         var window = Open(b.Patch);
         Preview(window).IsEffectivelyVisible.ShouldBeTrue();

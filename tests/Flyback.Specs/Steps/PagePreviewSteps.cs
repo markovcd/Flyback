@@ -48,12 +48,12 @@ public sealed class PagePreviewSteps
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var sine = b.Add("osc.sine", 0, 0);
-        var scope = b.Add(NodeCatalog.ScopeTypeId, 100, 0);
-        var output = b.Add(NodeCatalog.OutputTypeId, 200, 0);
+        var scope = b.Add(ChartModules.ScopeTypeId, 100, 0);
+        var output = b.Add(OutputModule.TypeId, 200, 0);
 
         b.Wire(sine, 0, scope, 0);
-        b.Wire(sine, 0, output, NodeCatalog.OutputLeftPort);
-        b.Wire(scope, 0, output, NodeCatalog.OutputColorPort);
+        b.Wire(sine, 0, output, OutputModule.LeftPort);
+        b.Wire(scope, 0, output, OutputModule.ColorPort);
 
         var program = b.Patch.CompileForVideo(NodeCatalog.BuiltIn, played: true).Program;
         program.Tables.ShouldNotBeEmpty("the chart is a table, and a picture without one proves nothing");

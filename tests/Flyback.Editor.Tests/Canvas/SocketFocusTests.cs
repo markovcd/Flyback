@@ -27,7 +27,7 @@ public class SocketFocusTests : EditorTest
     private (NodeEditor Editor, Window Window, NodeInstance Sine, SocketPick Freq) Clicked()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        var sine = builder.Add(NodeCatalog.SineTypeId, 300, 200);
+        var sine = builder.Add(OscillatorModules.SineTypeId, 300, 200);
         var freq = new SocketPick(sine.Id, Port(sine, "freq"));
 
         var (editor, window) = Editing(builder.Patch, services => services.AddSingleton<IPointerAnchors>(new Free()));

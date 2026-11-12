@@ -21,9 +21,9 @@ public class AudioRendererTests
         var builder = new PatchBuilder();
         var time = builder.Add("time", 0, 0);
         var osc = builder.Add(oscillator, 0, 0, (1, hz));
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, gain));
+        var sink = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, gain));
 
-        builder.Wire(time, 0, osc, 0).Wire(osc, 0, sink, NodeCatalog.OutputLeftPort);
+        builder.Wire(time, 0, osc, 0).Wire(osc, 0, sink, OutputModule.LeftPort);
 
         return Compile(builder.Patch);
     }
@@ -192,8 +192,8 @@ public class AudioRendererTests
     {
         var builder = new PatchBuilder();
         var knob = builder.Add("value", 0, 0, (0, 1f));
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
-        builder.Wire(knob, 0, sink, NodeCatalog.OutputLeftPort);
+        var sink = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
+        builder.Wire(knob, 0, sink, OutputModule.LeftPort);
 
         var buffer = Render(Compile(builder.Patch), GlobalConstants.SampleRate);
 
@@ -301,8 +301,8 @@ public class AudioRendererTests
     {
         var builder = new PatchBuilder();
         var coords = builder.Add("coord", 0, 0);
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
-        builder.Wire(coords, NodeCatalog.CoordXPort, sink, NodeCatalog.OutputLeftPort);
+        var sink = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
+        builder.Wire(coords, SourceModules.CoordXPort, sink, OutputModule.LeftPort);
 
         var heard = new float[4_000 * 2];
         new AudioRenderer { Aspect = 16f / 9f }.Render(Compile(builder.Patch), heard);
@@ -322,12 +322,12 @@ public class AudioRendererTests
         var coords = builder.Add("coord", 0, 0);
         var osc = builder.Add("osc.sine", 0, 0, (1, 220f));
         var scaled = builder.Add("math.mul", 0, 0);
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 0.5f));
+        var sink = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 0.5f));
 
         builder.Wire(time, 0, osc, 0)
             .Wire(osc, 0, scaled, 0)
-            .Wire(coords, NodeCatalog.CoordAspectPort, scaled, 1)
-            .Wire(scaled, 0, sink, NodeCatalog.OutputLeftPort);
+            .Wire(coords, SourceModules.CoordAspectPort, scaled, 1)
+            .Wire(scaled, 0, sink, OutputModule.LeftPort);
 
         var program = Compile(builder.Patch);
 

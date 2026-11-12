@@ -66,7 +66,7 @@ public class ModuleCatalogTests
             (_, i) => [i[0]]);
 
         module.Inputs[0].Help.ShouldBe(SocketHelp.Inputs["x"]);
-        module.Inputs[1].Help.ShouldBe(NodeCatalog.BuiltIn.Require(NodeCatalog.SineTypeId).Inputs[0].Help);
+        module.Inputs[1].Help.ShouldBe(NodeCatalog.BuiltIn.Require(OscillatorModules.SineTypeId).Inputs[0].Help);
         module.Outputs[0].Help.ShouldBe(SocketHelp.Outputs["x"]);
         module.Outputs[0].Help.ShouldNotBe(module.Inputs[0].Help);
     }

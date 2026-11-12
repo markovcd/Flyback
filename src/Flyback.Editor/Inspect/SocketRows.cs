@@ -205,7 +205,7 @@ internal sealed class SocketRows(NodeEditor editor, TextWriteBack writeBack, Ins
     /// </summary>
     private (Func<float, string>? Reads, string? Flag) RemapReading(NodeDef def, NodeInstance node, int index)
     {
-        if (def.TypeId != NodeCatalog.AutoRemapTypeId || index == AutoRemap.In) return (null, null);
+        if (def.TypeId != MathModules.AutoRemapTypeId || index == AutoRemap.In) return (null, null);
 
         var spans = AutoRemap.Of(editor.History.Patch, node);
         var input = index is AutoRemap.InLow or AutoRemap.InHigh;

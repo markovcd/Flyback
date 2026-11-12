@@ -24,13 +24,13 @@ public sealed class GallerySteps(EditorDriver editor, PatchContext context)
 
     [Then("the canvas still holds the sine")]
     public void ThenTheSineIsStillThere() =>
-        editor.CanvasTypes.ShouldContain(NodeCatalog.SineTypeId);
+        editor.CanvasTypes.ShouldContain(OscillatorModules.SineTypeId);
 
     [Then("the preset on the canvas is {string}")]
     public void ThenThePresetIs(string name)
     {
         editor.Showing.ShouldBe(name);
-        context.Patch.Nodes.ShouldNotContain(node => node.TypeId == NodeCatalog.SineTypeId);
+        context.Patch.Nodes.ShouldNotContain(node => node.TypeId == OscillatorModules.SineTypeId);
     }
 
     [Then("the gallery's {string} row stands pressed")]

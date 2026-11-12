@@ -28,7 +28,7 @@ public class TouchpadScrollTests : EditorTest
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         builder.Add("value", 0, 0);
-        builder.Add(NodeCatalog.OutputTypeId, 520, 0);
+        builder.Add(OutputModule.TypeId, 520, 0);
 
         var editor = NewCanvas(Wide, Tall);
         var window = Show(editor, Wide);

@@ -119,7 +119,7 @@ public class LogoSceneTests
         audio.HasErrors.ShouldBeFalse(string.Join("; ", audio.Issues.Select(i => i.Message)));
 
         var renderer = new AudioRenderer();
-        var buffer = new float[renderer.SampleRate * NodeCatalog.AudioChannels];
+        var buffer = new float[renderer.SampleRate * OutputModule.AudioChannels];
 
         renderer.Render(audio.Program, buffer);
 

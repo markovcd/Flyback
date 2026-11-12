@@ -28,9 +28,9 @@ public class CopyPasteTests : EditorTest
 
         time = b.Add("time", 0, 0);
         osc = b.Add("osc.sine", 0, 260, (1, 220f));
-        sink = b.Add(NodeCatalog.OutputTypeId, 520, 120);
+        sink = b.Add(OutputModule.TypeId, 520, 120);
 
-        b.Wire(time, 0, osc, 0).Wire(osc, 0, sink, NodeCatalog.OutputLeftPort);
+        b.Wire(time, 0, osc, 0).Wire(osc, 0, sink, OutputModule.LeftPort);
 
         return b.Patch;
     }
@@ -88,7 +88,7 @@ public class CopyPasteTests : EditorTest
         window.KeyPressQwerty(PhysicalKey.D, RawInputModifiers.Control);
         Settle(window);
 
-        Count(editor.History.Patch, NodeCatalog.OutputTypeId).ShouldBe(1);
+        Count(editor.History.Patch, OutputModule.TypeId).ShouldBe(1);
         said.ShouldHaveSingleItem().ShouldContain("cannot be duplicated");
     }
 
@@ -271,7 +271,7 @@ public class CopyPasteTests : EditorTest
         (await editor.Clipboard.PasteAsync(Clipboard(window))).ShouldBeNull();
 
         patch.Nodes.Count.ShouldBe(3 + drone.Nodes.Count - 1);
-        patch.Nodes.Count(n => NodeCatalog.IsSink(n.TypeId)).ShouldBe(1);
+        patch.Nodes.Count(n => OutputModule.IsSink(n.TypeId)).ShouldBe(1);
     }
 
     // --- the boxes ----------------------------------------------------------
@@ -343,7 +343,7 @@ public class CopyPasteTests : EditorTest
         Click(editor, window, sink);
 
         (await editor.Clipboard.CutAsync(Clipboard(window))).ShouldNotBeNullOrWhiteSpace();
-        patch.FirstOf(NodeCatalog.OutputTypeId).ShouldNotBeNull();
+        patch.FirstOf(OutputModule.TypeId).ShouldNotBeNull();
     }
 
     // --- the keys -----------------------------------------------------------

@@ -28,5 +28,5 @@ public sealed record SavedGroup(string Name, string Path, PatchLoad Load)
     /// How many modules arrive with it, which is what a saved group is worth
     /// knowing before it is added. The sink is left out because pasting drops it.
     /// </summary>
-    public int Modules => Fragment.Nodes.Count(node => !NodeCatalog.IsSink(node.TypeId));
+    public int Modules => Fragment.Nodes.Count(node => !OutputModule.IsSink(node.TypeId));
 }

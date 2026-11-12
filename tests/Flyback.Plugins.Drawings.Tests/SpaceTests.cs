@@ -17,10 +17,10 @@ public class SpaceTests
     private static double Out(string typeId, int output, params (int Port, float Value)[] knobs)
     {
         var b = new PatchBuilder(Modules);
-        var screen = b.Add(NodeCatalog.OutputTypeId);
+        var screen = b.Add(OutputModule.TypeId);
         var module = b.Add(typeId, knobs);
 
-        b.Wire(module, output, screen, NodeCatalog.OutputColorPort);
+        b.Wire(module, output, screen, OutputModule.ColorPort);
 
         var program = b.Patch.CompileForVideo(Modules).Program;
         var registers = program.AllocateRegisters();

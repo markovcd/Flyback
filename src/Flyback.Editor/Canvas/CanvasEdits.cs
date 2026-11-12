@@ -106,7 +106,7 @@ internal sealed class CanvasEdits(
 
         if (ExpressionFusion.Standing(def, NodeCatalog.Current, 0, 0) is { } standing)
         {
-            def = NodeCatalog.Require(NodeCatalog.ExpressionTypeId);
+            def = NodeCatalog.Require(MathModules.ExpressionTypeId);
             standing.X = x;
             standing.Y = center.Y - geometry.Height(def) / 2;
             return standing;
@@ -116,11 +116,11 @@ internal sealed class CanvasEdits(
     }
 
     /// <summary>How many of the selected modules can be switched off: all but the Output.</summary>
-    public int Switchable => selection.Nodes.Count(n => !NodeCatalog.IsSink(n.TypeId));
+    public int Switchable => selection.Nodes.Count(n => !OutputModule.IsSink(n.TypeId));
 
     /// <summary>Whether the next press would switch the selection back on, which it does only for one entirely off.</summary>
     public bool SelectionIsOff =>
-        Switchable > 0 && selection.Nodes.Where(n => !NodeCatalog.IsSink(n.TypeId)).All(n => n.Off);
+        Switchable > 0 && selection.Nodes.Where(n => !OutputModule.IsSink(n.TypeId)).All(n => n.Off);
 
     /// <summary>
     /// Switches the selected modules off, or back on where every one of them is already
@@ -128,7 +128,7 @@ internal sealed class CanvasEdits(
     /// </summary>
     public void SwitchSelected()
     {
-        var switching = selection.Nodes.Where(n => !NodeCatalog.IsSink(n.TypeId)).ToArray();
+        var switching = selection.Nodes.Where(n => !OutputModule.IsSink(n.TypeId)).ToArray();
 
         if (switching.Length == 0) return;
 
@@ -174,7 +174,7 @@ internal sealed class CanvasEdits(
     /// How many of the selected modules a group would take: all but the Output. Agrees
     /// with <see cref="Patch.Group"/> exactly.
     /// </summary>
-    public int Groupable => selection.Nodes.Count(n => !NodeCatalog.IsSink(n.TypeId));
+    public int Groupable => selection.Nodes.Count(n => !OutputModule.IsSink(n.TypeId));
 
     /// <summary>
     /// Draws the selected modules as one box. Where they take in whole groups of which
@@ -398,7 +398,7 @@ internal sealed class CanvasEdits(
     /// </param>
     public IReadOnlyList<NodeInstance> AddFragment(Patch fragment, Point? at = null)
     {
-        var arriving = fragment.Nodes.Where(n => !NodeCatalog.IsSink(n.TypeId)).ToArray();
+        var arriving = fragment.Nodes.Where(n => !OutputModule.IsSink(n.TypeId)).ToArray();
         if (arriving.Length == 0) return [];
 
         var box = selection.Scene.Drawn(fragment, arriving);

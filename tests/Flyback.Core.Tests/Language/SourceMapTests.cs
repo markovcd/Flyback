@@ -176,7 +176,7 @@ public class SourceMapTests
         var sine = load.Patch.Nodes.Single(n => n.TypeId == "osc.sine");
 
         var edited = Turned(source, load.Map.Knob(sine.Id, "amp", "0.25"));
-        var sum = Built(edited).Patch.Nodes.Single(n => n.TypeId == NodeCatalog.ExpressionTypeId);
+        var sum = Built(edited).Patch.Nodes.Single(n => n.TypeId == MathModules.ExpressionTypeId);
 
         FormulaExtra.Of(sum).ShouldBe("a * 0.5", edited);
     }
@@ -248,8 +248,8 @@ public class SourceMapTests
         // Every module except the shared Coordinates and Time, which are written
         // as the bare words the language has for them and place nothing.
         var expected = patch.Nodes
-            .Where(node => node.TypeId != NodeCatalog.CoordTypeId && node.TypeId != NodeCatalog.TimeTypeId)
-            .Where(node => !NodeCatalog.IsSink(node.TypeId))
+            .Where(node => node.TypeId != SourceModules.CoordTypeId && node.TypeId != SourceModules.TimeTypeId)
+            .Where(node => !OutputModule.IsSink(node.TypeId))
             .Select(node => node.Id);
 
         foreach (var id in expected)
@@ -289,7 +289,7 @@ public class SourceMapTests
                 // A sum written as arithmetic has no brackets to take a knob, and
                 // the only one it leaves unwired is a socket its formula never reads.
                 if ("+-*/%".Contains(printing.Source[span.From])) continue;
-                if (node.TypeId == NodeCatalog.ExpressionTypeId && !printing.Source[span.From..].StartsWith("expression(", StringComparison.Ordinal)) continue;
+                if (node.TypeId == MathModules.ExpressionTypeId && !printing.Source[span.From..].StartsWith("expression(", StringComparison.Ordinal)) continue;
 
                 var socket = def.Inputs[port].Name.Replace(' ', '_');
 

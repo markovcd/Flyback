@@ -29,7 +29,7 @@ internal static class MasteringBench
         Func<int, double>? clock = null,
         params (int Port, float Value)[] knobs)
     {
-        var patch = Wired(type, into ?? (0, y is null ? -1 : 1), heard ?? (0, 1), NodeCatalog.OutputLeftPort, knobs, configure);
+        var patch = Wired(type, into ?? (0, y is null ? -1 : 1), heard ?? (0, 1), OutputModule.LeftPort, knobs, configure);
 
         var result = patch.CompileForAudio(Catalog);
         result.HasErrors.ShouldBeFalse(string.Join("; ", result.Issues.Select(i => i.Message)));
@@ -57,7 +57,7 @@ internal static class MasteringBench
     public static float[] Picture(
         string type, float[] x, Action<NodeInstance>? configure, params (int Port, float Value)[] knobs)
     {
-        var patch = Wired(type, (0, -1), (0, 1), NodeCatalog.OutputColorPort, knobs, configure);
+        var patch = Wired(type, (0, -1), (0, 1), OutputModule.ColorPort, knobs, configure);
         var program = patch.CompileForVideo(Catalog).Program;
         var registers = program.AllocateRegisters();
 
@@ -77,16 +77,16 @@ internal static class MasteringBench
     {
         var b = new PatchBuilder(Catalog);
 
-        var coord = b.Add(NodeCatalog.CoordTypeId);
+        var coord = b.Add(SourceModules.CoordTypeId);
         var module = b.Add(type, knobs);
         configure?.Invoke(module);
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
         b.Wire(coord, 0, module, into.X);
         if (into.Y >= 0) b.Wire(coord, 1, module, into.Y);
 
         b.Wire(module, heard.Left, sink, port);
-        if (port == NodeCatalog.OutputLeftPort) b.Wire(module, heard.Right, sink, NodeCatalog.OutputRightPort);
+        if (port == OutputModule.LeftPort) b.Wire(module, heard.Right, sink, OutputModule.RightPort);
 
         return b.Patch;
     }

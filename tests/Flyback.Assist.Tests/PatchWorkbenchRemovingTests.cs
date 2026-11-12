@@ -42,7 +42,7 @@ public class PatchWorkbenchRemovingTests
 
         (await Write(bench, "let knob1 = value()")).Ok.ShouldBeTrue();
 
-        bench.Snapshot().Nodes.Count(n => n.TypeId == NodeCatalog.OutputTypeId).ShouldBe(1);
+        bench.Snapshot().Nodes.Count(n => n.TypeId == OutputModule.TypeId).ShouldBe(1);
         (await Edit(bench, "let knob1 = value()", "let knob1 = value()\nknob1 |> out.left")).Ok.ShouldBeTrue();
     }
 
@@ -89,6 +89,6 @@ public class PatchWorkbenchRemovingTests
 
         // Back to what was open, which is never nothing: the Output survives a
         // reset because every patch has one.
-        bench.Snapshot().Nodes.ShouldHaveSingleItem().TypeId.ShouldBe(NodeCatalog.OutputTypeId);
+        bench.Snapshot().Nodes.ShouldHaveSingleItem().TypeId.ShouldBe(OutputModule.TypeId);
     }
 }

@@ -15,7 +15,7 @@ public class VolumeIsUpTests
     private static Patch AtVolume(float value)
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        builder.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, value));
+        builder.Add(OutputModule.TypeId, (OutputModule.VolumePort, value));
 
         return builder.Patch;
     }
@@ -24,7 +24,7 @@ public class VolumeIsUpTests
     public void The_default_volume_is_up()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        builder.Add(NodeCatalog.OutputTypeId);
+        builder.Add(OutputModule.TypeId);
 
         Sound.VolumeIsUp(builder.Patch).ShouldBeTrue();
     }
@@ -51,9 +51,9 @@ public class VolumeIsUpTests
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         var source = builder.Add("value");
-        var output = builder.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0f));
+        var output = builder.Add(OutputModule.TypeId, (OutputModule.VolumePort, 0f));
 
-        builder.Wire(source, 0, output, NodeCatalog.OutputVolumePort);
+        builder.Wire(source, 0, output, OutputModule.VolumePort);
 
         Sound.VolumeIsUp(builder.Patch).ShouldBeTrue();
     }
@@ -73,12 +73,12 @@ public class VolumeIsUpTests
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         var source = builder.Add("osc.sine");
-        var output = builder.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0f));
+        var output = builder.Add(OutputModule.TypeId, (OutputModule.VolumePort, 0f));
 
-        builder.Wire(source, 0, output, NodeCatalog.OutputLeftPort);
+        builder.Wire(source, 0, output, OutputModule.LeftPort);
 
         var knob = builder.Patch.AddControl(value: 1f);
-        ControlMap.Link(output, NodeCatalog.OutputVolumePort, new ControlLink(knob.Id, 0f, 1f));
+        ControlMap.Link(output, OutputModule.VolumePort, new ControlLink(knob.Id, 0f, 1f));
 
         Sound.VolumeIsUp(builder.Patch).ShouldBeTrue("the knob Volume follows is all the way up");
     }

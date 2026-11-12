@@ -37,11 +37,11 @@ public class AudioEngineTests
 
         var time = builder.Add("time", 0, 0);
         var osc = builder.Add("osc.sine", 0, 0, (1, hz));
-        var speaker = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var speaker = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
 
         return builder
             .Wire(time, 0, osc, 0)
-            .Wire(osc, 0, speaker, NodeCatalog.OutputLeftPort)
+            .Wire(osc, 0, speaker, OutputModule.LeftPort)
             .Patch;
     }
 
@@ -215,7 +215,7 @@ public class AudioEngineTests
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
         var tint = builder.Add("color.hsv", 0, 0);
-        var screen = builder.Add(NodeCatalog.OutputTypeId, 0, 0);
+        var screen = builder.Add(OutputModule.TypeId, 0, 0);
         builder.Wire(tint, 0, screen, 0);
 
         engine.Update(builder.Patch);
@@ -243,12 +243,12 @@ public class AudioEngineTests
         var coords = builder.Add("coord", 0, 0);
         var osc = builder.Add("osc.sine", 0, 0, (1, 220f));
         var scaled = builder.Add("math.mul", 0, 0);
-        var speaker = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 0.5f));
+        var speaker = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 0.5f));
 
         builder.Wire(time, 0, osc, 0)
             .Wire(osc, 0, scaled, 0)
-            .Wire(coords, NodeCatalog.CoordAspectPort, scaled, 1)
-            .Wire(scaled, 0, speaker, NodeCatalog.OutputLeftPort);
+            .Wire(coords, SourceModules.CoordAspectPort, scaled, 1)
+            .Wire(scaled, 0, speaker, OutputModule.LeftPort);
 
         engine.Update(builder.Patch);
         engine.Start();
@@ -281,8 +281,8 @@ public class AudioEngineTests
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
         var held = builder.Add("value", 0, 0, (0, 0.5f));
-        var scope = builder.Add(NodeCatalog.ScopeTypeId, 0, 0);
-        builder.Add(NodeCatalog.OutputTypeId, 0, 0);
+        var scope = builder.Add(ChartModules.ScopeTypeId, 0, 0);
+        builder.Add(OutputModule.TypeId, 0, 0);
 
         builder.Wire(held, 0, scope, 0);
 
@@ -321,12 +321,12 @@ public class AudioEngineTests
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
         var held = builder.Add("value", 0, 0, (0, 0.5f));
-        var meter = builder.Add(NodeCatalog.MeterTypeId, 0, 0);
-        var output = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var meter = builder.Add(MeterModule.TypeId, 0, 0);
+        var output = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
 
         builder.Wire(held, 0, meter, 0)
-               .Wire(held, 0, output, NodeCatalog.OutputLeftPort)
-               .Wire(meter, 0, output, NodeCatalog.OutputColorPort);
+               .Wire(held, 0, output, OutputModule.LeftPort)
+               .Wire(meter, 0, output, OutputModule.ColorPort);
 
         var drawn = builder.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program;
         var watching = new LiveValues(drawn.LiveInputs);
@@ -368,9 +368,9 @@ public class AudioEngineTests
         using var engine = new AudioEngine(new AudioSetup(device));
 
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        var clock = builder.Add(NodeCatalog.ClockTypeId, 0, 0);
-        var speaker = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
-        builder.Wire(clock, 0, speaker, NodeCatalog.OutputLeftPort);
+        var clock = builder.Add(MidiModules.ClockTypeId, 0, 0);
+        var speaker = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
+        builder.Wire(clock, 0, speaker, OutputModule.LeftPort);
 
         engine.Update(builder.Patch);
         engine.Live.Find(MidiSignal.LeadKey).ShouldBe(0.02f);
@@ -727,20 +727,20 @@ public class AudioEngineTests
         using var engine = new AudioEngine(new AudioSetup(device));
 
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        var key = builder.Add(NodeCatalog.MidiTypeId, 0, 0);
+        var key = builder.Add(MidiModules.MidiTypeId, 0, 0);
 
         key.SetState(MidiExtra.StateKey, new JsonObject { [MidiExtra.IndexField] = 1f });
 
         var time = builder.Add("time", 0, 0);
         var osc = builder.Add("osc.sine", 0, 0, (1, 220f));
         var gated = builder.Add("math.mul", 0, 0);
-        var speaker = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var speaker = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
 
         builder
             .Wire(time, 0, osc, 0)
             .Wire(osc, 0, gated, 0)
             .Wire(key, 1, gated, 1)
-            .Wire(gated, 0, speaker, NodeCatalog.OutputLeftPort);
+            .Wire(gated, 0, speaker, OutputModule.LeftPort);
 
         var gate = MidiSignal.Key(MidiSources.Keyboard, MidiSignal.Gate);
 

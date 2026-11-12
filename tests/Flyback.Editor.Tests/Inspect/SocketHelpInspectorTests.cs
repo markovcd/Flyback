@@ -15,16 +15,16 @@ namespace Flyback.Editor.Tests.Inspect;
 /// </summary>
 public class SocketHelpInspectorTests : EditorTest
 {
-    private static readonly NodeDef Filter = NodeCatalog.BuiltIn.Require(NodeCatalog.FilterTypeId);
+    private static readonly NodeDef Filter = NodeCatalog.BuiltIn.Require(FilterModule.TypeId);
 
     private MainWindow Selected(string typeId)
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 700, 40);
+        var output = b.Add(OutputModule.TypeId, 700, 40);
         var module = b.Add(typeId, 360, 40);
 
-        if (typeId != NodeCatalog.OutputTypeId) b.Wire(module, 0, output, NodeCatalog.OutputLeftPort);
+        if (typeId != OutputModule.TypeId) b.Wire(module, 0, output, OutputModule.LeftPort);
 
         var window = NewMainWindow();
 
@@ -51,7 +51,7 @@ public class SocketHelpInspectorTests : EditorTest
     [AvaloniaFact]
     public void The_description_heads_the_panel()
     {
-        var window = Selected(NodeCatalog.FilterTypeId);
+        var window = Selected(FilterModule.TypeId);
 
         All<TextBlock>(window).ShouldContain(t => t.Text == Filter.Description);
     }
@@ -59,7 +59,7 @@ public class SocketHelpInspectorTests : EditorTest
     [AvaloniaFact]
     public void An_input_row_carries_its_sockets_help_as_its_tip()
     {
-        var window = Selected(NodeCatalog.FilterTypeId);
+        var window = Selected(FilterModule.TypeId);
 
         var cutoff = Filter.Inputs.Single(port => port.Name == "cutoff");
 
@@ -70,7 +70,7 @@ public class SocketHelpInspectorTests : EditorTest
     [AvaloniaFact]
     public void The_outputs_are_listed_last_each_with_its_help()
     {
-        var window = Selected(NodeCatalog.FilterTypeId);
+        var window = Selected(FilterModule.TypeId);
 
         var text = All<TextBlock>(window).Select(t => t.Text).ToList();
         var heading = text.IndexOf("Outputs");
@@ -88,9 +88,9 @@ public class SocketHelpInspectorTests : EditorTest
     [AvaloniaFact]
     public void A_standard_socket_shows_the_standard_help()
     {
-        var window = Selected(NodeCatalog.SineTypeId);
+        var window = Selected(OscillatorModules.SineTypeId);
 
-        var freq = NodeCatalog.BuiltIn.Require(NodeCatalog.SineTypeId).Inputs.Single(port => port.Name == "freq");
+        var freq = NodeCatalog.BuiltIn.Require(OscillatorModules.SineTypeId).Inputs.Single(port => port.Name == "freq");
 
         freq.Standard.ShouldBeTrue();
         ToolTip.GetTip(Row(window, "freq")).ShouldBe(SocketHelp.Inputs["freq"]);
@@ -100,9 +100,9 @@ public class SocketHelpInspectorTests : EditorTest
     [AvaloniaFact]
     public void A_settings_row_carries_its_help_as_its_tip()
     {
-        var window = Selected(NodeCatalog.ExpressionTypeId);
+        var window = Selected(MathModules.ExpressionTypeId);
 
-        var formula = NodeCatalog.BuiltIn.Require(NodeCatalog.ExpressionTypeId).Extras.Single().Fields.Single();
+        var formula = NodeCatalog.BuiltIn.Require(MathModules.ExpressionTypeId).Extras.Single().Fields.Single();
         var caption = All<TextBlock>(window).Single(t => t.Text == formula.Label);
 
         formula.Help.ShouldNotBeEmpty();
@@ -113,7 +113,7 @@ public class SocketHelpInspectorTests : EditorTest
     [AvaloniaFact]
     public void A_module_with_no_outputs_lists_none()
     {
-        var window = Selected(NodeCatalog.OutputTypeId);
+        var window = Selected(OutputModule.TypeId);
 
         All<TextBlock>(window).ShouldNotContain(t => t.Text == "Outputs");
     }

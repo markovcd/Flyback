@@ -128,12 +128,12 @@ public class EasyDrumTests
     public void On_trigger_it_is_silent_until_struck_and_then_plays_each_rise()
     {
         var b = new PatchBuilder(Catalog);
-        var pulse = b.Add(NodeCatalog.PulseTypeId, (1, 2f), (3, 0.5f), (4, 0.5f), (5, 0.5f));
+        var pulse = b.Add(OscillatorModules.PulseTypeId, (1, 2f), (3, 0.5f), (4, 0.5f), (5, 0.5f));
         var drum = Configure(b.Add(Drum), ("sound", "kick"), ("rhythm", "trigger"));
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var output = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
         // High for the second half of each half second.
-        b.Wire(pulse, 0, drum, Trigger).Wire(drum, Env, output, NodeCatalog.OutputLeftPort);
+        b.Wire(pulse, 0, drum, Trigger).Wire(drum, Env, output, OutputModule.LeftPort);
 
         var env = Played(b.Build(), 1.2).Left;
 
@@ -175,7 +175,7 @@ public class EasyDrumTests
         var node = Module(("sound", "snare"));
         var heard = Played(node, 1.0, Env).Left;
 
-        var program = Wired(node, Env, NodeCatalog.OutputColorPort).CompileForVideo(Catalog).Program;
+        var program = Wired(node, Env, OutputModule.ColorPort).CompileForVideo(Catalog).Program;
         var registers = program.AllocateRegisters();
 
         foreach (var seconds in (double[])[0.1, 0.52, 0.6, 0.9])
@@ -191,7 +191,7 @@ public class EasyDrumTests
     {
         foreach (var rhythm in (string[])["auto", "trigger"])
         {
-            var program = Wired(Module(("sound", sound), ("rhythm", rhythm)), Left, NodeCatalog.OutputColorPort)
+            var program = Wired(Module(("sound", sound), ("rhythm", rhythm)), Left, OutputModule.ColorPort)
                 .CompileForVideo(Catalog).Program;
 
             foreach (var dialect in Enum.GetValues<GlslDialect>())
@@ -217,7 +217,7 @@ public class EasyDrumTests
         var b = new PatchBuilder(Catalog);
         b.Patch.Nodes.Add(node);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var output = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
         b.Wire(node, port, output, into);
 
         return b.Build();
@@ -228,8 +228,8 @@ public class EasyDrumTests
         var b = new PatchBuilder(Catalog);
         b.Patch.Nodes.Add(node);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
-        b.Wire(node, port, output, NodeCatalog.OutputLeftPort).Wire(node, Right, output, NodeCatalog.OutputRightPort);
+        var output = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
+        b.Wire(node, port, output, OutputModule.LeftPort).Wire(node, Right, output, OutputModule.RightPort);
 
         return Played(b.Build(), seconds);
     }

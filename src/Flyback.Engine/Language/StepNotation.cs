@@ -42,15 +42,15 @@ public static class StepNotation
         // Counted before anything is spelled out, since what is spelled out is the list itself.
         var count = 0L;
 
-        for (var pass = 0; pass < passes && count <= NodeCatalog.MaxSteps; pass++)
+        for (var pass = 0; pass < passes && count <= SequencerModules.MaxSteps; pass++)
             foreach (var term in terms)
                 count = Math.Min(count + term.Leaves(pass), long.MaxValue / 2);
 
-        if (count > NodeCatalog.MaxSteps)
+        if (count > SequencerModules.MaxSteps)
         {
             issues.Add(new LanguageIssue(line, column, IssueCode.TooManySteps, reader.Capped || count >= long.MaxValue / 2
-                ? $"this block spells more steps than a sequence holds, which is {NodeCatalog.MaxSteps}."
-                : $"this block spells {count} steps, and a sequence holds at most {NodeCatalog.MaxSteps}."));
+                ? $"this block spells more steps than a sequence holds, which is {SequencerModules.MaxSteps}."
+                : $"this block spells {count} steps, and a sequence holds at most {SequencerModules.MaxSteps}."));
 
             return new StepBlock([], 1);
         }
@@ -340,7 +340,7 @@ public static class StepNotation
 
                         // Past what a sequence holds the block is refused whole, so
                         // nothing larger than that is ever built to find out.
-                        var times = (int)Math.Min(count, NodeCatalog.MaxSteps + 1);
+                        var times = (int)Math.Min(count, SequencerModules.MaxSteps + 1);
                         Capped |= count > times;
 
                         // Repetition is the one form that makes several terms
@@ -377,12 +377,12 @@ public static class StepNotation
         private Term Euclid(Term term)
         {
             var opened = at - 1;
-            var sounding = (int)Math.Min(Figure() ?? 0d, NodeCatalog.MaxSteps + 1);
+            var sounding = (int)Math.Min(Figure() ?? 0d, SequencerModules.MaxSteps + 1);
 
             while (char.IsWhiteSpace(Current) || Current == ',') at++;
 
             var asked = Figure() ?? 0d;
-            var over = (int)Math.Min(asked, NodeCatalog.MaxSteps + 1);
+            var over = (int)Math.Min(asked, SequencerModules.MaxSteps + 1);
             Capped |= asked > over;
 
             while (char.IsWhiteSpace(Current)) at++;

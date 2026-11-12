@@ -156,10 +156,10 @@ public sealed class WebViewerSteps(Session session, PatchContext context, IUnitT
         var modules = Installed.Value.Modules;
         var patch = PresetLibrary.Open(session.Presets.Single(), null, modules).Patch;
 
-        patch.IncomingTo(patch.Output.Id, NodeCatalog.OutputVolumePort).ShouldBeNull("the Output's volume is wired, so setting it changes nothing");
+        patch.IncomingTo(patch.Output.Id, OutputModule.VolumePort).ShouldBeNull("the Output's volume is wired, so setting it changes nothing");
 
         var before = PatchIO.ToJson(patch, modules);
-        patch.Output.InputValues[NodeCatalog.OutputVolumePort] = volume;
+        patch.Output.InputValues[OutputModule.VolumePort] = volume;
         var after = PatchIO.ToJson(patch, modules);
 
         var first = Path.Combine(folder.FullName, "before.fbk");
@@ -322,9 +322,9 @@ public sealed class WebViewerSteps(Session session, PatchContext context, IUnitT
     {
         var song = MidiFiles.Bytes((60, 0, 0.5));
 
-        context.Add("tone", NodeCatalog.SineTypeId);
+        context.Add("tone", OscillatorModules.SineTypeId);
         context.SetInput("tone", "freq", 440f);
-        context.Add("song", NodeCatalog.MidiFileTypeId);
+        context.Add("song", MidiModules.MidiFileTypeId);
         Core.Graph.Extras.MidiFileExtra.Set(context.Node("song"), "tune.mid");
         context.Add("gate", "math.mul");
         context.Wire("tone", "out", "gate", "a");

@@ -57,14 +57,14 @@ public class ProbeSelectionTests : EditorTest
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 700, 40);
+        var output = b.Add(OutputModule.TypeId, 700, 40);
         var coordinates = b.Add("coord", 40, 40);
         var picture = b.Add("osc.sine", 340, 40);
 
-        b.Wire(coordinates, 0, picture, 0).Wire(picture, 0, output, NodeCatalog.OutputColorPort);
+        b.Wire(coordinates, 0, picture, 0).Wire(picture, 0, output, OutputModule.ColorPort);
 
         var clock = b.Add("time", 40, 320);
-        var probe = b.Add(NodeCatalog.ProbeTypeId, 340, 320);
+        var probe = b.Add(ChartModules.ProbeTypeId, 340, 320);
 
         b.Wire(clock, 0, probe, 0);
 

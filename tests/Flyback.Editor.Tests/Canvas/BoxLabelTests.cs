@@ -18,7 +18,7 @@ public class BoxLabelTests : EditorTest
 
     private static NodeInstance Expression(PatchBuilder b, string formula, double x)
     {
-        var node = b.Add(NodeCatalog.ExpressionTypeId, x, 0);
+        var node = b.Add(MathModules.ExpressionTypeId, x, 0);
         node.SetState("expression", new JsonObject { ["formula"] = formula });
         return node;
     }
@@ -55,11 +55,11 @@ public class BoxLabelTests : EditorTest
     public void A_box_names_an_expressions_input_for_its_own_socket()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var clock = b.Add(NodeCatalog.TimeTypeId, 0, 0);
+        var clock = b.Add(SourceModules.TimeTypeId, 0, 0);
         var inner = Expression(b, Long, 300);
         var tail = Expression(b, "a * 2", 600);
-        var sink = b.Add(NodeCatalog.OutputTypeId, 900, 0);
-        b.Wire(clock, 0, inner, 0).Wire(inner, 0, tail, 0).Wire(tail, 0, sink, NodeCatalog.OutputLeftPort);
+        var sink = b.Add(OutputModule.TypeId, 900, 0);
+        b.Wire(clock, 0, inner, 0).Wire(inner, 0, tail, 0).Wire(tail, 0, sink, OutputModule.LeftPort);
 
         var group = b.Patch.Group([inner.Id, tail.Id]).ShouldNotBeNull();
         group.Collapsed = true;
@@ -107,7 +107,7 @@ public class BoxLabelTests : EditorTest
         editor.History.Open(b.Patch);
         Settle(window);
 
-        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ExpressionTypeId);
+        var def = NodeCatalog.BuiltIn.Require(MathModules.ExpressionTypeId);
 
         double Height(NodeInstance node) =>
             FormulaLayout.FormulaBlock(editor.History.Patch, node, def, Geometry.Bounds(node, def), compact: false, static _ => CanvasText.ValueBrush)

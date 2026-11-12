@@ -20,7 +20,7 @@ public class DuckTests
     [Fact]
     public void It_is_offered_under_shaping_for_audio()
     {
-        var def = Modules.Get(NodeCatalog.DuckTypeId).ShouldNotBeNull();
+        var def = Modules.Get(DuckModule.TypeId).ShouldNotBeNull();
 
         def.Name.ShouldBe("Duck");
         def.Category.ShouldBe(ModuleCategories.Shaping);
@@ -82,12 +82,12 @@ public class DuckTests
         float[] values = [-0.75f, 0f, 0.5f, 1f];
 
         var b = new PatchBuilder(Modules);
-        var coord = b.Add(NodeCatalog.CoordTypeId);
-        var duck = b.Add(NodeCatalog.DuckTypeId, (Depth, 1f));
-        var sink = b.Add(NodeCatalog.OutputTypeId);
+        var coord = b.Add(SourceModules.CoordTypeId);
+        var duck = b.Add(DuckModule.TypeId, (Depth, 1f));
+        var sink = b.Add(OutputModule.TypeId);
         b.Wire(coord, 0, duck, 0);
         b.Wire(coord, 0, duck, Key);
-        b.Wire(duck, 0, sink, NodeCatalog.OutputColorPort);
+        b.Wire(duck, 0, sink, OutputModule.ColorPort);
 
         var program = b.Patch.CompileForVideo(Modules).Program;
         var registers = program.AllocateRegisters();
@@ -114,14 +114,14 @@ public class DuckTests
         var (left, right) = heard ?? (0, 1);
 
         var b = new PatchBuilder(Modules);
-        var coord = b.Add(NodeCatalog.CoordTypeId);
-        var duck = b.Add(NodeCatalog.DuckTypeId, knobs);
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var coord = b.Add(SourceModules.CoordTypeId);
+        var duck = b.Add(DuckModule.TypeId, knobs);
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
         b.Wire(coord, 0, duck, toX);
         if (toY >= 0) b.Wire(coord, 1, duck, toY);
-        b.Wire(duck, left, sink, NodeCatalog.OutputLeftPort);
-        b.Wire(duck, right, sink, NodeCatalog.OutputRightPort);
+        b.Wire(duck, left, sink, OutputModule.LeftPort);
+        b.Wire(duck, right, sink, OutputModule.RightPort);
 
         var result = b.Patch.CompileForAudio(Modules);
         result.HasErrors.ShouldBeFalse(string.Join("; ", result.Issues.Select(i => i.Message)));

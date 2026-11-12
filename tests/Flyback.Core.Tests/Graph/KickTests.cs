@@ -39,7 +39,7 @@ public class KickTests
         var b = new PatchBuilder(modules);
 
         // 120 a minute, and the module that says so in those words.
-        var tempo = b.Add(NodeCatalog.TempoTypeId, 40, 200, (0, 120f));
+        var tempo = b.Add(SequencerModules.TempoTypeId, 40, 200, (0, 120f));
 
         // 'width' is how much of each beat the pulse is shut for. Held far longer
         // than the drum lasts, which is deliberate: what decides how long a kick
@@ -48,10 +48,10 @@ public class KickTests
 
         // Level and pitch, in that order down the column, and the pitch one an
         // order of magnitude shorter.
-        var level = b.Add(NodeCatalog.AdsrTypeId, 520, 200,
+        var level = b.Add(EnvelopeModules.AdsrTypeId, 520, 200,
             (1, -2.7f), (2, -0.52f), (3, 0f), (4, -1.3f));
 
-        var sweep = b.Add(NodeCatalog.AdsrTypeId, 520, 480,
+        var sweep = b.Add(EnvelopeModules.AdsrTypeId, 520, 480,
             (1, -3f), (2, -1.35f), (3, 0f), (4, -2f));
 
         // The envelope is nought to one and a pitch is in hertz, so it is
@@ -62,7 +62,7 @@ public class KickTests
         var body = b.Add("osc.sine", 1020, 480);
         var struck = b.Add("math.mul", 1260, 300);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 1500, 420, (NodeCatalog.OutputVolumePort, 0.8f));
+        var output = b.Add(OutputModule.TypeId, 1500, 420, (OutputModule.VolumePort, 0.8f));
 
         b.Wire(tempo, 0, beat, 1)
          .Wire(beat, 0, level, 0)
@@ -71,7 +71,7 @@ public class KickTests
          .Wire(pitch, 0, body, 1)
          .Wire(body, 0, struck, 0)
          .Wire(level, 0, struck, 1)
-         .Wire(struck, 0, output, NodeCatalog.OutputLeftPort);
+         .Wire(struck, 0, output, OutputModule.LeftPort);
 
         return b.Patch;
     }

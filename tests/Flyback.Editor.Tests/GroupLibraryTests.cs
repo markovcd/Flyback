@@ -37,9 +37,9 @@ public class GroupLibraryTests : IDisposable
 
         var time = b.Add("time", 0, 0);
         var osc = b.Add("osc.sine", 300, 0, (1, 220f));
-        var sink = b.Add(NodeCatalog.OutputTypeId, 600, 0);
+        var sink = b.Add(OutputModule.TypeId, 600, 0);
 
-        b.Wire(time, 0, osc, 0).Wire(osc, 0, sink, NodeCatalog.OutputLeftPort);
+        b.Wire(time, 0, osc, 0).Wire(osc, 0, sink, OutputModule.LeftPort);
 
         group = b.Patch.Group([time.Id, osc.Id]) ?? throw new InvalidOperationException("no group");
         group.Rename(named);
@@ -85,7 +85,7 @@ public class GroupLibraryTests : IDisposable
         // fragment has one on the way back in and pasting drops it again — the
         // same round trip the clipboard makes. What was kept is the other two.
         kept.Fragment.Nodes
-            .Where(n => !NodeCatalog.IsSink(n.TypeId))
+            .Where(n => !OutputModule.IsSink(n.TypeId))
             .Select(n => n.TypeId)
             .Order()
             .ShouldBe(["osc.sine", "time"]);

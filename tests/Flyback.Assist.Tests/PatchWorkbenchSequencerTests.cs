@@ -65,11 +65,11 @@ public class PatchWorkbenchSequencerTests
     {
         var bench = Bench();
 
-        var many = string.Join(" ", Enumerable.Range(0, NodeCatalog.MaxSteps + 1).Select(_ => "0.5"));
+        var many = string.Join(" ", Enumerable.Range(0, SequencerModules.MaxSteps + 1).Select(_ => "0.5"));
         var set = await Write(bench, $"let tune1 = values() [ {many} ]");
 
         set.Ok.ShouldBeFalse();
-        set.Text.ShouldContain(NodeCatalog.MaxSteps.ToString(CultureInfo.InvariantCulture));
+        set.Text.ShouldContain(SequencerModules.MaxSteps.ToString(CultureInfo.InvariantCulture));
     }
 
     /// <summary>

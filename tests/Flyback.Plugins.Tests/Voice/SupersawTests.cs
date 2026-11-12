@@ -173,8 +173,8 @@ public class SupersawTests
         var patch = ShippedPlugins.Loaded.Presets.Single(p => p.Name == "Supersaw").Build(Catalog);
         var sink = patch.Output;
 
-        var left = patch.IncomingTo(sink.Id, NodeCatalog.OutputLeftPort).ShouldNotBeNull();
-        var right = patch.IncomingTo(sink.Id, NodeCatalog.OutputRightPort).ShouldNotBeNull();
+        var left = patch.IncomingTo(sink.Id, OutputModule.LeftPort).ShouldNotBeNull();
+        var right = patch.IncomingTo(sink.Id, OutputModule.RightPort).ShouldNotBeNull();
 
         left.SourceNode.ShouldBe(right.SourceNode);
         left.SourcePort.ShouldBe(0);
@@ -264,15 +264,15 @@ public class SupersawTests
 
         var clock = Add(patch, "time");
         var osc = Add(patch, typeId, knobs);
-        var sink = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = Add(patch, OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
         patch.Connect(clock.Id, 0, osc.Id, 0);
-        patch.Connect(osc.Id, 0, sink.Id, NodeCatalog.OutputLeftPort);
+        patch.Connect(osc.Id, 0, sink.Id, OutputModule.LeftPort);
 
         // 'wide' where the module has one, otherwise the same output twice —
         // which is what the audio sink's normalled right channel would do anyway.
         var right = Catalog.Require(typeId).Outputs.Count > 1 ? 1 : 0;
-        patch.Connect(osc.Id, right, sink.Id, NodeCatalog.OutputRightPort);
+        patch.Connect(osc.Id, right, sink.Id, OutputModule.RightPort);
 
         var program = patch.CompileForAudio(Catalog).Program;
         var registers = program.AllocateRegisters();

@@ -99,7 +99,7 @@ All of it is in `src/Flyback.Core/Graph`.
   and may be normalled to a hidden module such as `time` with no wire
   ([0050](adr/0050-normalled-sockets-carry-a-signal-with-no-wire.md)).
 
-A module is declared like this, in one of the `NodeCatalog.*.cs` partials:
+A module is declared like this, in its family's type (`OscillatorModules`, `DelayModule`), using the socket shorthands in `Sockets`:
 
 ```csharp
 yield return new NodeDef(
@@ -123,7 +123,7 @@ returns one `Slot` per output. It writes ops; it does not compute anything. That
 is the whole extension mechanism, and a plugin uses the same one.
 
 `NodeCatalog` is the built-in set, assembled once in a static constructor from
-the partials. `ModuleCatalog` is the immutable set a running program has: built-ins
+each family's `Def()` or `Defs()`. `ModuleCatalog` is the immutable set a running program has: built-ins
 plus whatever plugins added. `NodeCatalog.Install` is called once at startup,
 before any window exists. `ModuleCategories.All` is both the set of curated
 categories and the palette order.
@@ -923,9 +923,9 @@ private static float Heard(params (int Port, float Value)[] knobs)
 {
     var b = new PatchBuilder(NodeCatalog.BuiltIn);
     var mixer = b.Add(Mixer, 0, 0, knobs);
-    var output = b.Add(NodeCatalog.OutputTypeId, 200, 0, (NodeCatalog.OutputVolumePort, 1f));
+    var output = b.Add(OutputModule.TypeId, 200, 0, (OutputModule.VolumePort, 1f));
 
-    b.Wire(mixer, 0, output, NodeCatalog.OutputLeftPort);
+    b.Wire(mixer, 0, output, OutputModule.LeftPort);
 
     var result = b.Patch.CompileForAudio(NodeCatalog.BuiltIn);
     result.HasErrors.ShouldBeFalse();
@@ -1148,7 +1148,8 @@ lines the commit changed, and every one the suite misses gets a test (ADR-0207).
 
 ## 13. Recipes
 
-**Add a built-in module.** Add a `NodeDef` to the right `NodeCatalog.*.cs` partial
+**Add a built-in module.** Add a `NodeDef` to its family's type in `src/Flyback.Core/Graph/`
+(a new `XModule` with a `Def()` for a module of its own, listed in `NodeCatalog`'s static constructor)
 with a type id that will never change. Build it from existing ops if at all
 possible: a module made only of existing ops needs nothing else, and survives to
 the shader for free. Every-module and every-preset theories pick it up. Update

@@ -97,7 +97,7 @@ public class PluginExtraTests
         });
 
         patch.Nodes.Add(chord);
-        patch.Connect(chord.Id, 0, patch.Output.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(chord.Id, 0, patch.Output.Id, OutputModule.ColorPort);
 
         var compiled = patch.CompileForVideo(catalog);
         compiled.HasErrors.ShouldBeFalse();

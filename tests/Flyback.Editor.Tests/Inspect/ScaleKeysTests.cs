@@ -29,7 +29,7 @@ public class ScaleKeysTests : EditorTest
 
     private Window Open(out NodeInstance node, out Func<int> edits)
     {
-        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.QuantiserTypeId);
+        var def = NodeCatalog.BuiltIn.Require(PitchModules.QuantiserTypeId);
         var built = NodeInstance.Create(def, 0, 0);
         var count = 0;
 

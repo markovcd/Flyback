@@ -35,9 +35,9 @@ public class PresetLibraryTests : IDisposable
 
         var time = b.Add("time", 0, 0);
         var osc = b.Add("osc.sine", 300, 0, (1, hertz));
-        var sink = b.Add(NodeCatalog.OutputTypeId, 600, 0);
+        var sink = b.Add(OutputModule.TypeId, 600, 0);
 
-        b.Wire(time, 0, osc, 0).Wire(osc, 0, sink, NodeCatalog.OutputLeftPort);
+        b.Wire(time, 0, osc, 0).Wire(osc, 0, sink, OutputModule.LeftPort);
 
         return b.Patch;
     }
@@ -89,13 +89,13 @@ public class PresetLibraryTests : IDisposable
     public async Task A_saved_preset_is_opened_and_drawn_with_the_files_in_its_bundle()
     {
         var patch = new Patch();
-        var shown = NodeInstance.Create(NodeCatalog.BuiltIn.Require(NodeCatalog.PictureTypeId), 0, 0);
-        var sink = NodeInstance.Create(NodeCatalog.BuiltIn.Require(NodeCatalog.OutputTypeId), 300, 0);
+        var shown = NodeInstance.Create(NodeCatalog.BuiltIn.Require(SourceModules.PictureTypeId), 0, 0);
+        var sink = NodeInstance.Create(NodeCatalog.BuiltIn.Require(OutputModule.TypeId), 300, 0);
 
         PictureExtra.Set(shown, "white.png");
         patch.Nodes.Add(shown);
         patch.Nodes.Add(sink);
-        patch.Connect(shown.Id, 0, sink.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(shown.Id, 0, sink.Id, OutputModule.ColorPort);
 
         var library = Library();
         var saved = await library.SaveAsync("Shown", patch, name => name == "white.png" ? White() : null, NodeCatalog.BuiltIn);
@@ -103,7 +103,7 @@ public class PresetLibraryTests : IDisposable
         var opened = PresetLibrary.Open(saved.Preset, library, NodeCatalog.BuiltIn);
 
         // Packing renames what it carries, so the name is asked of the patch that came back.
-        var named = PictureExtra.Of(opened.Patch.Nodes.Single(n => n.TypeId == NodeCatalog.PictureTypeId));
+        var named = PictureExtra.Of(opened.Patch.Nodes.Single(n => n.TypeId == SourceModules.PictureTypeId));
 
         opened.Pictures.Find(named).ShouldNotBeNull(opened.Pictures.Explain(named));
 
@@ -122,13 +122,13 @@ public class PresetLibraryTests : IDisposable
     public async Task A_preset_saved_over_is_drawn_again_rather_than_found_on_disk()
     {
         var patch = new Patch();
-        var shown = NodeInstance.Create(NodeCatalog.BuiltIn.Require(NodeCatalog.PictureTypeId), 0, 0);
-        var sink = NodeInstance.Create(NodeCatalog.BuiltIn.Require(NodeCatalog.OutputTypeId), 300, 0);
+        var shown = NodeInstance.Create(NodeCatalog.BuiltIn.Require(SourceModules.PictureTypeId), 0, 0);
+        var sink = NodeInstance.Create(NodeCatalog.BuiltIn.Require(OutputModule.TypeId), 300, 0);
 
         PictureExtra.Set(shown, "white.png");
         patch.Nodes.Add(shown);
         patch.Nodes.Add(sink);
-        patch.Connect(shown.Id, 0, sink.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(shown.Id, 0, sink.Id, OutputModule.ColorPort);
 
         var library = Library();
         var kept = Path.Combine(folder, "thumbnails");

@@ -27,14 +27,14 @@ public sealed class CanvasSteps(PatchContext context, EditorDriver editor) : IDi
         if (settings is not null && File.Exists(settings)) File.Delete(settings);
     }
 
-    private static NodeDef Filter => NodeCatalog.Require(NodeCatalog.FilterTypeId);
+    private static NodeDef Filter => NodeCatalog.Require(FilterModule.TypeId);
 
     private static int Cutoff => Filter.Inputs.ToList().FindIndex(p => p.Name == "cutoff");
 
     private double fullHeight;
 
     [Given("a Filter")]
-    public void GivenAFilter() => context.Add("Filter", NodeCatalog.FilterTypeId);
+    public void GivenAFilter() => context.Add("Filter", FilterModule.TypeId);
 
     [Given("a Filter whose cutoff is set to {float}")]
     public void GivenAFilterWhoseCutoffIs(float value)

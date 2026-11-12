@@ -75,7 +75,7 @@ public class SourceViewUndoViewTests : SourceViewTest
 
         var editor = Editor(window);
         var turned = editor.History.Patch.Nodes.First(n =>
-            n.TypeId != NodeCatalog.OutputTypeId
+            n.TypeId != OutputModule.TypeId
             && NodeCatalog.BuiltIn.Require(n.TypeId).Inputs.Count > 0);
 
         editor.Selection.Select(turned.Id);

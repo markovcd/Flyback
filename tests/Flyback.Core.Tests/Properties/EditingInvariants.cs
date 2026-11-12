@@ -21,7 +21,7 @@ public class EditingInvariants
     public void An_edited_patch_stays_a_patch()
     {
         var catalog = NodeCatalog.BuiltIn;
-        var addable = catalog.All.Where(d => !NodeCatalog.IsSink(d.TypeId)).ToList();
+        var addable = catalog.All.Where(d => !OutputModule.IsSink(d.TypeId)).ToList();
         var random = new Random(20260920);
 
         var patch = new Patch();
@@ -90,7 +90,7 @@ public class EditingInvariants
     public void Undo_walks_back_the_way_redo_walks_forward()
     {
         var catalog = NodeCatalog.BuiltIn;
-        var addable = catalog.All.Where(d => !NodeCatalog.IsSink(d.TypeId)).ToList();
+        var addable = catalog.All.Where(d => !OutputModule.IsSink(d.TypeId)).ToList();
         var random = new Random(4242);
 
         var patch = new Patch();

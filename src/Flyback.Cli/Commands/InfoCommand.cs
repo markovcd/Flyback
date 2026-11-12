@@ -159,7 +159,7 @@ internal static class InfoCommand
         foreach (var group in patch.Groups ?? [])
         {
             var members = patch.Nodes
-                .Where(n => group.Members.Contains(n.Id) && !NodeCatalog.IsSink(n.TypeId))
+                .Where(n => group.Members.Contains(n.Id) && !OutputModule.IsSink(n.TypeId))
                 .ToArray();
 
             var was = members.Select(n => n.Off).ToArray();

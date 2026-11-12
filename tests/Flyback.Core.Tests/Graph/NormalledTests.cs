@@ -27,10 +27,10 @@ public class NormalledTests
     {
         var b = new PatchBuilder(Modules);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 400, 0);
+        var output = b.Add(OutputModule.TypeId, 400, 0);
         osc = b.Add("osc.sine", 200, 0);
 
-        b.Wire(osc, 0, output, NodeCatalog.OutputColorPort);
+        b.Wire(osc, 0, output, OutputModule.ColorPort);
         return b.Patch;
     }
 
@@ -69,12 +69,12 @@ public class NormalledTests
     {
         var b = new PatchBuilder(Modules);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 400, 0);
+        var output = b.Add(OutputModule.TypeId, 400, 0);
         var osc = b.Add("osc.sine", 200, 0);
-        var coords = b.Add(NodeCatalog.CoordTypeId, 0, 0);
+        var coords = b.Add(SourceModules.CoordTypeId, 0, 0);
 
-        b.Wire(osc, 0, output, NodeCatalog.OutputColorPort);
-        b.Wire(coords, NodeCatalog.CoordXPort, osc, 0);
+        b.Wire(osc, 0, output, OutputModule.ColorPort);
+        b.Wire(coords, SourceModules.CoordXPort, osc, 0);
 
         Count(b.Patch.CompileForVideo(Modules), OpCode.LoadT).ShouldBe(0);
 
@@ -92,12 +92,12 @@ public class NormalledTests
     {
         var b = new PatchBuilder(Modules);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 600, 0);
+        var output = b.Add(OutputModule.TypeId, 600, 0);
         var mix = b.Add("math.add", 400, 0);
 
         b.Wire(b.Add("osc.sine", 200, 0), 0, mix, 0);
         b.Wire(b.Add("osc.saw", 200, 100), 0, mix, 1);
-        b.Wire(mix, 0, output, NodeCatalog.OutputColorPort);
+        b.Wire(mix, 0, output, OutputModule.ColorPort);
 
         Count(b.Patch.CompileForVideo(Modules), OpCode.LoadT).ShouldBe(1);
     }
@@ -112,10 +112,10 @@ public class NormalledTests
     {
         var b = new PatchBuilder(Modules);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 400, 0);
+        var output = b.Add(OutputModule.TypeId, 400, 0);
         var rings = b.Add("pattern.rings", 200, 0);
 
-        b.Wire(rings, 0, output, NodeCatalog.OutputColorPort);
+        b.Wire(rings, 0, output, OutputModule.ColorPort);
 
         var compiled = b.Patch.CompileForVideo(Modules);
 
@@ -132,12 +132,12 @@ public class NormalledTests
     {
         var b = new PatchBuilder(Modules);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 600, 0);
+        var output = b.Add(OutputModule.TypeId, 600, 0);
         var mix = b.Add("math.add", 400, 0);
 
         b.Wire(b.Add("pattern.rings", 200, 0), 0, mix, 0);
         b.Wire(b.Add("pattern.checker", 200, 100), 0, mix, 1);
-        b.Wire(mix, 0, output, NodeCatalog.OutputColorPort);
+        b.Wire(mix, 0, output, OutputModule.ColorPort);
 
         var compiled = b.Patch.CompileForVideo(Modules);
 
@@ -163,11 +163,11 @@ public class NormalledTests
         var catalog = NodeCatalog.BuiltIn.With(Extras, [absent]).Catalog;
 
         var b = new PatchBuilder(catalog);
-        var output = b.Add(NodeCatalog.OutputTypeId, 400, 0);
+        var output = b.Add(OutputModule.TypeId, 400, 0);
         var orbit = b.Add("test.extras.orbit", 200, 0);
 
         orbit.InputValues[0] = 0.5f;
-        b.Wire(orbit, 0, output, NodeCatalog.OutputColorPort);
+        b.Wire(orbit, 0, output, OutputModule.ColorPort);
 
         var compiled = b.Patch.CompileForVideo(catalog);
 
@@ -192,9 +192,9 @@ public class NormalledTests
         var catalog = NodeCatalog.BuiltIn.With(Extras, [borrowing]).Catalog;
 
         var b = new PatchBuilder(catalog);
-        var output = b.Add(NodeCatalog.OutputTypeId, 400, 0);
+        var output = b.Add(OutputModule.TypeId, 400, 0);
 
-        b.Wire(b.Add("test.extras.orbit", 200, 0), 0, output, NodeCatalog.OutputColorPort);
+        b.Wire(b.Add("test.extras.orbit", 200, 0), 0, output, OutputModule.ColorPort);
 
         var compiled = b.Patch.CompileForVideo(catalog);
 

@@ -19,9 +19,9 @@ public class ControlTests
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         var value = builder.Add("value", 0, 0, (0, knob));
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
 
-        builder.Wire(value, 0, sink, NodeCatalog.OutputLeftPort);
+        builder.Wire(value, 0, sink, OutputModule.LeftPort);
 
         return (builder.Patch, value);
     }
@@ -145,8 +145,8 @@ public class ControlTests
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         var add = builder.Add("math.add", 0, 0);
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
-        builder.Wire(add, 0, sink, NodeCatalog.OutputLeftPort);
+        var sink = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
+        builder.Wire(add, 0, sink, OutputModule.LeftPort);
 
         var knob = builder.Patch.AddControl();
         ControlMap.Link(add, 0, new ControlLink(knob.Id, 0f, 1f));
@@ -167,8 +167,8 @@ public class ControlTests
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         var source = builder.Add("value", 0, 0, (0, 7f));
         var add = builder.Add("math.add", 0, 0);
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
-        builder.Wire(source, 0, add, 0).Wire(add, 0, sink, NodeCatalog.OutputLeftPort);
+        var sink = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
+        builder.Wire(source, 0, add, 0).Wire(add, 0, sink, OutputModule.LeftPort);
 
         var knob = builder.Patch.AddControl();
         ControlMap.Link(add, 0, new ControlLink(knob.Id, 0f, 100f));
@@ -196,8 +196,8 @@ public class ControlTests
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         var note = builder.Add("audio.note", 0, 0);
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
-        builder.Wire(note, 1, sink, NodeCatalog.OutputLeftPort);
+        var sink = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
+        builder.Wire(note, 1, sink, OutputModule.LeftPort);
 
         NodeCatalog.BuiltIn.Get("audio.note")!.Inputs[0].Stepped.ShouldBeTrue();
 

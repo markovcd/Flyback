@@ -37,7 +37,7 @@ public static class PatchClipboard
             .Distinct()
             .Select(patch.Find)
             .OfType<NodeInstance>()
-            .Where(node => !NodeCatalog.IsSink(node.TypeId))
+            .Where(node => !OutputModule.IsSink(node.TypeId))
             .ToArray();
 
         var inside = taking.Select(node => node.Id).ToHashSet();
@@ -108,7 +108,7 @@ public static class PatchClipboard
         double dy = 0)
     {
         var arriving = fragment.Nodes
-            .Where(node => !NodeCatalog.IsSink(node.TypeId))
+            .Where(node => !OutputModule.IsSink(node.TypeId))
             .ToArray();
 
         if (arriving.Length == 0) return [];

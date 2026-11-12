@@ -56,7 +56,7 @@ public class PatchWorkbenchRefusalsTests
         var again = await Write(bench, "let output2 = output()\nlet knob1 = value()\nknob1 |> out.color");
 
         again.Ok.ShouldBeFalse();
-        bench.Snapshot().Nodes.Count(n => n.TypeId == NodeCatalog.OutputTypeId).ShouldBe(1);
+        bench.Snapshot().Nodes.Count(n => n.TypeId == OutputModule.TypeId).ShouldBe(1);
     }
 
     [Fact]
@@ -64,7 +64,7 @@ public class PatchWorkbenchRefusalsTests
     {
         var bench = Bench();
 
-        bench.Snapshot().Nodes.ShouldHaveSingleItem().TypeId.ShouldBe(NodeCatalog.OutputTypeId);
+        bench.Snapshot().Nodes.ShouldHaveSingleItem().TypeId.ShouldBe(OutputModule.TypeId);
     }
 
     [Fact]

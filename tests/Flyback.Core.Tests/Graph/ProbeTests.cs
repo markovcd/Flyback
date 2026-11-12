@@ -17,7 +17,7 @@ namespace Flyback.Core.Tests.Graph;
 /// </remarks>
 public class ProbeTests
 {
-    private const string Probe = NodeCatalog.ProbeTypeId;
+    private const string Probe = ChartModules.ProbeTypeId;
     private const string Sine = "osc.sine";
     private const string Time = "time";
     private const string Coordinates = "coord";
@@ -59,10 +59,10 @@ public class ProbeTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 900, 0);
+        var output = b.Add(OutputModule.TypeId, 900, 0);
         var seen = b.Add(Coordinates, 0, 0);
         var picture = b.Add(Sine, 300, 0);
-        b.Wire(seen, 0, picture, 0).Wire(picture, 0, output, NodeCatalog.OutputColorPort);
+        b.Wire(seen, 0, picture, 0).Wire(picture, 0, output, OutputModule.ColorPort);
 
         var source = b.Add(watched, 300, 300);
         var probe = b.Add(Probe, 600, 300, knobs);
@@ -224,11 +224,11 @@ public class ProbeTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 900, 0);
+        var output = b.Add(OutputModule.TypeId, 900, 0);
         var clock = b.Add(Time, 0, 0);
         var probe = b.Add(Probe, 300, 0, (Scale, 1f));
 
-        b.Wire(clock, 0, probe, In).Wire(probe, 0, output, NodeCatalog.OutputColorPort);
+        b.Wire(clock, 0, probe, In).Wire(probe, 0, output, OutputModule.ColorPort);
 
         var result = b.Patch.CompileForVideo(NodeCatalog.BuiltIn);
         result.HasErrors.ShouldBeFalse();

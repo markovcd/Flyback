@@ -30,7 +30,7 @@ public sealed class SoundFileSteps(PatchContext context, IUnitTestRuntimeProvide
 
     private void Hear(string path, string port)
     {
-        SampleExtra.Set(context.Add("clip", NodeCatalog.SampleTypeId), path);
+        SampleExtra.Set(context.Add("clip", SourceModules.SampleTypeId), path);
         context.Add("screen", "output");
         context.Wire("clip", port, "screen", "left");
         context.SetInput("screen", "volume", 1f);

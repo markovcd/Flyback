@@ -104,10 +104,10 @@ public class StrokeTests
         var gone = b.Add("math.fract");
         var left = b.Add("math.sub", (0, 1f));
         var bent = b.Add("math.pow", (1, 7f));
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
         b.Wire(clock, 0, rated, 0).Wire(rated, 0, offset, 0).Wire(offset, 0, gone, 0)
-         .Wire(gone, 0, left, 1).Wire(left, 0, bent, 0).Wire(bent, 0, sink, NodeCatalog.OutputLeftPort);
+         .Wire(gone, 0, left, 1).Wire(left, 0, bent, 0).Wire(bent, 0, sink, OutputModule.LeftPort);
 
         var byHand = Exact(b.Patch);
         var module = Exact(Wired(Out, false, (RatePort, 4f), (OffsetPort, 0.5f), (CurvePort, 7f)));
@@ -131,9 +131,9 @@ public class StrokeTests
     {
         var b = new PatchBuilder(Catalog);
         var stroke = b.Add(StrokeType, knobs);
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
-        b.Wire(stroke, port, sink, video ? NodeCatalog.OutputColorPort : NodeCatalog.OutputLeftPort);
+        b.Wire(stroke, port, sink, video ? OutputModule.ColorPort : OutputModule.LeftPort);
 
         return b.Patch;
     }

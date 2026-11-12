@@ -21,23 +21,23 @@ internal static class Buses
     {
         ArgumentNullException.ThrowIfNull(patch);
 
-        if (!patch.Nodes.Any(n => n.TypeId == NodeCatalog.ReceiveTypeId)) return patch;
+        if (!patch.Nodes.Any(n => n.TypeId == BusModules.ReceiveTypeId)) return patch;
 
         // By id when two Sends share a bus, which nothing about editing moves —
         // the canvas reorders the list to draw a module in front.
         var sends = new Dictionary<string, NodeInstance>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var send in patch.Nodes.Where(n => n.TypeId == NodeCatalog.SendTypeId).OrderBy(n => n.Id))
+        foreach (var send in patch.Nodes.Where(n => n.TypeId == BusModules.SendTypeId).OrderBy(n => n.Id))
         {
-            var bus = NodeCatalog.BusOf(send)!;
+            var bus = BusModules.BusOf(send)!;
 
             if (!sends.TryAdd(bus, send))
                 warn?.Invoke(send.Id, $"Another Send is already on '{bus}', so this one is not heard. Put it on a bus of its own.");
         }
 
-        foreach (var receive in patch.Nodes.Where(n => n.TypeId == NodeCatalog.ReceiveTypeId))
+        foreach (var receive in patch.Nodes.Where(n => n.TypeId == BusModules.ReceiveTypeId))
         {
-            var bus = NodeCatalog.BusOf(receive)!;
+            var bus = BusModules.BusOf(receive)!;
 
             if (!sends.ContainsKey(bus))
                 warn?.Invoke(receive.Id, $"No Send is on '{bus}', so this Receive carries nothing.");
@@ -48,7 +48,7 @@ internal static class Buses
 
         foreach (var wire in patch.Connections)
         {
-            if (patch.Find(wire.SourceNode) is not { TypeId: NodeCatalog.ReceiveTypeId } receive)
+            if (patch.Find(wire.SourceNode) is not { TypeId: BusModules.ReceiveTypeId } receive)
             {
                 wires.Add(wire);
                 continue;
@@ -61,7 +61,7 @@ internal static class Buses
         }
 
         foreach (var receive in ringed)
-            warn?.Invoke(receive, $"'{NodeCatalog.BusOf(patch.Find(receive)!)}' is fed round from its own Receive, so it carries nothing.");
+            warn?.Invoke(receive, $"'{BusModules.BusOf(patch.Find(receive)!)}' is fed round from its own Receive, so it carries nothing.");
 
         return new Patch
         {
@@ -88,9 +88,9 @@ internal static class Buses
             while (through.Add(receive.Id))
             {
                 if (receive.Off) return null;
-                if (!sends.TryGetValue(NodeCatalog.BusOf(receive)!, out var send) || send.Off) return null;
+                if (!sends.TryGetValue(BusModules.BusOf(receive)!, out var send) || send.Off) return null;
                 if (patch.IncomingTo(send.Id, 0) is not { } into) return null;
-                if (patch.Find(into.SourceNode) is not { TypeId: NodeCatalog.ReceiveTypeId } next) return into;
+                if (patch.Find(into.SourceNode) is not { TypeId: BusModules.ReceiveTypeId } next) return into;
 
                 receive = next;
             }

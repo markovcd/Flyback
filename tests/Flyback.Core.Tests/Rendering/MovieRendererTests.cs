@@ -315,7 +315,7 @@ public class MovieRendererTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 900, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var output = b.Add(OutputModule.TypeId, 900, 0, (OutputModule.VolumePort, 1f));
         var voice = b.Add("osc.sine", 0, 0, (1, 110f));
 
         // A slow tremolo, so the level has something to follow: the frames of the
@@ -323,13 +323,13 @@ public class MovieRendererTests
         var swell = b.Add("osc.sine", 0, 200, (1, 2f), (3, 0.5f), (4, 0.5f));
         var swelled = b.Add("math.mul", 200, 100);
 
-        var meter = b.Add(NodeCatalog.MeterTypeId, 400, 0, (1, -1.5f));
+        var meter = b.Add(MeterModule.TypeId, 400, 0, (1, -1.5f));
 
         b.Wire(voice, 0, swelled, 0)
          .Wire(swell, 0, swelled, 1)
-         .Wire(swelled, 0, output, NodeCatalog.OutputLeftPort)
+         .Wire(swelled, 0, output, OutputModule.LeftPort)
          .Wire(swelled, 0, meter, 0)
-         .Wire(meter, 0, output, NodeCatalog.OutputColorPort);
+         .Wire(meter, 0, output, OutputModule.ColorPort);
 
         var file = new MemoryStream();
 
@@ -366,7 +366,7 @@ public class MovieRendererTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 900, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var output = b.Add(OutputModule.TypeId, 900, 0, (OutputModule.VolumePort, 1f));
         var voice = b.Add("osc.sine", 0, 0, (1, 110f));
 
         // A slow tremolo, so the chart is a different height from one frame to the
@@ -374,13 +374,13 @@ public class MovieRendererTests
         var swell = b.Add("osc.sine", 0, 200, (1, 2f), (3, 0.5f), (4, 0.5f));
         var swelled = b.Add("math.mul", 200, 100);
 
-        var chart = b.Add(NodeCatalog.ScopeTypeId, 400, 0);
+        var chart = b.Add(ChartModules.ScopeTypeId, 400, 0);
 
         b.Wire(voice, 0, swelled, 0)
          .Wire(swell, 0, swelled, 1)
-         .Wire(swelled, 0, output, NodeCatalog.OutputLeftPort)
+         .Wire(swelled, 0, output, OutputModule.LeftPort)
          .Wire(swelled, 0, chart, 0)
-         .Wire(chart, 0, output, NodeCatalog.OutputColorPort);
+         .Wire(chart, 0, output, OutputModule.ColorPort);
 
         var file = new MemoryStream();
 
@@ -432,7 +432,7 @@ public class MovieRendererTests
 
         foreach (var (_, size) in Movi(avi, "01wb")) bytes += size;
 
-        return bytes / (NodeCatalog.AudioChannels * sizeof(short));
+        return bytes / (OutputModule.AudioChannels * sizeof(short));
     }
 
     private static int Chunks(byte[] avi, string fourCc) => Movi(avi, fourCc).Count;

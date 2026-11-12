@@ -116,7 +116,7 @@ public class PatchWorkbenchPresetsTests
     public async Task A_lookup_says_what_each_socket_is_for_and_the_briefing_does_not()
     {
         var bench = Bench();
-        var filter = NodeCatalog.BuiltIn.Require(NodeCatalog.FilterTypeId);
+        var filter = NodeCatalog.BuiltIn.Require(FilterModule.TypeId);
 
         var described = await Call(bench, "describe_module", $$"""{"type_id":"{{filter.TypeId}}"}""");
 
@@ -134,9 +134,9 @@ public class PatchWorkbenchPresetsTests
     public async Task A_lookup_says_what_each_setting_is_for_and_the_briefing_does_not()
     {
         var bench = Bench();
-        var formula = NodeCatalog.BuiltIn.Require(NodeCatalog.ExpressionTypeId).Extras.Single().Fields.Single();
+        var formula = NodeCatalog.BuiltIn.Require(MathModules.ExpressionTypeId).Extras.Single().Fields.Single();
 
-        var described = await Call(bench, "describe_module", $$"""{"type_id":"{{NodeCatalog.ExpressionTypeId}}"}""");
+        var described = await Call(bench, "describe_module", $$"""{"type_id":"{{MathModules.ExpressionTypeId}}"}""");
 
         formula.Help.ShouldNotBeEmpty();
         described.Text.ShouldContain(formula.Help);
@@ -148,7 +148,7 @@ public class PatchWorkbenchPresetsTests
     {
         var found = await Call(Bench(), "find_modules", """{"query":"portamento"}""");
 
-        found.Text.ShouldContain(NodeCatalog.SlewTypeId);
+        found.Text.ShouldContain(SlewModule.TypeId);
     }
 
     [Fact]
@@ -156,7 +156,7 @@ public class PatchWorkbenchPresetsTests
     {
         var found = await Call(Bench(), "find_modules", """{"query":"meant to be swept"}""");
 
-        found.Text.ShouldContain(NodeCatalog.FilterTypeId);
+        found.Text.ShouldContain(FilterModule.TypeId);
     }
 
     [Fact]

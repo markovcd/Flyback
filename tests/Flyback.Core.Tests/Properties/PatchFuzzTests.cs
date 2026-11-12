@@ -20,7 +20,7 @@ public class PatchFuzzTests
     private const int Height = 18;
 
     private static readonly NodeDef[] Modules =
-        [.. NodeCatalog.Current.All.Where(d => d.TypeId != NodeCatalog.OutputTypeId)];
+        [.. NodeCatalog.Current.All.Where(d => d.TypeId != OutputModule.TypeId)];
 
     /// <summary>
     /// Modules are only ever wired from ones placed before them, so the graph is
@@ -153,15 +153,15 @@ public class PatchFuzzTests
 
         // Both halves of the one sink, so a generated patch fuzzes the eye and
         // the ear at once, and fuzzes the split between them too.
-        var output = builder.Add(NodeCatalog.OutputTypeId, 0, 0);
+        var output = builder.Add(OutputModule.TypeId, 0, 0);
 
         if (candidates.Length > 0)
         {
             var (source, sourceDef) = candidates[Decide() % candidates.Length];
-            builder.Wire(source, Decide() % sourceDef.Outputs.Count, output, NodeCatalog.OutputColorPort);
+            builder.Wire(source, Decide() % sourceDef.Outputs.Count, output, OutputModule.ColorPort);
 
             var (audioSource, audioDef) = candidates[Decide() % candidates.Length];
-            builder.Wire(audioSource, Decide() % audioDef.Outputs.Count, output, NodeCatalog.OutputLeftPort);
+            builder.Wire(audioSource, Decide() % audioDef.Outputs.Count, output, OutputModule.LeftPort);
         }
 
         return builder.Patch;

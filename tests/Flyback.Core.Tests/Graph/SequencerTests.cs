@@ -357,7 +357,7 @@ public class SequencerTests
     [Fact]
     public void The_program_is_no_longer_than_the_pattern_it_plays()
     {
-        var lengths = new[] { 1, 4, 8, 16, NodeCatalog.MaxSteps }
+        var lengths = new[] { 1, 4, 8, 16, SequencerModules.MaxSteps }
             .Select(n => Compile(Values, Ramp(n)).Program.Ops.Length)
             .ToArray();
 
@@ -418,7 +418,7 @@ public class SequencerTests
 
         var time = builder.Add("time", 0, 0);
         var sequence = builder.Add(Values, 0, 0);
-        var screen = builder.Add(NodeCatalog.OutputTypeId, 0, 0);
+        var screen = builder.Add(OutputModule.TypeId, 0, 0);
 
         builder.Wire(time, 0, sequence, 0).Wire(sequence, 0, screen, 0);
 

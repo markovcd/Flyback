@@ -120,11 +120,11 @@ public class LineTests
         var line = NodeInstance.Create(Catalog.Require(LineType), 0, 0);
         foreach (var (at, value) in knobs) line.InputValues[at] = value;
 
-        var screen = NodeInstance.Create(Catalog.Require(NodeCatalog.OutputTypeId), 0, 0);
+        var screen = NodeInstance.Create(Catalog.Require(OutputModule.TypeId), 0, 0);
 
         patch.Nodes.Add(line);
         patch.Nodes.Add(screen);
-        patch.Connect(line.Id, port, screen.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(line.Id, port, screen.Id, OutputModule.ColorPort);
 
         return patch.CompileForVideo(Catalog).Program;
     }

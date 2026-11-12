@@ -347,7 +347,7 @@ public static class PatchPrinter
         /// </summary>
         public (string Source, IReadOnlyList<Guid> Order) Run()
         {
-            var sink = patch.Nodes.FirstOrDefault(n => NodeCatalog.IsSink(n.TypeId));
+            var sink = patch.Nodes.FirstOrDefault(n => OutputModule.IsSink(n.TypeId));
             var text = new StringBuilder();
 
             if (sink is not null && modules.Get(sink.TypeId) is { } def)
@@ -376,7 +376,7 @@ public static class PatchPrinter
             foreach (var node in patch.Nodes)
             {
                 if (node.Id == plan.Coord || node.Id == plan.Clock) continue;
-                if (NodeCatalog.IsSink(node.TypeId)) continue;
+                if (OutputModule.IsSink(node.TypeId)) continue;
 
                 Ensure(node.Id);
             }
@@ -638,7 +638,7 @@ public static class PatchPrinter
         {
             foreach (var node in patch.Nodes)
             {
-                if (!node.Off || NodeCatalog.IsSink(node.TypeId)) continue;
+                if (!node.Off || OutputModule.IsSink(node.TypeId)) continue;
                 if (!plan.Names.TryGetValue(node.Id, out var name)) continue;
 
                 statements.Add(Part.Of($"off {name}"));
@@ -947,8 +947,8 @@ public static class PatchPrinter
             {
                 return Part.Of(wire.SourcePort switch
                 {
-                    NodeCatalog.CoordXPort => "x",
-                    NodeCatalog.CoordYPort => "y",
+                    SourceModules.CoordXPort => "x",
+                    SourceModules.CoordYPort => "y",
                     2 => "radius",
                     3 => "angle",
                     _ => "aspect",
@@ -959,7 +959,7 @@ public static class PatchPrinter
             {
                 return Part.Of(wire.SourcePort == 0
                     ? "t"
-                    : $"t.{modules.Require(NodeCatalog.TimeTypeId).Outputs[wire.SourcePort].Name}");
+                    : $"t.{modules.Require(SourceModules.TimeTypeId).Outputs[wire.SourcePort].Name}");
             }
 
             if (patch.Find(wire.SourceNode) is not { } node || modules.Get(node.TypeId) is not { } def)
@@ -1036,7 +1036,7 @@ public static class PatchPrinter
 
                 // Another sum written in full would read back fused with this one,
                 // so it is said by name.
-                if (patch.Find(incoming.SourceNode) is { TypeId: NodeCatalog.ExpressionTypeId } inner)
+                if (patch.Find(incoming.SourceNode) is { TypeId: MathModules.ExpressionTypeId } inner)
                     Name(inner);
             }
 

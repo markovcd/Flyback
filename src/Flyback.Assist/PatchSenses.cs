@@ -48,7 +48,7 @@ internal sealed class PatchSenses(WorkingPatch bench, WorkbenchLimits limits)
         // is a deliberate thing, not a complaint waiting to happen. It is still
         // nothing to look at: what would come back is a black rectangle, and an
         // assistant shown black goes and "fixes" a patch that was working.
-        if (bench.Patch.IncomingTo(bench.Patch.Output.Id, NodeCatalog.OutputColorPort) is null)
+        if (bench.Patch.IncomingTo(bench.Patch.Output.Id, OutputModule.ColorPort) is null)
         {
             return Task.FromResult(ToolOutcome.Refused(
                 "nothing is wired into the Output's 'color', so this patch draws nothing and "
@@ -225,7 +225,7 @@ internal sealed class PatchSenses(WorkingPatch bench, WorkbenchLimits limits)
                 }
 
                 var wav = new MemoryStream();
-                WavWriter.Write(wav, samples, renderer.SampleRate, NodeCatalog.AudioChannels);
+                WavWriter.Write(wav, samples, renderer.SampleRate, OutputModule.AudioChannels);
 
                 var caption = new StringBuilder(
                     $"{Number(seconds)}s of sound from {Number(from)}s, in stereo at "
@@ -285,7 +285,7 @@ internal sealed class PatchSenses(WorkingPatch bench, WorkbenchLimits limits)
     private int Settling => (int)Math.Ceiling(limits.ListenRate * ClipLevels.Onset);
 
     private int Samples(double seconds) =>
-        (int)Math.Round(limits.ListenRate * seconds) * NodeCatalog.AudioChannels;
+        (int)Math.Round(limits.ListenRate * seconds) * OutputModule.AudioChannels;
 
     /// <summary>Which stretch of the timeline to render, clamped to what one call may spend.</summary>
     private (double From, double Seconds) Window(JsonElement arguments)

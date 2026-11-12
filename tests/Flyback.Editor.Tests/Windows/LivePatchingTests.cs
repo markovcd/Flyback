@@ -97,8 +97,8 @@ public class LivePatchingTests : EditorTest
     public void Tab_with_a_value_picked_on_the_modules_moves_to_the_next_input_and_leaves_them_shown()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        var node = builder.Add(NodeCatalog.SineTypeId, 300, 200);
-        builder.Add(NodeCatalog.OutputTypeId, 700, 200);
+        var node = builder.Add(OscillatorModules.SineTypeId, 300, 200);
+        builder.Add(OutputModule.TypeId, 700, 200);
         var window = Open(builder.Patch);
         var editor = Editor(window);
         var def = NodeCatalog.Get(node.TypeId)!;

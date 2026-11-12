@@ -243,10 +243,10 @@ public class PlaceholderTests
         var steps = b.Add("seq.notes", (1, 3f));
         var note = b.Add("audio.note");
         var tone = b.Add("osc.sine");
-        var output = b.Add(NodeCatalog.OutputTypeId);
+        var output = b.Add(OutputModule.TypeId);
         b.Wire(steps, 0, note, 0)
          .Wire(note, 0, tone, 1)
-         .Wire(tone, 0, output, NodeCatalog.OutputLeftPort);
+         .Wire(tone, 0, output, OutputModule.LeftPort);
         var patch = b.Build();
 
         var printed = PatchPrinter.Print(patch, NodeCatalog.BuiltIn);

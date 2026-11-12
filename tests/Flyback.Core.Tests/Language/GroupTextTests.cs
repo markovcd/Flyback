@@ -43,7 +43,7 @@ public class GroupTextTests
         var group = patch.Groups.ShouldNotBeNull().ShouldHaveSingleItem();
 
         group.Members.Select(id => patch.Find(id)!.TypeId)
-            .ShouldNotContain(type => type == NodeCatalog.TimeTypeId || type == NodeCatalog.CoordTypeId);
+            .ShouldNotContain(type => type == SourceModules.TimeTypeId || type == SourceModules.CoordTypeId);
     }
 
     [Fact]

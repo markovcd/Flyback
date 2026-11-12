@@ -25,7 +25,7 @@ public class EveryModuleTests
     [MemberData(nameof(ModuleTypeIds))]
     public void Every_module_evaluates(string typeId)
     {
-        if (typeId == NodeCatalog.OutputTypeId) return;
+        if (typeId == OutputModule.TypeId) return;
 
         var patch = Alone(typeId);
 
@@ -58,7 +58,7 @@ public class EveryModuleTests
     [MemberData(nameof(ModuleTypeIds))]
     public void Every_module_stays_finite_over_a_run(string typeId)
     {
-        if (typeId == NodeCatalog.OutputTypeId) return;
+        if (typeId == OutputModule.TypeId) return;
 
         var program = Alone(typeId).CompileForAudio(Catalog).Program;
         var registers = program.AllocateRegisters();
@@ -91,7 +91,7 @@ public class EveryModuleTests
     {
         var builder = new PatchBuilder(Catalog);
         var module = builder.Add(typeId, 0, 0);
-        var output = builder.Add(NodeCatalog.OutputTypeId, 400, 0);
+        var output = builder.Add(OutputModule.TypeId, 400, 0);
 
         if (Catalog.Require(typeId).Outputs.Count > 0) builder.Wire(module, 0, output, 0);
 

@@ -80,7 +80,7 @@ internal static class InspectorShape
 
         // An Auto remap's rows read the ranges at the far ends of its wires, which
         // move when its output is patched or the module feeding it is turned.
-        var spans = def.TypeId == NodeCatalog.AutoRemapTypeId ? AutoRemap.Of(editor.History.Patch, node).ToString() : "";
+        var spans = def.TypeId == MathModules.AutoRemapTypeId ? AutoRemap.Of(editor.History.Patch, node).ToString() : "";
 
         // A row not on its box's edge carries the button that puts it there.
         var edge = editor.History.Patch.GroupOf(node.Id) is { } home

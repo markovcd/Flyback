@@ -33,7 +33,7 @@ public class PlaneInvariants
         var b = new PatchBuilder();
 
         var add = b.Add("math.add", 200, 0, (1, step));
-        var sink = b.Add(NodeCatalog.OutputTypeId, 600, 0);
+        var sink = b.Add(OutputModule.TypeId, 600, 0);
 
         // A loop of one module: what it adds to is what it produced last frame.
         b.Wire(add, 0, add, 0)
@@ -94,7 +94,7 @@ public class PlaneInvariants
         var scaled = b.Add("math.mul", 200, 0, (1, 0.1f));
         var add = b.Add("math.add", 400, 0);
         var carry = b.Add("math.mul", 600, 0, (1, 1f));
-        var sink = b.Add(NodeCatalog.OutputTypeId, 800, 0);
+        var sink = b.Add(OutputModule.TypeId, 800, 0);
 
         b.Wire(coord, 0, scaled, 0)
          .Wire(scaled, 0, add, 1)

@@ -185,7 +185,7 @@ internal sealed class ModuleDrag(CanvasHistory history, CanvasSelection selectio
         // A whole group rides along as itself, since groups do not nest, and so does the Output.
         var loose = carried
             .Where(id => patch.GroupOf(id) is not { } own || !own.Members.All(carried.Contains))
-            .Where(id => patch.Find(id) is { } node && !NodeCatalog.IsSink(node.TypeId))
+            .Where(id => patch.Find(id) is { } node && !OutputModule.IsSink(node.TypeId))
             .ToArray();
 
         if (loose.Length == 0) return;

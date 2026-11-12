@@ -226,8 +226,8 @@ internal sealed class ModulePainter(
 
         if (tags.Tagged(def)) UndescribedTags.Draw(context, bounds, follow ? titleBrush : null);
 
-        var formula = NodeCatalog.FormulaOf(node);
-        var spans = def.TypeId == NodeCatalog.AutoRemapTypeId ? AutoRemap.Of(Patch, node) : null;
+        var formula = MathModules.FormulaOf(node);
+        var spans = def.TypeId == MathModules.AutoRemapTypeId ? AutoRemap.Of(Patch, node) : null;
 
         for (var i = 0; i < def.Outputs.Count; i++)
         {

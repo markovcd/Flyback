@@ -36,9 +36,9 @@ public sealed class StillsCommandTests : IDisposable
     private static Patch Sound()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        var tone = builder.Add(NodeCatalog.SineTypeId, 0, 0);
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
-        builder.Wire(tone, 0, sink, NodeCatalog.OutputLeftPort);
+        var tone = builder.Add(OscillatorModules.SineTypeId, 0, 0);
+        var sink = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
+        builder.Wire(tone, 0, sink, OutputModule.LeftPort);
 
         return builder.Patch;
     }
@@ -46,7 +46,7 @@ public sealed class StillsCommandTests : IDisposable
     private static Patch Silent()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        builder.Add(NodeCatalog.OutputTypeId, 0, 0);
+        builder.Add(OutputModule.TypeId, 0, 0);
 
         return builder.Patch;
     }
@@ -56,8 +56,8 @@ public sealed class StillsCommandTests : IDisposable
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         var coord = builder.Add("coord", 0, 0);
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0);
-        builder.Wire(coord, 0, sink, NodeCatalog.OutputColorPort);
+        var sink = builder.Add(OutputModule.TypeId, 0, 0);
+        builder.Wire(coord, 0, sink, OutputModule.ColorPort);
 
         return builder.Patch;
     }

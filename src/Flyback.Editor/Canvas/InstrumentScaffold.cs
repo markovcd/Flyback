@@ -67,8 +67,8 @@ internal static class InstrumentScaffold
 
         if (profile.Conducts)
         {
-            var (x, top) = Next(NodeCatalog.ClockTypeId);
-            var clock = builder.Add(NodeCatalog.ClockTypeId, x, top);
+            var (x, top) = Next(MidiModules.ClockTypeId);
+            var clock = builder.Add(MidiModules.ClockTypeId, x, top);
 
             clock.Name = "Clock";
             clock.SetState(MidiClockExtra.StateKey, new JsonObject { [MidiClockExtra.DeviceField] = device });
@@ -76,8 +76,8 @@ internal static class InstrumentScaffold
 
         foreach (var track in profile.Tracks)
         {
-            var (x, top) = Next(NodeCatalog.MidiTypeId);
-            var midi = builder.Add(NodeCatalog.MidiTypeId, x, top);
+            var (x, top) = Next(MidiModules.MidiTypeId);
+            var midi = builder.Add(MidiModules.MidiTypeId, x, top);
 
             midi.Name = track.Name.Length <= NodeInstance.NameLimit ? track.Name : track.Name[..NodeInstance.NameLimit];
             midi.SetState(MidiExtra.StateKey, new JsonObject

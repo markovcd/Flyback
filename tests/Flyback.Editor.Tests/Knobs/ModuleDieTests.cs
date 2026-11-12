@@ -37,7 +37,7 @@ public class ModuleDieTests : EditorTest
     public void The_Output_has_no_knob_a_roll_moves()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var output = b.Add(NodeCatalog.OutputTypeId, 700, 40);
+        var output = b.Add(OutputModule.TypeId, 700, 40);
 
         ModuleDie.Rollable(b.Patch, output).ShouldBeEmpty();
     }

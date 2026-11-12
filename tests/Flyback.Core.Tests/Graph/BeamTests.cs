@@ -12,7 +12,7 @@ namespace Flyback.Core.Tests.Graph;
 /// </summary>
 public class BeamTests
 {
-    private const string Beam = NodeCatalog.BeamTypeId;
+    private const string Beam = BeamModule.TypeId;
     private const string Sine = "osc.sine";
     private const string Square = "osc.square";
     private const string Value = "value";
@@ -50,7 +50,7 @@ public class BeamTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 900, 0);
+        var output = b.Add(OutputModule.TypeId, 900, 0);
         var x = b.Add(across.Type, 0, 0, across.Knobs);
         var y = b.Add(up.Type, 0, 200, up.Knobs);
         var beam = b.Add(Beam, 400, 0, knobs);

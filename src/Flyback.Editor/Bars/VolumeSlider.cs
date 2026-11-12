@@ -19,7 +19,7 @@ internal sealed class VolumeSlider : IReactTo<PatchChanged>
 {
     public const string Tip = "How loud the speakers are: the Output's Volume. All the way down closes them.";
 
-    private const int Port = NodeCatalog.OutputVolumePort;
+    private const int Port = OutputModule.VolumePort;
 
     private readonly NodeEditor editor;
     private readonly Reactions reactions;
@@ -35,7 +35,7 @@ internal sealed class VolumeSlider : IReactTo<PatchChanged>
         this.editor = editor;
         this.reactions = reactions;
 
-        var spec = NodeCatalog.Get(NodeCatalog.OutputTypeId)!.Inputs[Port];
+        var spec = NodeCatalog.Get(OutputModule.TypeId)!.Inputs[Port];
 
         Slider = new Slider
         {
@@ -101,7 +101,7 @@ internal sealed class VolumeSlider : IReactTo<PatchChanged>
         var patch = editor.History.Patch;
 
         // Before the first patch is opened, the canvas holds an empty one.
-        if (patch.FirstOf(NodeCatalog.OutputTypeId) is not { } output) return;
+        if (patch.FirstOf(OutputModule.TypeId) is not { } output) return;
 
         // Nothing wired into the sound has nothing to turn up.
         View.IsVisible = patch.Reaches().Sound;

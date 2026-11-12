@@ -105,10 +105,10 @@ public class CrushTests
 
         var coord = Add(patch, "coord");
         var crush = Add(patch, CrushType, (Bits, 2f), (RatePort, 50f));
-        var screen = Add(patch, NodeCatalog.OutputTypeId);
+        var screen = Add(patch, OutputModule.TypeId);
 
         patch.Connect(coord.Id, 0, crush.Id, 0);
-        patch.Connect(crush.Id, 0, screen.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(crush.Id, 0, screen.Id, OutputModule.ColorPort);
 
         var program = patch.CompileForVideo(Catalog).Program;
         var registers = program.AllocateRegisters();
@@ -126,10 +126,10 @@ public class CrushTests
 
         var coord = Add(patch, "coord");
         var crush = Add(patch, CrushType, knobs);
-        var sink = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = Add(patch, OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
         patch.Connect(coord.Id, 0, crush.Id, 0);
-        patch.Connect(crush.Id, 0, sink.Id, NodeCatalog.OutputLeftPort);
+        patch.Connect(crush.Id, 0, sink.Id, OutputModule.LeftPort);
 
         return Interpreted.Heard(patch, signal);
     }

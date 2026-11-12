@@ -146,8 +146,8 @@ public class DeskTests
 
         var trimmed = byHand.Add("math.mul", (1, trim));
         var safe = byHand.Add("math.clamp", (1, -1f), (2, 1f));
-        var sink = byHand.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
-        byHand.Wire(master, 0, trimmed, 0).Wire(trimmed, 0, safe, 0).Wire(safe, 0, sink, NodeCatalog.OutputLeftPort);
+        var sink = byHand.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
+        byHand.Wire(master, 0, trimmed, 0).Wire(trimmed, 0, safe, 0).Wire(safe, 0, sink, OutputModule.LeftPort);
 
         var chained = new PatchBuilder(NodeCatalog.BuiltIn);
         NodeInstance? before = null;
@@ -165,8 +165,8 @@ public class DeskTests
         }
 
         before!.InputValues[Trim] = trim;
-        var out2 = chained.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
-        chained.Wire(before, Left, out2, NodeCatalog.OutputLeftPort);
+        var out2 = chained.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
+        chained.Wire(before, Left, out2, OutputModule.LeftPort);
 
         Sample(chained.Patch).ShouldBe(Sample(byHand.Patch));
     }
@@ -190,9 +190,9 @@ public class DeskTests
         var desk = b.Add(Desk);
         set(new Rig(b, desk));
 
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
-        b.Wire(desk, left, sink, NodeCatalog.OutputLeftPort)
-         .Wire(desk, right, sink, NodeCatalog.OutputRightPort);
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
+        b.Wire(desk, left, sink, OutputModule.LeftPort)
+         .Wire(desk, right, sink, OutputModule.RightPort);
 
         var result = b.Patch.CompileForAudio(NodeCatalog.BuiltIn);
         result.HasErrors.ShouldBeFalse(string.Join("; ", result.Issues.Select(i => i.Message)));

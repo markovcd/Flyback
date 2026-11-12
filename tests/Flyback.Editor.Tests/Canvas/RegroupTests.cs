@@ -23,11 +23,11 @@ public class RegroupTests : EditorTest
         middle = builder.Add("math.mul", 300, 0);
         var last = builder.Add("math.mul", 600, 0);
         loose = builder.Add("time", 0, 400);
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 900, 400);
+        var sink = builder.Add(OutputModule.TypeId, 900, 400);
 
         builder.Wire(first, 0, middle, 0)
                .Wire(middle, 0, last, 0)
-               .Wire(last, 0, sink, NodeCatalog.OutputLeftPort);
+               .Wire(last, 0, sink, OutputModule.LeftPort);
 
         group = builder.Patch.Group([first.Id, middle.Id, last.Id]).ShouldNotBeNull();
         group.Name = "Voice";
@@ -361,7 +361,7 @@ public class RegroupTests : EditorTest
         group.Collapsed = true;
         var (editor, window) = Editing(patch);
 
-        var sink = patch.FirstOf(NodeCatalog.OutputTypeId).ShouldNotBeNull();
+        var sink = patch.FirstOf(OutputModule.TypeId).ShouldNotBeNull();
         var header = editor.Selection.Scene.Boxes().Single().Bounds.TopLeft + new Vector(40, 8);
 
         Click(editor, window, header);

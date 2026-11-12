@@ -29,7 +29,7 @@ public class ReverbTests
     [Fact]
     public void It_is_offered_under_time_effects()
     {
-        var def = Modules.Get(NodeCatalog.ReverbTypeId).ShouldNotBeNull();
+        var def = Modules.Get(ReverbModule.TypeId).ShouldNotBeNull();
 
         def.Name.ShouldBe("Reverb");
         def.Category.ShouldBe(ModuleCategories.TimeEffects);
@@ -265,11 +265,11 @@ public class ReverbTests
         var patch = new Patch();
 
         var coord = Add(patch, "coord");
-        var effect = Add(patch, NodeCatalog.ReverbTypeId, knobs);
-        var sink = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var effect = Add(patch, ReverbModule.TypeId, knobs);
+        var sink = Add(patch, OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
         patch.Connect(coord.Id, 0, effect.Id, 0);
-        patch.Connect(effect.Id, 0, sink.Id, NodeCatalog.OutputLeftPort);
+        patch.Connect(effect.Id, 0, sink.Id, OutputModule.LeftPort);
 
         var program = patch.CompileForAudio(Modules).Program;
         var delays = new DelayState(program.DelayLengths, rate, program.PhaseCount, program.UnitCount);
@@ -296,12 +296,12 @@ public class ReverbTests
         var patch = new Patch();
 
         var coord = Add(patch, "coord");
-        var effect = Add(patch, NodeCatalog.ReverbTypeId, knobs);
-        var sink = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var effect = Add(patch, ReverbModule.TypeId, knobs);
+        var sink = Add(patch, OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
         patch.Connect(coord.Id, 0, effect.Id, 0);
-        patch.Connect(effect.Id, 0, sink.Id, NodeCatalog.OutputLeftPort);
-        patch.Connect(effect.Id, 1, sink.Id, NodeCatalog.OutputRightPort);
+        patch.Connect(effect.Id, 0, sink.Id, OutputModule.LeftPort);
+        patch.Connect(effect.Id, 1, sink.Id, OutputModule.RightPort);
 
         var program = patch.CompileForAudio(Modules).Program;
         var delays = new DelayState(program.DelayLengths, Rate, program.PhaseCount, program.UnitCount);
@@ -326,8 +326,8 @@ public class ReverbTests
         var patch = new Patch();
 
         var coord = Add(patch, "coord");
-        var effect = Add(patch, NodeCatalog.ReverbTypeId, [(3, 1f), .. knobs]);
-        var screen = Add(patch, NodeCatalog.OutputTypeId);
+        var effect = Add(patch, ReverbModule.TypeId, [(3, 1f), .. knobs]);
+        var screen = Add(patch, OutputModule.TypeId);
 
         patch.Connect(coord.Id, 0, effect.Id, 0);
         patch.Connect(effect.Id, 0, screen.Id, 0);

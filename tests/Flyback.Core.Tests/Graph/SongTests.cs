@@ -123,7 +123,7 @@ public class SongTests
         patch.Nodes.Add(NodeInstance.Create(NodeCatalog.BuiltIn.Require(SongModule.TypeId), 0, 0));
 
         patch.CanAdd(SongModule.TypeId).ShouldBeFalse();
-        patch.CanAdd(NodeCatalog.ArrangementTypeId).ShouldBeTrue();
+        patch.CanAdd(SequencerModules.ArrangementTypeId).ShouldBeTrue();
     }
 
     [Fact]

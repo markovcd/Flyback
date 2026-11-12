@@ -348,9 +348,9 @@ public class TextTests
         var patch = new Patch();
 
         var text = Add(patch, TextType);
-        var sink = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = Add(patch, OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
-        patch.Connect(text.Id, 0, sink.Id, NodeCatalog.OutputLeftPort);
+        patch.Connect(text.Id, 0, sink.Id, OutputModule.LeftPort);
 
         return new Reading(patch.CompileForAudio(Catalog).Program);
     }
@@ -375,11 +375,11 @@ public class TextTests
         var patch = new Patch();
 
         var text = Add(patch, TextType, knobs);
-        var screen = Add(patch, NodeCatalog.OutputTypeId);
+        var screen = Add(patch, OutputModule.TypeId);
 
         if (lines is not null) text.SetState("text", new JsonObject { ["lines"] = lines });
 
-        patch.Connect(text.Id, 0, screen.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(text.Id, 0, screen.Id, OutputModule.ColorPort);
 
         return patch;
     }

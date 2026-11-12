@@ -16,7 +16,7 @@ public class FramingTests : EditorTest
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         builder.Add("value", 0, 0);
-        builder.Add(NodeCatalog.OutputTypeId, 520, 0);
+        builder.Add(OutputModule.TypeId, 520, 0);
 
         return builder.Patch;
     }

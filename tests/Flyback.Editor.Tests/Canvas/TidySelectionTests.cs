@@ -33,12 +33,12 @@ public class TidySelectionTests : EditorTest
         var coord = b.Add("coord", 1600, 900);
         var rings = b.Add("pattern.rings", 1100, 1400);
 
-        var sink = b.Add(NodeCatalog.OutputTypeId, 2200, 0);
+        var sink = b.Add(OutputModule.TypeId, 2200, 0);
 
         b.Wire(time, 0, osc, 0)
-         .Wire(osc, 0, sink, NodeCatalog.OutputLeftPort)
+         .Wire(osc, 0, sink, OutputModule.LeftPort)
          .Wire(coord, 0, rings, 0)
-         .Wire(rings, 0, sink, NodeCatalog.OutputColorPort);
+         .Wire(rings, 0, sink, OutputModule.ColorPort);
 
         near = [time, osc];
         far = [coord, rings];

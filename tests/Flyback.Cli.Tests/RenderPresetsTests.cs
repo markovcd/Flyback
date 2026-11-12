@@ -142,10 +142,10 @@ public sealed class RenderPresetsTests : IDisposable
         var patch = new Patch();
         patch.EnsureOutput(NodeCatalog.Current);
 
-        var shown = NodeInstance.Create(NodeCatalog.BuiltIn.Require(NodeCatalog.PictureTypeId), 0, 0);
+        var shown = NodeInstance.Create(NodeCatalog.BuiltIn.Require(SourceModules.PictureTypeId), 0, 0);
         PictureExtra.Set(shown, picture);
         patch.Nodes.Add(shown);
-        patch.Connect(shown.Id, 0, patch.Output.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(shown.Id, 0, patch.Output.Id, OutputModule.ColorPort);
 
         var file = new FileInfo(Path.Combine(work, "shown.fbk"));
         File.WriteAllText(file.FullName, PatchIO.ToJson(patch));

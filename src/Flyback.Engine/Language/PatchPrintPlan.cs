@@ -49,9 +49,9 @@ internal sealed class PatchPrintPlan(
         // Only one ungrouped, switched-on Coordinates and Time can be written
         // as the bare words x/y and t.
         var coord = patch.Nodes.FirstOrDefault(n =>
-            n.TypeId == NodeCatalog.CoordTypeId && !n.Off && patch.GroupOf(n.Id) is null)?.Id ?? Guid.Empty;
+            n.TypeId == SourceModules.CoordTypeId && !n.Off && patch.GroupOf(n.Id) is null)?.Id ?? Guid.Empty;
         var clock = patch.Nodes.FirstOrDefault(n =>
-            n.TypeId == NodeCatalog.TimeTypeId && !n.Off && patch.GroupOf(n.Id) is null)?.Id ?? Guid.Empty;
+            n.TypeId == SourceModules.TimeTypeId && !n.Off && patch.GroupOf(n.Id) is null)?.Id ?? Guid.Empty;
 
         // Backwards wires need a name so they can be written as back-wires.
         var looped = Cycles.Backwards(patch).Select(wire => wire.TargetNode).ToHashSet();
@@ -59,7 +59,7 @@ internal sealed class PatchPrintPlan(
         foreach (var node in patch.Nodes)
         {
             if (node.Id == coord || node.Id == clock) continue;
-            if (NodeCatalog.IsSink(node.TypeId)) continue;
+            if (OutputModule.IsSink(node.TypeId)) continue;
 
             var leaving = patch.Connections.Where(c => c.SourceNode == node.Id).ToList();
             var home = patch.GroupOf(node.Id)?.Id;
@@ -68,7 +68,7 @@ internal sealed class PatchPrintPlan(
             var crossing = leaving.Any(c =>
                 patch.GroupOf(c.TargetNode)?.Id != home
                 && patch.Find(c.TargetNode) is { } target
-                && !NodeCatalog.IsSink(target.TypeId));
+                && !OutputModule.IsSink(target.TypeId));
 
             var must = called is not null
                 || crossing
@@ -148,7 +148,7 @@ internal sealed class PatchPrintPlan(
 
     private static bool Plain(NodeInstance node) =>
         node.TypeId.StartsWith("math.", StringComparison.Ordinal)
-        && node.TypeId is not (NodeCatalog.MixerTypeId or NodeCatalog.DeskTypeId);
+        && node.TypeId is not (MathModules.MixerTypeId or MathModules.DeskTypeId);
 
     /// <summary>
     /// Names an unnamed arithmetic module after the one socket it feeds, where
@@ -169,7 +169,7 @@ internal sealed class PatchPrintPlan(
             if (patch.Find(wire.TargetNode) is not { } target || Plain(target)) return null;
             if (modules.Get(target.TypeId) is not { } def || wire.TargetPort >= def.Inputs.Count) return null;
 
-            var where = NodeCatalog.IsSink(target.TypeId)
+            var where = OutputModule.IsSink(target.TypeId)
                 ? "out"
                 : names.TryGetValue(target.Id, out var named) ? named : Wanted(target, modules);
 

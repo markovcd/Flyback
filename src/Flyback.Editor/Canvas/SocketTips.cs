@@ -32,9 +32,9 @@ internal static class SocketTips
         if (NodeCatalog.Normalled(port) is { } source) return $"Normalled from {source}";
 
         if (i >= node.InputValues.Length) return null;
-        if (NodeCatalog.FormulaOf(node) is { } formula && !FormulaLayout.Reads(formula, i)) return null;
+        if (MathModules.FormulaOf(node) is { } formula && !FormulaLayout.Reads(formula, i)) return null;
 
-        var spans = node.TypeId == NodeCatalog.AutoRemapTypeId ? AutoRemap.Of(patch, node) : null;
+        var spans = node.TypeId == MathModules.AutoRemapTypeId ? AutoRemap.Of(patch, node) : null;
 
         return RemapValue(spans, i, node.InputValues[i]) switch
         {

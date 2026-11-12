@@ -335,9 +335,9 @@ public class ViewerOptionsTests
 
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         var osc = builder.Add("osc.sine", 0, 0);
-        var speaker = builder.Add(NodeCatalog.OutputTypeId, 0, 0);
+        var speaker = builder.Add(OutputModule.TypeId, 0, 0);
 
-        File.WriteAllText(path, PatchIO.ToJson(builder.Wire(osc, 0, speaker, NodeCatalog.OutputLeftPort).Patch));
+        File.WriteAllText(path, PatchIO.ToJson(builder.Wire(osc, 0, speaker, OutputModule.LeftPort).Patch));
 
         try
         {

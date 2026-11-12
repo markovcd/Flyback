@@ -20,7 +20,7 @@ public class PatchWorkbenchClearingTests
         var cleared = await Call(bench, "write_patch", """{"source": ""}""");
 
         cleared.Ok.ShouldBeTrue(cleared.Text);
-        bench.Snapshot().Nodes.ShouldHaveSingleItem().TypeId.ShouldBe(NodeCatalog.OutputTypeId);
+        bench.Snapshot().Nodes.ShouldHaveSingleItem().TypeId.ShouldBe(OutputModule.TypeId);
 
         var proposed = await Call(bench, "propose", """{"summary": "a clean slate"}""");
 

@@ -193,7 +193,7 @@ public class GlslEmitterTests
         var b = new PatchBuilder();
 
         var add = b.Add("math.add", 200, 0, (1, 0.25f));
-        var sink = b.Add(NodeCatalog.OutputTypeId, 600, 0);
+        var sink = b.Add(OutputModule.TypeId, 600, 0);
 
         b.Wire(add, 0, add, 0)
          .Wire(add, 0, sink, 0);

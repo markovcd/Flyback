@@ -22,7 +22,7 @@ public sealed class DeviceRecordTests : EditorTest
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
         b.Add("osc.sine", 0, 0, (1, 3f));
-        b.Add(NodeCatalog.OutputTypeId, 700, 0);
+        b.Add(OutputModule.TypeId, 700, 0);
 
         var window = NewMainWindow(new EditorSetup { Host = new() { Place = place } });
 

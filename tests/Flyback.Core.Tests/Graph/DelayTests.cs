@@ -23,7 +23,7 @@ public class DelayTests
     [Fact]
     public void It_is_offered_under_time_effects()
     {
-        var def = Modules.Get(NodeCatalog.DelayTypeId).ShouldNotBeNull();
+        var def = Modules.Get(DelayModule.TypeId).ShouldNotBeNull();
 
         def.Name.ShouldBe("Delay");
         def.Category.ShouldBe(ModuleCategories.TimeEffects);
@@ -96,11 +96,11 @@ public class DelayTests
         var patch = new Patch();
 
         var coord = Add(patch, "coord");
-        var effect = Add(patch, NodeCatalog.DelayTypeId, knobs);
-        var sink = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var effect = Add(patch, DelayModule.TypeId, knobs);
+        var sink = Add(patch, OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
         patch.Connect(coord.Id, 0, effect.Id, 0);
-        patch.Connect(effect.Id, 0, sink.Id, NodeCatalog.OutputLeftPort);
+        patch.Connect(effect.Id, 0, sink.Id, OutputModule.LeftPort);
 
         var program = patch.CompileForAudio(Modules).Program;
         var delays = new DelayState(program.DelayLengths, Rate, program.PhaseCount, program.UnitCount);
@@ -122,8 +122,8 @@ public class DelayTests
         var patch = new Patch();
 
         var coord = Add(patch, "coord");
-        var effect = Add(patch, NodeCatalog.DelayTypeId, (3, 1f));
-        var screen = Add(patch, NodeCatalog.OutputTypeId);
+        var effect = Add(patch, DelayModule.TypeId, (3, 1f));
+        var screen = Add(patch, OutputModule.TypeId);
 
         patch.Connect(coord.Id, 0, effect.Id, 0);
         patch.Connect(effect.Id, 0, screen.Id, 0);

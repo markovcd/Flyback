@@ -31,14 +31,14 @@ public class PreviewBackendTests : EditorTest
 
         var plain = new PatchBuilder(NodeCatalog.BuiltIn);
         var knob = plain.Add("value", 0, 0);
-        var plainSink = plain.Add(NodeCatalog.OutputTypeId, 200, 0);
-        plain.Wire(knob, 0, plainSink, NodeCatalog.OutputColorPort);
+        var plainSink = plain.Add(OutputModule.TypeId, 200, 0);
+        plain.Wire(knob, 0, plainSink, OutputModule.ColorPort);
 
         var playing = new PatchBuilder(NodeCatalog.BuiltIn);
-        var player = playing.Add(NodeCatalog.SampleTypeId, 0, 0);
+        var player = playing.Add(SourceModules.SampleTypeId, 0, 0);
         SampleExtra.Set(player, path);
-        var playingSink = playing.Add(NodeCatalog.OutputTypeId, 200, 0);
-        playing.Wire(player, 0, playingSink, NodeCatalog.OutputColorPort);
+        var playingSink = playing.Add(OutputModule.TypeId, 200, 0);
+        playing.Wire(player, 0, playingSink, OutputModule.ColorPort);
 
         return (
             plain.Patch.CompileForVideo(NodeCatalog.BuiltIn, library).Program,

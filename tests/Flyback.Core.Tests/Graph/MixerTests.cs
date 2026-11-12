@@ -35,9 +35,9 @@ public class MixerTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var mixer = b.Add(Mixer, 0, 0, knobs);
-        var output = b.Add(NodeCatalog.OutputTypeId, 200, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var output = b.Add(OutputModule.TypeId, 200, 0, (OutputModule.VolumePort, 1f));
 
-        b.Wire(mixer, 0, output, NodeCatalog.OutputLeftPort);
+        b.Wire(mixer, 0, output, OutputModule.LeftPort);
 
         var result = b.Patch.CompileForAudio(NodeCatalog.BuiltIn);
         result.HasErrors.ShouldBeFalse();
@@ -112,10 +112,10 @@ public class MixerTests
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var time = b.Add("time", 0, 0);
         var mixer = b.Add(Mixer, 200, 0, (In(1), 1f));
-        var output = b.Add(NodeCatalog.OutputTypeId, 400, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var output = b.Add(OutputModule.TypeId, 400, 0, (OutputModule.VolumePort, 1f));
 
         b.Wire(time, 0, mixer, Level(1))
-         .Wire(mixer, 0, output, NodeCatalog.OutputLeftPort);
+         .Wire(mixer, 0, output, OutputModule.LeftPort);
 
         var result = b.Patch.CompileForAudio(NodeCatalog.BuiltIn);
         var registers = result.Program.AllocateRegisters();
@@ -146,15 +146,15 @@ public class MixerTests
             Mixer, 200, 0,
             (Level(1), 0.5f), (Level(2), 0.5f), (In(3), 0.25f), (Level(3), 1f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 400, 0);
+        var output = b.Add(OutputModule.TypeId, 400, 0);
 
         b.Wire(red, 0, mixer, In(1))
          .Wire(green, 0, mixer, In(2))
-         .Wire(mixer, 0, output, NodeCatalog.OutputColorPort);
+         .Wire(mixer, 0, output, OutputModule.ColorPort);
 
         var result = b.Patch.CompileForVideo(NodeCatalog.BuiltIn);
         result.HasErrors.ShouldBeFalse();
-        result.Program.OutputWidth.ShouldBe(NodeCatalog.VideoChannels);
+        result.Program.OutputWidth.ShouldBe(OutputModule.VideoChannels);
 
         var registers = result.Program.AllocateRegisters();
         result.Program.Evaluate(0d, 0d, 0d, registers, default);
@@ -203,7 +203,7 @@ public class MixerTests
         var program = patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
         program.Attach(IlProgram.Compile(program, IlParts.Whole));
 
-        var buffer = new float[GlobalConstants.SampleRate * 12 * NodeCatalog.AudioChannels];
+        var buffer = new float[GlobalConstants.SampleRate * 12 * OutputModule.AudioChannels];
         new AudioRenderer().Render(program, buffer);
 
         var peak = buffer.Max(Math.Abs);

@@ -27,7 +27,7 @@ internal sealed class KeyboardSection(NodeEditor editor, InspectorRows rows)
     /// </remarks>
     public Control? Build(NodeInstance node)
     {
-        if (node.TypeId != NodeCatalog.MidiTypeId) return null;
+        if (node.TypeId != MidiModules.MidiTypeId) return null;
 
         var device = new ExtraState(new MidiExtra().Fields, node.StateOf(MidiExtra.StateKey)).Chosen(MidiExtra.DeviceField);
 

@@ -10,7 +10,7 @@ internal static class PromptExpansion
     /// a change to it, or a new patch where it holds only the Output.
     /// </summary>
     public static Task<(string? Brief, string? Failure)> ExpandAsync(AssistantRun run, string typed, Patch over, CancellationToken cancel) =>
-        over.Nodes.All(node => node.TypeId == NodeCatalog.OutputTypeId)
+        over.Nodes.All(node => node.TypeId == OutputModule.TypeId)
             ? BriefAsync(run, typed, cancel)
             : ChangeBriefAsync(run, typed, cancel);
 

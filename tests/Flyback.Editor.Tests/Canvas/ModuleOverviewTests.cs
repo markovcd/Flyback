@@ -35,8 +35,8 @@ public class ModuleOverviewTests : EditorTest
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
         builder.Add("time", 0, 0);
-        sine = builder.Add(NodeCatalog.SineTypeId, 600, 0);
-        builder.Add(NodeCatalog.OutputTypeId, 3000, 1200);
+        sine = builder.Add(OscillatorModules.SineTypeId, 600, 0);
+        builder.Add(OutputModule.TypeId, 3000, 1200);
 
         return builder.Patch;
     }

@@ -67,27 +67,27 @@ public class EchoTests
         var inARow = taps == "row";
 
         var b = new PatchBuilder(Catalog);
-        var tempo = b.Add(NodeCatalog.TempoTypeId, (0, 112f));
+        var tempo = b.Add(SequencerModules.TempoTypeId, (0, 112f));
         var sixteenths = b.Add("math.mul", (1, 4f));
         var dotted = b.Add("math.div", (0, 3f));
         var straight = b.Add("math.div", (0, 2f));
-        var tapL = b.Add(NodeCatalog.DelayTypeId, (2, 0.45f), (3, 0.7f));
-        var tapR = b.Add(NodeCatalog.DelayTypeId, (2, inARow ? 0f : 0.45f), (3, 0.7f));
+        var tapL = b.Add(DelayModule.TypeId, (2, 0.45f), (3, 0.7f));
+        var tapR = b.Add(DelayModule.TypeId, (2, inARow ? 0f : 0.45f), (3, 0.7f));
         var click = Click(b);
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
         b.Wire(tempo, 0, sixteenths, 0)
          .Wire(sixteenths, 0, dotted, 1).Wire(sixteenths, 0, straight, 1)
          .Wire(click, 0, tapL, 0).Wire(dotted, 0, tapL, 1)
          .Wire(inARow ? tapL : click, 0, tapR, 0).Wire(straight, 0, tapR, 1)
-         .Wire(side == 0 ? tapL : tapR, 0, sink, NodeCatalog.OutputLeftPort);
+         .Wire(side == 0 ? tapL : tapR, 0, sink, OutputModule.LeftPort);
 
         var wrapped = new PatchBuilder(Catalog);
         var echo = Echo(wrapped, taps, (FeedbackPort, 0.45f), (MixPort, 0.7f));
-        var sink2 = wrapped.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var sink2 = wrapped.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
-        wrapped.Wire(wrapped.Add(NodeCatalog.TempoTypeId, (0, 112f)), 0, echo, TempoPort)
-               .Wire(echo, side, sink2, NodeCatalog.OutputLeftPort);
+        wrapped.Wire(wrapped.Add(SequencerModules.TempoTypeId, (0, 112f)), 0, echo, TempoPort)
+               .Wire(echo, side, sink2, OutputModule.LeftPort);
 
         Interpreted.Run(wrapped.Patch, new float[Rate]).ShouldBe(Interpreted.Run(b.Patch, new float[Rate]));
     }
@@ -98,9 +98,9 @@ public class EchoTests
     {
         var b = new PatchBuilder(Catalog);
         var echo = Echo(b, taps, knobs);
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
-        b.Wire(echo, side, sink, NodeCatalog.OutputLeftPort);
+        b.Wire(echo, side, sink, OutputModule.LeftPort);
 
         return Interpreted.Run(b.Patch, new float[Rate]);
     }

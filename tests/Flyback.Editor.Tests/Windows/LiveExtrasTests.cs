@@ -27,10 +27,10 @@ public class LiveExtrasTests : EditorTest
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
         sine = builder.Add("osc.sine", 0, 0);
-        quantiser = builder.Add(NodeCatalog.QuantiserTypeId, 300, 0);
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 600, 0);
+        quantiser = builder.Add(PitchModules.QuantiserTypeId, 300, 0);
+        var sink = builder.Add(OutputModule.TypeId, 600, 0);
 
-        builder.Wire(sine, 0, quantiser, 0).Wire(quantiser, 0, sink, NodeCatalog.OutputLeftPort);
+        builder.Wire(sine, 0, quantiser, 0).Wire(quantiser, 0, sink, OutputModule.LeftPort);
 
         return builder.Patch;
     }
@@ -118,7 +118,7 @@ public class LiveExtrasTests : EditorTest
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         var ink = builder.Add("color.ink", 300, 0);
-        builder.Wire(ink, 0, builder.Add(NodeCatalog.OutputTypeId, 600, 0), NodeCatalog.OutputColorPort);
+        builder.Wire(ink, 0, builder.Add(OutputModule.TypeId, 600, 0), OutputModule.ColorPort);
 
         var window = Open(builder.Patch);
         var extras = Service<LiveExtras>(window);
@@ -134,7 +134,7 @@ public class LiveExtrasTests : EditorTest
 
         Click(window, chips.Single(b => b.Content is "Over"));
 
-        (placed.StateOf(NodeCatalog.InkStateKey)?[NodeCatalog.InkModeKey]?.GetValue<string>() ?? "").ShouldBe(NodeCatalog.InkOver);
+        (placed.StateOf(ColorModules.InkStateKey)?[ColorModules.InkModeKey]?.GetValue<string>() ?? "").ShouldBe(ColorModules.InkOver);
     }
 
     [AvaloniaFact]

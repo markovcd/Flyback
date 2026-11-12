@@ -9,7 +9,7 @@ namespace Flyback.Assist.Tests.Decide;
 /// <summary>A phrase finds the modules it means, and finds nothing without a model.</summary>
 public class ModuleFinderTests
 {
-    private static IReadOnlyList<NodeDef> Candidates => [.. NodeCatalog.BuiltIn.All.Where(d => !NodeCatalog.IsSink(d.TypeId))];
+    private static IReadOnlyList<NodeDef> Candidates => [.. NodeCatalog.BuiltIn.All.Where(d => !OutputModule.IsSink(d.TypeId))];
 
     private static ModuleFinder Finder(IDecisionModel? model, string? chosen = null) => new(new Decisions(
         model is null ? [] : [model],

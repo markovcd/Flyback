@@ -22,8 +22,8 @@ public class ChoiceFieldInspectorTests : EditorTest
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
         var placed = b.Add("color.ink", 360, 40);
-        var screen = b.Add(NodeCatalog.OutputTypeId, 700, 40);
-        b.Wire(placed, 0, screen, NodeCatalog.OutputColorPort);
+        var screen = b.Add(OutputModule.TypeId, 700, 40);
+        b.Wire(placed, 0, screen, OutputModule.ColorPort);
 
         var window = NewMainWindow();
 
@@ -55,7 +55,7 @@ public class ChoiceFieldInspectorTests : EditorTest
         .Single(list => list.ItemsSource?.Cast<object>().OfType<ChoiceOption>().Any(o => o.Name == "Over") == true);
 
     private static string Held(NodeInstance ink) =>
-        ink.StateOf(NodeCatalog.InkStateKey)?[NodeCatalog.InkModeKey]?.GetValue<string>() ?? string.Empty;
+        ink.StateOf(ColorModules.InkStateKey)?[ColorModules.InkModeKey]?.GetValue<string>() ?? string.Empty;
 
     /// <summary>
     /// Back to where the list started as well as away from it: the row compares a
@@ -69,7 +69,7 @@ public class ChoiceFieldInspectorTests : EditorTest
 
         Mode(window).SelectedIndex = 1;
         Settle(window);
-        Held(ink).ShouldBe(NodeCatalog.InkOver);
+        Held(ink).ShouldBe(ColorModules.InkOver);
 
         Mode(window).SelectedIndex = 0;
         Settle(window);
@@ -77,6 +77,6 @@ public class ChoiceFieldInspectorTests : EditorTest
 
         Mode(window).SelectedIndex = 1;
         Settle(window);
-        Held(ink).ShouldBe(NodeCatalog.InkOver);
+        Held(ink).ShouldBe(ColorModules.InkOver);
     }
 }

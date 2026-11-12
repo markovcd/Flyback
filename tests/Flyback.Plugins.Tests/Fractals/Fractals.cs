@@ -45,11 +45,11 @@ internal static class Fractals
 
     /// <summary>The screen's program with <paramref name="node"/>'s output <paramref name="port"/> on the Output's color.</summary>
     public static CompiledPatch Seen(NodeInstance node, int port) =>
-        Wired(node, port, NodeCatalog.OutputColorPort).CompileForVideo(Catalog).Program;
+        Wired(node, port, OutputModule.ColorPort).CompileForVideo(Catalog).Program;
 
     /// <summary>The speakers' program with <paramref name="node"/>'s output <paramref name="port"/> on the Output's left.</summary>
     public static CompiledPatch Heard(NodeInstance node, int port) =>
-        Wired(node, port, NodeCatalog.OutputLeftPort).CompileForAudio(Catalog).Program;
+        Wired(node, port, OutputModule.LeftPort).CompileForAudio(Catalog).Program;
 
     /// <summary>One scalar output as a function of where on the screen it is read.</summary>
     public static Func<float, float, double> Field(string typeId, int port, int iterations, params (int Port, float Value)[] knobs)
@@ -112,8 +112,8 @@ internal static class Fractals
         var patch = new Patch();
         patch.Nodes.Add(node);
 
-        var sink = NodeInstance.Create(Catalog.Require(NodeCatalog.OutputTypeId), 0, 0);
-        sink.InputValues[NodeCatalog.OutputVolumePort] = 1f;
+        var sink = NodeInstance.Create(Catalog.Require(OutputModule.TypeId), 0, 0);
+        sink.InputValues[OutputModule.VolumePort] = 1f;
         patch.Nodes.Add(sink);
 
         patch.Connect(node.Id, port, sink.Id, into);

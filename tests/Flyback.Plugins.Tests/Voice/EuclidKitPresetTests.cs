@@ -22,7 +22,7 @@ public class EuclidKitPresetTests
 
         foreach (var typeId in new[]
                  {
-                     NodeCatalog.NoiseTypeId, NodeCatalog.SlewTypeId, "flyback.voice.decay",
+                     NoiseModule.TypeId, SlewModule.TypeId, "flyback.voice.decay",
                      "flyback.voice.euclid", "flyback.picture.layer", "flyback.picture.line",
                  })
             types.ShouldContain(typeId);

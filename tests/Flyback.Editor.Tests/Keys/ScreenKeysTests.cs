@@ -22,10 +22,10 @@ public class ScreenKeysTests : EditorTest
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 700, 40);
-        var midi = b.Add(NodeCatalog.MidiTypeId, 200, 40);
+        var output = b.Add(OutputModule.TypeId, 700, 40);
+        var midi = b.Add(MidiModules.MidiTypeId, 200, 40);
 
-        b.Wire(midi, 0, output, NodeCatalog.OutputColorPort);
+        b.Wire(midi, 0, output, OutputModule.ColorPort);
         b.Patch.Keyboard = scale;
 
         return b.Patch;
@@ -36,7 +36,7 @@ public class ScreenKeysTests : EditorTest
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        b.Add(NodeCatalog.OutputTypeId, 700, 40);
+        b.Add(OutputModule.TypeId, 700, 40);
 
         return b.Patch;
     }

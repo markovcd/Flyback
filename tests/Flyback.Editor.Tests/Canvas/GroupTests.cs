@@ -34,11 +34,11 @@ public class GroupTests : EditorTest
         feed = builder.Add("time", 0, 0);
         first = builder.Add("osc.sine", 300, 0);
         second = builder.Add("math.mul", 600, 0);
-        sink = builder.Add(NodeCatalog.OutputTypeId, 900, 0);
+        sink = builder.Add(OutputModule.TypeId, 900, 0);
 
         builder.Wire(feed, 0, first, 0)
                .Wire(first, 0, second, 0)
-               .Wire(second, 0, sink, NodeCatalog.OutputLeftPort);
+               .Wire(second, 0, sink, OutputModule.LeftPort);
 
         return builder.Patch;
     }
@@ -81,12 +81,12 @@ public class GroupTests : EditorTest
         lowLeft = builder.Add("time", 0, 300);
         lowRight = builder.Add("osc.sine", 300, 300);
 
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 700, 150);
+        var sink = builder.Add(OutputModule.TypeId, 700, 150);
 
         builder.Wire(topLeft, 0, topRight, 0)
-               .Wire(topRight, 0, sink, NodeCatalog.OutputLeftPort)
+               .Wire(topRight, 0, sink, OutputModule.LeftPort)
                .Wire(lowLeft, 0, lowRight, 0)
-               .Wire(lowRight, 0, sink, NodeCatalog.OutputRightPort);
+               .Wire(lowRight, 0, sink, OutputModule.RightPort);
 
         return builder.Patch;
     }
@@ -258,7 +258,7 @@ public class GroupTests : EditorTest
         var under = builder.Add("time", 0, 0);
         var left = builder.Add("osc.sine", 0, 400);
         var right = builder.Add("math.add", 400, 0);
-        builder.Add(NodeCatalog.OutputTypeId, 900, 400);
+        builder.Add(OutputModule.TypeId, 900, 400);
         builder.Wire(left, 0, right, 0);
 
         var (editor, window) = Editing(builder.Patch);
@@ -351,7 +351,7 @@ public class GroupTests : EditorTest
 
         // Laid out against the shut box, and drawn over where its second module stands.
         var neighbor = builder.Add("time", 300, 0);
-        builder.Add(NodeCatalog.OutputTypeId, 900, 400);
+        builder.Add(OutputModule.TypeId, 900, 400);
 
         var (editor, window) = Editing(builder.Patch);
 
@@ -495,7 +495,7 @@ public class GroupTests : EditorTest
 
         var bounds = Geometry.GroupBounds(patch, group, sockets);
         var from = NodeGeometry.GroupOutputPort(bounds, 0);
-        var to = Geometry.InputPort(sink, NodeCatalog.Require(sink.TypeId), NodeCatalog.OutputRightPort);
+        var to = Geometry.InputPort(sink, NodeCatalog.Require(sink.TypeId), OutputModule.RightPort);
 
         window.MouseDown(Screen(editor, window, from), MouseButton.Left);
         window.MouseMove(Screen(editor, window, to));
@@ -503,7 +503,7 @@ public class GroupTests : EditorTest
         Settle(window);
 
         // The new wire leaves the module inside the box, not the box.
-        patch.IncomingTo(sink.Id, NodeCatalog.OutputRightPort)
+        patch.IncomingTo(sink.Id, OutputModule.RightPort)
             .ShouldNotBeNull()
             .SourceNode.ShouldBe(second.Id);
     }

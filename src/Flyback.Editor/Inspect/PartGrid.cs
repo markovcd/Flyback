@@ -391,7 +391,7 @@ internal sealed class PartGrid
             Save();
         };
 
-        var longer = Wide("+ section", "Add a section at the end, each part holding its last level", parts.Count > 0 && Sections < NodeCatalog.MaxSections);
+        var longer = Wide("+ section", "Add a section at the end, each part holding its last level", parts.Count > 0 && Sections < SequencerModules.MaxSections);
         longer.Click += (_, _) =>
         {
             foreach (var part in parts) part.Add(part[^1] with { Glides = false });

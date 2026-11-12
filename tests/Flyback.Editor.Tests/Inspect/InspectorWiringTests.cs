@@ -38,11 +38,11 @@ public class InspectorWiringTests : EditorTest
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 700, 40);
+        var output = b.Add(OutputModule.TypeId, 700, 40);
         var sine = b.Add("osc.sine", 360, 40);
         var clock = b.Add("time", 40, 40);
 
-        b.Wire(sine, 0, output, NodeCatalog.OutputColorPort);
+        b.Wire(sine, 0, output, OutputModule.ColorPort);
         if (wired) b.Wire(clock, 0, sine, 1);
 
         return (b.Patch, sine, clock);
@@ -262,13 +262,13 @@ public class InspectorWiringTests : EditorTest
         Select(window, output);
         NotPatched(window).ShouldBe(2);
 
-        editor.History.Patch.Connect(tone.Id, 0, output.Id, NodeCatalog.OutputLeftPort);
+        editor.History.Patch.Connect(tone.Id, 0, output.Id, OutputModule.LeftPort);
         editor.History.Record();
 
         NotPatched(window).ShouldBe(1, "left is now patched");
         Wired(window).ShouldBe(1);
 
-        editor.History.Patch.Disconnect(output.Id, NodeCatalog.OutputLeftPort);
+        editor.History.Patch.Disconnect(output.Id, OutputModule.LeftPort);
         editor.History.Record();
 
         NotPatched(window).ShouldBe(2, "unplugging brings the row back");

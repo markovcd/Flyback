@@ -63,7 +63,7 @@ public sealed class ExportSteps(PatchContext context, IUnitTestRuntimeProvider r
         engine.Start();
 
         var frames = (int)Math.Round(seconds * GlobalConstants.SampleRate);
-        var sound = new float[frames * NodeCatalog.AudioChannels];
+        var sound = new float[frames * OutputModule.AudioChannels];
 
         for (var at = 0; at < frames; at += buffer)
             device.Fill(sound.AsSpan(at * 2, Math.Min(buffer, frames - at) * 2));
@@ -115,7 +115,7 @@ public sealed class ExportSteps(PatchContext context, IUnitTestRuntimeProvider r
         played.ShouldNotBeNull().ShouldContain(v => v != 0f);
 
         var heard = new MemoryStream();
-        WavWriter.Write(heard, played, GlobalConstants.SampleRate, NodeCatalog.AudioChannels);
+        WavWriter.Write(heard, played, GlobalConstants.SampleRate, OutputModule.AudioChannels);
 
         exports.Single().ShouldBe(heard.ToArray());
     }

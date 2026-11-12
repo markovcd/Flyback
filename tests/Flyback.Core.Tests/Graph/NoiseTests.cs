@@ -28,7 +28,7 @@ public class NoiseTests
     [Fact]
     public void It_is_offered_under_oscillators()
     {
-        var def = Modules.Get(NodeCatalog.NoiseTypeId).ShouldNotBeNull();
+        var def = Modules.Get(NoiseModule.TypeId).ShouldNotBeNull();
 
         def.Name.ShouldBe("Noise");
         def.Category.ShouldBe(ModuleCategories.Oscillators);
@@ -185,7 +185,7 @@ public class NoiseTests
     private static (CompiledPatch Compiled, Func<double, float> Read) Program(
         int port, params (int Port, float Value)[] knobs)
     {
-        var patch = Wired(port, NodeCatalog.OutputLeftPort, knobs);
+        var patch = Wired(port, OutputModule.LeftPort, knobs);
         var program = patch.CompileForAudio(Modules).Program;
         var registers = program.AllocateRegisters();
 
@@ -199,7 +199,7 @@ public class NoiseTests
 
     private static Func<double, float> Picture(int port)
     {
-        var patch = Wired(port, NodeCatalog.OutputColorPort);
+        var patch = Wired(port, OutputModule.ColorPort);
         var program = patch.CompileForVideo(Modules).Program;
         var registers = program.AllocateRegisters();
 
@@ -214,11 +214,11 @@ public class NoiseTests
     {
         var patch = new Patch();
 
-        var random = NodeInstance.Create(Modules.Require(NodeCatalog.NoiseTypeId), 0, 0);
+        var random = NodeInstance.Create(Modules.Require(NoiseModule.TypeId), 0, 0);
         foreach (var (at, value) in knobs) random.InputValues[at] = value;
 
-        var sink = NodeInstance.Create(Modules.Require(NodeCatalog.OutputTypeId), 0, 0);
-        sink.InputValues[NodeCatalog.OutputVolumePort] = 1f;
+        var sink = NodeInstance.Create(Modules.Require(OutputModule.TypeId), 0, 0);
+        sink.InputValues[OutputModule.VolumePort] = 1f;
 
         patch.Nodes.Add(random);
         patch.Nodes.Add(sink);

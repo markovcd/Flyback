@@ -26,18 +26,18 @@ public class PatchSinkTests
     [Fact]
     public void The_output_is_the_sink_and_nothing_else_is()
     {
-        NodeCatalog.IsSink(NodeCatalog.OutputTypeId).ShouldBeTrue();
+        OutputModule.IsSink(OutputModule.TypeId).ShouldBeTrue();
 
         // Sat in the Output category of the palette, and no such thing to the compiler.
-        NodeCatalog.IsSink(NodeCatalog.ValueTypeId).ShouldBeFalse();
-        NodeCatalog.IsSink("osc.sine").ShouldBeFalse();
+        OutputModule.IsSink(SourceModules.ValueTypeId).ShouldBeFalse();
+        OutputModule.IsSink("osc.sine").ShouldBeFalse();
     }
 
     [Fact]
     public void The_output_can_never_be_added_because_there_is_always_one()
     {
-        PatchOf().CanAdd(NodeCatalog.OutputTypeId).ShouldBeFalse();
-        PatchOf(NodeCatalog.OutputTypeId).CanAdd(NodeCatalog.OutputTypeId).ShouldBeFalse();
+        PatchOf().CanAdd(OutputModule.TypeId).ShouldBeFalse();
+        PatchOf(OutputModule.TypeId).CanAdd(OutputModule.TypeId).ShouldBeFalse();
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public class PatchSinkTests
 
         var output = patch.EnsureOutput(NodeCatalog.BuiltIn);
 
-        output.TypeId.ShouldBe(NodeCatalog.OutputTypeId);
+        output.TypeId.ShouldBe(OutputModule.TypeId);
         patch.Nodes.ShouldHaveSingleItem();
     }
 
@@ -69,7 +69,7 @@ public class PatchSinkTests
         var again = patch.EnsureOutput(NodeCatalog.BuiltIn);
 
         again.ShouldBeSameAs(first);
-        patch.Nodes.Count(n => n.TypeId == NodeCatalog.OutputTypeId).ShouldBe(1);
+        patch.Nodes.Count(n => n.TypeId == OutputModule.TypeId).ShouldBe(1);
     }
 
     /// <summary>
@@ -80,7 +80,7 @@ public class PatchSinkTests
     [Fact]
     public void The_output_cannot_be_removed()
     {
-        var patch = PatchOf("value", NodeCatalog.OutputTypeId);
+        var patch = PatchOf("value", OutputModule.TypeId);
         var output = patch.Output;
 
         patch.Remove(output.Id).ShouldBeFalse();
@@ -91,7 +91,7 @@ public class PatchSinkTests
     [Fact]
     public void Everything_else_can_still_be_removed()
     {
-        var patch = PatchOf("value", NodeCatalog.OutputTypeId);
+        var patch = PatchOf("value", OutputModule.TypeId);
         var knob = patch.Nodes[0];
 
         patch.Remove(knob.Id).ShouldBeTrue();
@@ -103,10 +103,10 @@ public class PatchSinkTests
     [Fact]
     public void Removing_a_module_unplugs_it_from_the_output()
     {
-        var patch = PatchOf("value", NodeCatalog.OutputTypeId);
+        var patch = PatchOf("value", OutputModule.TypeId);
         var knob = patch.Nodes[0];
 
-        patch.Connect(knob.Id, 0, patch.Output.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(knob.Id, 0, patch.Output.Id, OutputModule.ColorPort);
         patch.Remove(knob.Id);
 
         patch.Connections.ShouldBeEmpty();
@@ -115,10 +115,10 @@ public class PatchSinkTests
     [Fact]
     public void The_sink_a_patch_holds_can_be_found_to_be_wired_into()
     {
-        var patch = PatchOf("value", NodeCatalog.OutputTypeId);
+        var patch = PatchOf("value", OutputModule.TypeId);
 
         patch.Output.ShouldBe(patch.Nodes[1]);
-        patch.FirstOf(NodeCatalog.OutputTypeId).ShouldBe(patch.Nodes[1]);
+        patch.FirstOf(OutputModule.TypeId).ShouldBe(patch.Nodes[1]);
     }
 
     /// <summary>
@@ -138,7 +138,7 @@ public class PatchSinkTests
         {
             var patch = preset.Build(NodeCatalog.BuiltIn);
 
-            patch.Nodes.Count(n => n.TypeId == NodeCatalog.OutputTypeId)
+            patch.Nodes.Count(n => n.TypeId == OutputModule.TypeId)
                 .ShouldBe(1, $"the '{preset.Name}' preset");
         }
     }

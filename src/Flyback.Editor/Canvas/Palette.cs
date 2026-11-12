@@ -49,10 +49,10 @@ internal sealed class Palette
     /// </summary>
     private void LayFirstKeyboard(string typeId)
     {
-        if (typeId != NodeCatalog.MidiTypeId
+        if (typeId != MidiModules.MidiTypeId
             || keyboard() != KeyboardLayout.Scale
             || editor.History.Patch.Keyboard is not null
-            || editor.History.Patch.FirstOf(NodeCatalog.MidiTypeId) is not null)
+            || editor.History.Patch.FirstOf(MidiModules.MidiTypeId) is not null)
             return;
 
         editor.History.Patch.Keyboard = KeyboardScale.Major;

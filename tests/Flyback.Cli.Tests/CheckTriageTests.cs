@@ -19,9 +19,9 @@ public class CheckTriageTests
         var patch = Presets.All.Single(p => p.Name == "Plasma").Build(NodeCatalog.BuiltIn);
 
         patch.Nodes.Add(new NodeInstance { Id = Guid.NewGuid(), TypeId = "osc.nonesuch" });
-        patch.Connect(patch.Nodes[^1].Id, 0, patch.Output.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(patch.Nodes[^1].Id, 0, patch.Output.Id, OutputModule.ColorPort);
         patch.Nodes.Add(new NodeInstance { Id = Guid.NewGuid(), TypeId = "osc.nothere" });
-        patch.Connect(patch.Nodes[^1].Id, 0, patch.Output.Id, NodeCatalog.OutputLeftPort);
+        patch.Connect(patch.Nodes[^1].Id, 0, patch.Output.Id, OutputModule.LeftPort);
 
         return patch;
     }

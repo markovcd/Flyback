@@ -82,12 +82,12 @@ public class ViewerWindowTests : UiTest
 
         var time = builder.Add("time", 0, 0);
         var osc = builder.Add("osc.sine", 0, 0, (1, 220f));
-        var speaker = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var speaker = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
 
         return builder
             .Wire(time, 0, osc, 0)
-            .Wire(osc, 0, speaker, NodeCatalog.OutputLeftPort)
-            .Wire(osc, 0, speaker, NodeCatalog.OutputColorPort)
+            .Wire(osc, 0, speaker, OutputModule.LeftPort)
+            .Wire(osc, 0, speaker, OutputModule.ColorPort)
             .Patch;
     }
 
@@ -119,10 +119,10 @@ public class ViewerWindowTests : UiTest
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var line = builder.Add(NodeCatalog.LineInTypeId, 0, 0);
-        var speaker = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var line = builder.Add(SourceModules.LineInTypeId, 0, 0);
+        var speaker = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
 
-        return builder.Wire(line, 0, speaker, NodeCatalog.OutputLeftPort).Patch;
+        return builder.Wire(line, 0, speaker, OutputModule.LeftPort).Patch;
     }
 
     [AvaloniaFact]
@@ -522,11 +522,11 @@ public class ViewerWindowTests : UiTest
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var output = builder.Add(NodeCatalog.OutputTypeId, 700, 40, (NodeCatalog.OutputVolumePort, 1f));
+        var output = builder.Add(OutputModule.TypeId, 700, 40, (OutputModule.VolumePort, 1f));
         var value = builder.Add("value", 200, 40, (0, 0f));
 
-        builder.Wire(value, 0, output, NodeCatalog.OutputColorPort);
-        builder.Wire(value, 0, output, NodeCatalog.OutputLeftPort);
+        builder.Wire(value, 0, output, OutputModule.ColorPort);
+        builder.Wire(value, 0, output, OutputModule.LeftPort);
 
         var patch = builder.Patch;
         var knob = patch.AddControl("Glow", 0.3f);

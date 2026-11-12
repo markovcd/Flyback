@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using Flyback.Core.Compile;
 
 namespace Flyback.Core.Graph;
 
@@ -13,48 +14,10 @@ namespace Flyback.Core.Graph;
 /// a catalog that is not the running one should take a
 /// <see cref="ModuleCatalog"/> instead.
 /// </remarks>
-public static partial class NodeCatalog
+public static class NodeCatalog
 {
-    /// <summary>The provider every module in this file belongs to. Reserved.</summary>
+    /// <summary>The provider every built-in module belongs to. Reserved.</summary>
     internal static ModuleProvider BuiltInProvider { get; } = new("flyback", GlobalConstants.ApplicationName);
-
-    /// <summary>RGB, so the screen reads three registers.</summary>
-    internal const int VideoChannels = 3;
-
-    /// <summary>Stereo, so the speakers read two registers where the screen reads three.</summary>
-    internal const int AudioChannels = 2;
-
-    /// <summary>
-    /// One of the two programs a patch yields. Both root at the same Output and
-    /// differ only in which of its results they read.
-    /// </summary>
-    /// <param name="Inputs">
-    /// Which of the Output's sockets this program walks back from. The others are
-    /// never resolved, so nothing upstream of them emits an op — the whole of
-    /// ADR-0022's cross-sink dead-code elimination, which with one node has to be
-    /// said here.
-    /// </param>
-    /// <param name="Results">Which of the sink's emit results this program reads.</param>
-    internal readonly record struct SinkKind(string Name, Range Inputs, Range Results, int Width);
-
-    /// <summary>The screen's program, walking back from the Output's color.</summary>
-    internal static SinkKind Screen => new("screen", OutputColorPort..OutputLeftPort, 0..1, VideoChannels);
-
-    /// <summary>The speakers' program, walking back from left, right and volume.</summary>
-    internal static SinkKind Speakers => new("speakers", OutputLeftPort..(OutputVolumePort + 1), 1..3, AudioChannels);
-
-    // Port indices on the Output, named because three separate places index it
-    // and a shifted socket would otherwise be a silent change of meaning.
-    /// <summary>The Output's color input, which is the screen.</summary>
-    internal const int OutputColorPort = 0;
-    /// <summary>The Output's left input, which is the left speaker.</summary>
-    internal const int OutputLeftPort = 1;
-    /// <summary>The Output's right input, which is the right speaker.</summary>
-    internal const int OutputRightPort = 2;
-    /// <summary>The Output's volume input, which scales both speakers.</summary>
-    internal const int OutputVolumePort = 3;
-
-    private const float Tau = 6.283185307179586f;
 
     /// <summary>Just the modules that ship in the engine, with nothing added.</summary>
     internal static ModuleCatalog BuiltIn { get; }
@@ -85,82 +48,63 @@ public static partial class NodeCatalog
     /// <inheritdoc cref="ModuleCatalog.Normalled"/>
     internal static string? Normalled(PortSpec spec) => Current.Normalled(spec);
 
-    // --- port shorthands -----------------------------------------------------
+    /// <inheritdoc cref="Sockets.Clock"/>
+    public static PortNormal Clock => Sockets.Clock;
 
-    private static PortSpec Num(string name, float value = 0f, float min = -4f, float max = 4f) =>
-        new(name, PortKind.Scalar, value, min, max);
+    /// <inheritdoc cref="Sockets.Across"/>
+    public static PortNormal Across => Sockets.Across;
 
-    private static PortSpec Col(string name) => new(name, PortKind.Color);
+    /// <inheritdoc cref="Sockets.Down"/>
+    public static PortNormal Down => Sockets.Down;
 
-    /// <summary>The hidden clock every domain socket is normalled to.</summary>
-    public static PortNormal Clock => new(TimeTypeId);
+    /// <inheritdoc cref="Sockets.Freq"/>
+    public static PortSpec Freq => Sockets.Freq;
 
-    /// <summary>The hidden x and y every socket that wants a position is normalled to.</summary>
-    public static PortNormal Across => new(CoordTypeId);
+    /// <inheritdoc cref="SequencerModules.MaxParts"/>
+    public const int MaxParts = SequencerModules.MaxParts;
 
-    /// <summary>The hidden y every socket that wants a position down the screen is normalled to.</summary>
-    public static PortNormal Down => new(CoordTypeId, CoordYPort);
+    /// <inheritdoc cref="DelayModule.Echoed"/>
+    public static Slot DelayEchoed(Emitter em, Slot dry, Slot time, Slot feedback, Slot mix) =>
+        DelayModule.Echoed(em, dry, time, feedback, mix);
 
-    /// <summary>
-    /// An oscillator's rate, from standing still to the top of hearing: the lower
-    /// half of the knob's travel is LFO territory up to 20 Hz, the upper half is pitch.
-    /// </summary>
-    public static PortSpec Freq => new("freq", PortKind.Scalar, 1f, 0f, 20_000f) { Knee = 0.02f, Standard = true };
+    /// <inheritdoc cref="FilterModule.Responses"/>
+    public static Slot[] FilterResponses(Emitter em, Slot dry, Slot cutoff, Slot resonance) =>
+        FilterModule.Responses(em, dry, cutoff, resonance);
 
-    /// <summary>
-    /// The axis a module is read across rather than a value it uses. Named at the
-    /// port because only the module knows which input that is.
-    /// </summary>
-    /// <remarks>
-    /// Normalled to Time, because a domain resting on a knob is a module that does
-    /// not move — see <see cref="PortSpec.NormalledTo"/>. Every domain in the
-    /// catalog is built through here, so this one line is the whole of "an
-    /// oscillator runs unless you say otherwise".
-    /// </remarks>
-    private static PortSpec Domain(string name, string help = "") =>
-        new(name, NormalledTo: Clock, Domain: true) { Help = help, Standard = help.Length == 0 };
-
-    /// <summary>
-    /// Where on the screen a module is being asked about, normalled to Coordinates
-    /// so the pixel's own position is what it reads until a patch says different.
-    /// Declared as a pair because it is always a pair: given one and left holding
-    /// a knob on the other, a module reads along a line through the picture rather
-    /// than across it.
-    /// </summary>
-    private static PortSpec[] Position() =>
-    [
-        new("x", NormalledTo: Across) { Standard = true },
-        new("y", NormalledTo: Down) { Standard = true },
-    ];
-
-
-    private static PortSpec Any(string name, float value = 0f, float min = -4f, float max = 4f) =>
-        new(name, PortKind.Any, value, min, max);
+    /// <inheritdoc cref="NoiseModule.WhiteAndPink"/>
+    public static (Slot White, Slot Pink) WhiteAndPink(Emitter em, Slot domain, Slot seed) =>
+        NoiseModule.WhiteAndPink(em, domain, seed);
 
     static NodeCatalog()
     {
-        var modules = Output()
-            .Concat(Sources())
-            .Concat(Midi())
-            .Concat(Oscillators())
-            .Concat(Strings())
-            .Concat(Sequencers())
+        var modules = new[] { OutputModule.Def() }
+            .Concat(PitchModules.Defs())
+            .Concat(ChordModules.Defs())
+            .Concat(ChartModules.Defs())
+            .Append(BeamModule.Def())
+            .Append(MeterModule.Def())
+            .Append(ScanModule.Def())
+            .Concat(SourceModules.Defs())
+            .Concat(MidiModules.Defs())
+            .Concat(OscillatorModules.Defs())
+            .Concat(StringModule.Defs())
+            .Concat(SequencerModules.Defs())
             .Append(SongModule.Def)
-            .Concat(Envelopes())
-            .Append(Duck())
-            .Append(Filter())
-            .Append(Noise())
-            .Append(Slew())
-            .Append(Drive())
-            .Append(Delay())
-            .Append(Reverb())
-            .Concat(Maths())
-            .Concat(Bus())
-            .Concat(Polyphony())
-            .Concat(Space())
-            .Concat(Patterns())
-            .Concat(Color())
-            .Concat(Feedback())
+            .Concat(EnvelopeModules.Defs())
+            .Append(DuckModule.Def())
+            .Append(FilterModule.Def())
+            .Append(NoiseModule.Def())
+            .Append(SlewModule.Def())
+            .Append(DriveModule.Def())
+            .Append(DelayModule.Def())
+            .Append(ReverbModule.Def())
+            .Concat(MathModules.Defs())
+            .Concat(BusModules.Defs())
+            .Concat(PolyphonyModules.Defs())
+            .Concat(SpaceModules.Defs())
+            .Concat(PatternModules.Defs())
+            .Concat(ColorModules.Defs())
+            .Concat(FeedbackModules.Defs())
             .ToImmutableList();
 
         if (modules.SelectMany(SocketHelp.Missing).ToList() is [_, ..] missing)

@@ -31,7 +31,7 @@ public class SwitchedOffTests
     }
 
     private static NodeInstance Sink(PatchBuilder b) =>
-        b.Add(NodeCatalog.OutputTypeId, 400, 0, (NodeCatalog.OutputVolumePort, 1f));
+        b.Add(OutputModule.TypeId, 400, 0, (OutputModule.VolumePort, 1f));
 
     // --- what it hands on ----------------------------------------------------
 
@@ -49,7 +49,7 @@ public class SwitchedOffTests
         var output = Sink(b);
 
         b.Wire(value, 0, half, 0);
-        b.Wire(half, 0, output, NodeCatalog.OutputLeftPort);
+        b.Wire(half, 0, output, OutputModule.LeftPort);
 
         Heard(b.Patch).ShouldBe(0.15f, 0.0001f);
 
@@ -74,7 +74,7 @@ public class SwitchedOffTests
 
         b.Wire(value, 0, half, 0);
         b.Wire(half, 0, twice, 0);
-        b.Wire(twice, 0, output, NodeCatalog.OutputLeftPort);
+        b.Wire(twice, 0, output, OutputModule.LeftPort);
 
         half.Off = true;
         twice.Off = true;
@@ -99,7 +99,7 @@ public class SwitchedOffTests
         // Into the level rather than the signal, so what is left when the wire
         // stops carrying is a knob with a number on it and not zero.
         b.Wire(value, 0, level, 1);
-        b.Wire(level, 0, output, NodeCatalog.OutputLeftPort);
+        b.Wire(level, 0, output, OutputModule.LeftPort);
 
         Heard(b.Patch).ShouldBe(0.075f, 0.0001f);
 
@@ -123,7 +123,7 @@ public class SwitchedOffTests
         var output = Sink(b);
 
         b.Wire(osc, 0, level, 1);
-        b.Wire(level, 0, output, NodeCatalog.OutputLeftPort);
+        b.Wire(level, 0, output, OutputModule.LeftPort);
 
         osc.Off = true;
 
@@ -167,7 +167,7 @@ public class SwitchedOffTests
     [Fact]
     public void A_module_with_no_inputs_hands_on_nothing()
     {
-        var coord = Modules.Require(NodeCatalog.CoordTypeId);
+        var coord = Modules.Require(SourceModules.CoordTypeId);
 
         coord.Inputs.ShouldBeEmpty();
         coord.Through(0).ShouldBe(-1);
@@ -189,7 +189,7 @@ public class SwitchedOffTests
         var output = Sink(b);
 
         b.Wire(osc, 0, level, 0);
-        b.Wire(level, 0, output, NodeCatalog.OutputLeftPort);
+        b.Wire(level, 0, output, OutputModule.LeftPort);
 
         var before = b.Patch.CompileForAudio(Modules).Program.Ops.Length;
 
@@ -209,11 +209,11 @@ public class SwitchedOffTests
         var b = new PatchBuilder(Modules);
 
         var osc = b.Add("osc.sine");
-        var scope = b.Add(NodeCatalog.ScopeTypeId);
+        var scope = b.Add(ChartModules.ScopeTypeId);
         var output = Sink(b);
 
         b.Wire(osc, 0, scope, 0);
-        b.Wire(osc, 0, output, NodeCatalog.OutputLeftPort);
+        b.Wire(osc, 0, output, OutputModule.LeftPort);
 
         b.Patch.CompileForAudio(Modules).Program.Taps.Count.ShouldBe(1);
 
@@ -237,7 +237,7 @@ public class SwitchedOffTests
 
         b.Wire(first, 0, second, 0);
         b.Wire(second, 0, first, 0);
-        b.Wire(second, 0, output, NodeCatalog.OutputLeftPort);
+        b.Wire(second, 0, output, OutputModule.LeftPort);
 
         first.Off = true;
         second.Off = true;
@@ -308,7 +308,7 @@ public class SwitchedOffTests
         b.Wire(value, 0, sum, 0);
         b.Wire(sum, 0, damp, 0);
         b.Wire(damp, 0, sum, 1);
-        b.Wire(sum, 0, output, NodeCatalog.OutputLeftPort);
+        b.Wire(sum, 0, output, OutputModule.LeftPort);
 
         damp.Off = true;
 
@@ -351,7 +351,7 @@ public class SwitchedOffTests
         b.Wire(damp, 0, sum, 1);
 
         // The Output hangs off the far side of the loop this time.
-        b.Wire(damp, 0, output, NodeCatalog.OutputLeftPort);
+        b.Wire(damp, 0, output, OutputModule.LeftPort);
 
         damp.Off = true;
 

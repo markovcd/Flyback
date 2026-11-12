@@ -119,7 +119,7 @@ internal static class ActionRows
         // counts it. Sinks are left out of the count because the graph refuses
         // them: a button offering to delete three when it can only manage two
         // would be lying about what pressing it does.
-        var going = editor.Selection.Nodes.Count(n => !NodeCatalog.IsSink(n.TypeId));
+        var going = editor.Selection.Nodes.Count(n => !OutputModule.IsSink(n.TypeId));
 
         if (going > 0)
             Act(
@@ -154,7 +154,7 @@ internal static class ActionRows
         var row = Row();
         row.Margin = new Thickness(0, 0, 0, 6);
 
-        var copying = editor.Selection.Nodes.Count(n => !NodeCatalog.IsSink(n.TypeId));
+        var copying = editor.Selection.Nodes.Count(n => !OutputModule.IsSink(n.TypeId));
         var these = copying > 1 ? $"these {copying} modules" : "this module";
 
         if (copying > 0)

@@ -23,12 +23,12 @@ public class ChanceTests
             var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
             gate = b.Add("value", 0, 0, (0, 0f));
-            chance = b.Add(NodeCatalog.ChanceTypeId, 200, 0, (2, seed));
-            var sink = b.Add(NodeCatalog.OutputTypeId, 400, 0, (NodeCatalog.OutputVolumePort, 1f));
+            chance = b.Add(SequencerModules.ChanceTypeId, 200, 0, (2, seed));
+            var sink = b.Add(OutputModule.TypeId, 400, 0, (OutputModule.VolumePort, 1f));
 
             b.Wire(gate, 0, chance, 0)
-             .Wire(chance, port, sink, NodeCatalog.OutputLeftPort)
-             .Wire(chance, port, sink, NodeCatalog.OutputColorPort);
+             .Wire(chance, port, sink, OutputModule.LeftPort)
+             .Wire(chance, port, sink, OutputModule.ColorPort);
 
             patch = b.Patch;
 

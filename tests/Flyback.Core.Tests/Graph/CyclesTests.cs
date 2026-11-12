@@ -41,12 +41,12 @@ public class CyclesTests
         var first = b.Add("math.add", 0, 0);
         var second = b.Add("math.mul", 200, 0);
         var third = b.Add("math.sub", 400, 0);
-        var sink = b.Add(NodeCatalog.OutputTypeId, 600, 0);
+        var sink = b.Add(OutputModule.TypeId, 600, 0);
 
         b.Wire(first, 0, second, 0)
          .Wire(second, 0, third, 0)
          .Wire(third, 0, first, 1)
-         .Wire(third, 0, sink, NodeCatalog.OutputLeftPort);
+         .Wire(third, 0, sink, OutputModule.LeftPort);
 
         var backwards = Cycles.Backwards(b.Patch);
 
@@ -63,9 +63,9 @@ public class CyclesTests
     public void A_module_may_be_wired_to_itself()
     {
         var add = b.Add("math.add", 0, 0, (1, 0.25f));
-        var sink = b.Add(NodeCatalog.OutputTypeId, 200, 0);
+        var sink = b.Add(OutputModule.TypeId, 200, 0);
 
-        b.Wire(add, 0, add, 0).Wire(add, 0, sink, NodeCatalog.OutputLeftPort);
+        b.Wire(add, 0, add, 0).Wire(add, 0, sink, OutputModule.LeftPort);
 
         b.Patch.IncomingTo(add.Id, 0).ShouldNotBeNull().SourceNode.ShouldBe(add.Id);
 
@@ -107,12 +107,12 @@ public class CyclesTests
         var first = b.Add("math.add", 0, 0);
         var second = b.Add("math.mul", 200, 0);
         var third = b.Add("math.sub", 400, 0);
-        var sink = b.Add(NodeCatalog.OutputTypeId, 600, 0);
+        var sink = b.Add(OutputModule.TypeId, 600, 0);
 
         b.Wire(first, 0, second, 0)
          .Wire(second, 0, third, 0)
          .Wire(third, 0, first, 1)
-         .Wire(third, 0, sink, NodeCatalog.OutputLeftPort);
+         .Wire(third, 0, sink, OutputModule.LeftPort);
 
         var before = Cycles.Backwards(b.Patch);
 
@@ -143,10 +143,10 @@ public class CyclesTests
 
         b.Wire(first, 0, second, 0).Wire(second, 0, first, 1);
 
-        var sink = b.Add(NodeCatalog.OutputTypeId, 400, 0);
+        var sink = b.Add(OutputModule.TypeId, 400, 0);
         var lone = b.Add("time", 0, 200);
 
-        b.Wire(lone, 0, sink, NodeCatalog.OutputLeftPort);
+        b.Wire(lone, 0, sink, OutputModule.LeftPort);
 
         Cycles.Backwards(b.Patch).Count.ShouldBe(1);
     }
@@ -160,11 +160,11 @@ public class CyclesTests
     {
         var first = b.Add("math.add", 0, 0);
         var second = b.Add("math.mul", 200, 0, (1, 0.5f));
-        var sink = b.Add(NodeCatalog.OutputTypeId, 400, 0);
+        var sink = b.Add(OutputModule.TypeId, 400, 0);
 
         b.Wire(first, 0, second, 0)
          .Wire(second, 0, first, 1)
-         .Wire(first, 0, sink, NodeCatalog.OutputLeftPort);
+         .Wire(first, 0, sink, OutputModule.LeftPort);
 
         var result = b.Patch.CompileForAudio();
 

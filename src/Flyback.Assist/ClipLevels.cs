@@ -39,15 +39,15 @@ internal static class ClipLevels
             .Append(Slices)
             .Append(" slices across the clip, in dBFS:");
 
-        var frames = samples.Length / NodeCatalog.AudioChannels;
+        var frames = samples.Length / OutputModule.AudioChannels;
         var slice = Math.Max(1, frames / Slices);
 
         for (var i = 0; i < Slices; i++)
         {
-            var start = i * slice * NodeCatalog.AudioChannels;
+            var start = i * slice * OutputModule.AudioChannels;
             if (start >= samples.Length) break;
 
-            var length = Math.Min(slice * NodeCatalog.AudioChannels, samples.Length - start);
+            var length = Math.Min(slice * OutputModule.AudioChannels, samples.Length - start);
 
             text.Append(' ').Append(Decibels(Levels(samples.Slice(start, length)).Rms).Replace(" dBFS", ""));
         }
@@ -68,7 +68,7 @@ internal static class ClipLevels
     /// </summary>
     private static string Loudness(ReadOnlySpan<float> samples, int sampleRate)
     {
-        var meter = new LoudnessMeter(sampleRate, NodeCatalog.AudioChannels);
+        var meter = new LoudnessMeter(sampleRate, OutputModule.AudioChannels);
 
         meter.Add(samples);
 
@@ -103,11 +103,11 @@ internal static class ClipLevels
     /// </remarks>
     public static bool Silent(ReadOnlySpan<float> samples, int settle = 0)
     {
-        for (var channel = 0; channel < NodeCatalog.AudioChannels; channel++)
+        for (var channel = 0; channel < OutputModule.AudioChannels; channel++)
         {
             var sign = 0;
 
-            for (var i = settle * NodeCatalog.AudioChannels + channel; i < samples.Length; i += NodeCatalog.AudioChannels)
+            for (var i = settle * OutputModule.AudioChannels + channel; i < samples.Length; i += OutputModule.AudioChannels)
             {
                 if (Math.Abs(samples[i]) < SilenceFloor) continue;
 

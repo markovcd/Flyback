@@ -301,7 +301,7 @@ public sealed class Patch
     {
         var inside = members
             .Distinct()
-            .Where(id => Find(id) is { } node && !NodeCatalog.IsSink(node.TypeId))
+            .Where(id => Find(id) is { } node && !OutputModule.IsSink(node.TypeId))
             .ToList();
 
         if (inside.Count == 0) return null;
@@ -335,7 +335,7 @@ public sealed class Patch
     {
         var arriving = members
             .Distinct()
-            .Where(id => !group.Members.Contains(id) && Find(id) is { } node && !NodeCatalog.IsSink(node.TypeId))
+            .Where(id => !group.Members.Contains(id) && Find(id) is { } node && !OutputModule.IsSink(node.TypeId))
             .ToList();
 
         if (arriving.Count == 0) return false;
@@ -578,7 +578,7 @@ public sealed class Patch
     /// </summary>
     [JsonIgnore]
     internal NodeInstance Output =>
-        FirstOf(NodeCatalog.OutputTypeId)
+        FirstOf(OutputModule.TypeId)
         ?? throw new InvalidOperationException("This patch has no Output. Call EnsureOutput after building it by hand.");
 
     /// <summary>
@@ -592,7 +592,7 @@ public sealed class Patch
     /// renders nothing, and raises no complaint, because the patch compiled.
     /// </remarks>
     internal bool CanAdd(string typeId) =>
-        !NodeCatalog.IsSink(typeId) && (typeId != SongModule.TypeId || Nodes.All(node => node.TypeId != typeId));
+        !OutputModule.IsSink(typeId) && (typeId != SongModule.TypeId || Nodes.All(node => node.TypeId != typeId));
 
     /// <summary>
     /// Puts the Output in place if it is not already there, and hands it back.
@@ -605,10 +605,10 @@ public sealed class Patch
     /// <param name="modules"></param>
     internal NodeInstance EnsureOutput(ModuleCatalog? modules = null, Guid? id = null)
     {
-        if (FirstOf(NodeCatalog.OutputTypeId) is { } existing) return existing;
+        if (FirstOf(OutputModule.TypeId) is { } existing) return existing;
 
         var catalog = modules ?? NodeCatalog.Current;
-        var node = NodeInstance.Create(catalog.Require(NodeCatalog.OutputTypeId), OutputX, OutputY, id);
+        var node = NodeInstance.Create(catalog.Require(OutputModule.TypeId), OutputX, OutputY, id);
 
         Nodes.Add(node);
         return node;
@@ -636,12 +636,12 @@ public sealed class Patch
     /// </remarks>
     internal (bool Picture, bool Sound) Reaches()
     {
-        if (FirstOf(NodeCatalog.OutputTypeId) is not { } sink) return (false, false);
+        if (FirstOf(OutputModule.TypeId) is not { } sink) return (false, false);
 
         return (
-            IncomingTo(sink.Id, NodeCatalog.OutputColorPort) is not null,
-            IncomingTo(sink.Id, NodeCatalog.OutputLeftPort) is not null
-            || IncomingTo(sink.Id, NodeCatalog.OutputRightPort) is not null);
+            IncomingTo(sink.Id, OutputModule.ColorPort) is not null,
+            IncomingTo(sink.Id, OutputModule.LeftPort) is not null
+            || IncomingTo(sink.Id, OutputModule.RightPort) is not null);
     }
 
     /// <summary>
@@ -702,7 +702,7 @@ public sealed class Patch
     /// <returns>Whether anything was removed.</returns>
     internal bool Remove(Guid nodeId)
     {
-        if (Find(nodeId) is { } node && NodeCatalog.IsSink(node.TypeId)) return false;
+        if (Find(nodeId) is { } node && OutputModule.IsSink(node.TypeId)) return false;
 
         var removed = Nodes.RemoveAll(n => n.Id == nodeId) > 0;
         Connections.RemoveAll(c => c.SourceNode == nodeId || c.TargetNode == nodeId);

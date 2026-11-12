@@ -54,13 +54,13 @@ public sealed class SampleTests : IDisposable
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
         var position = b.Add("value", -200, 0, (0, at));
-        var player = b.Add(NodeCatalog.SampleTypeId, 0, 0, (1, level));
+        var player = b.Add(SourceModules.SampleTypeId, 0, 0, (1, level));
         SampleExtra.Set(player, path);
 
-        var sink = b.Add(NodeCatalog.OutputTypeId, 200, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = b.Add(OutputModule.TypeId, 200, 0, (OutputModule.VolumePort, 1f));
 
         b.Wire(position, 0, player, 0)
-         .Wire(player, 0, sink, NodeCatalog.OutputLeftPort);
+         .Wire(player, 0, sink, OutputModule.LeftPort);
 
         return (b.Patch, player);
     }
@@ -113,11 +113,11 @@ public sealed class SampleTests : IDisposable
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var player = b.Add(NodeCatalog.SampleTypeId, 0, 0);
+        var player = b.Add(SourceModules.SampleTypeId, 0, 0);
         SampleExtra.Set(player, Ramp("half.wav", 500));
 
-        var sink = b.Add(NodeCatalog.OutputTypeId, 200, 0, (NodeCatalog.OutputVolumePort, 1f));
-        b.Wire(player, 1, sink, NodeCatalog.OutputLeftPort);
+        var sink = b.Add(OutputModule.TypeId, 200, 0, (OutputModule.VolumePort, 1f));
+        b.Wire(player, 1, sink, OutputModule.LeftPort);
 
         // 500 samples at 500 a second.
         Heard(b.Patch.CompileForAudio(NodeCatalog.BuiltIn, Library())).ShouldBe(1d, 1e-5);
@@ -158,11 +158,11 @@ public sealed class SampleTests : IDisposable
         {
             var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-            var player = b.Add(NodeCatalog.SampleTypeId, 0, 0);
+            var player = b.Add(SourceModules.SampleTypeId, 0, 0);
             SampleExtra.Set(player, fall);
 
-            var sink = b.Add(NodeCatalog.OutputTypeId, 300, 0, (NodeCatalog.OutputVolumePort, 1f));
-            b.Wire(player, 0, sink, NodeCatalog.OutputLeftPort);
+            var sink = b.Add(OutputModule.TypeId, 300, 0, (OutputModule.VolumePort, 1f));
+            b.Wire(player, 0, sink, OutputModule.LeftPort);
 
             if (triggerHz > 0)
             {
@@ -364,11 +364,11 @@ public sealed class SampleTests : IDisposable
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var player = b.Add(NodeCatalog.SampleTypeId, 0, 0);
+        var player = b.Add(SourceModules.SampleTypeId, 0, 0);
         SampleExtra.Set(player, Path.Combine(folder, "gone.wav"));
 
-        var sink = b.Add(NodeCatalog.OutputTypeId, 200, 0);
-        b.Wire(player, 0, sink, NodeCatalog.OutputColorPort);
+        var sink = b.Add(OutputModule.TypeId, 200, 0);
+        b.Wire(player, 0, sink, OutputModule.ColorPort);
 
         b.Patch.CompileForVideo(NodeCatalog.BuiltIn, Library())
             .Issues.ShouldContain(i => i.Message.Contains("gone.wav"));
@@ -398,7 +398,7 @@ public sealed class SampleTests : IDisposable
     public void The_complaint_names_the_module_it_is_about()
     {
         var (patch, player) = Playing(Path.Combine(folder, "gone.wav"));
-        player.Rename(NodeCatalog.BuiltIn.Require(NodeCatalog.SampleTypeId), "Snare");
+        player.Rename(NodeCatalog.BuiltIn.Require(SourceModules.SampleTypeId), "Snare");
 
         var compiled = patch.CompileForAudio(NodeCatalog.BuiltIn, Library());
 
@@ -420,13 +420,13 @@ public sealed class SampleTests : IDisposable
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
         var position = b.Add("value", -200, 0, (0, 0.5f));
-        var player = b.Add(NodeCatalog.SampleTypeId, 0, 0);
+        var player = b.Add(SourceModules.SampleTypeId, 0, 0);
         SampleExtra.Set(player, Ramp());
 
-        var sink = b.Add(NodeCatalog.OutputTypeId, 200, 0);
+        var sink = b.Add(OutputModule.TypeId, 200, 0);
 
         b.Wire(position, 0, player, 0)
-         .Wire(player, 0, sink, NodeCatalog.OutputColorPort);
+         .Wire(player, 0, sink, OutputModule.ColorPort);
 
         var compiled = b.Patch.CompileForVideo(NodeCatalog.BuiltIn, Library());
 
@@ -452,14 +452,14 @@ public sealed class SampleTests : IDisposable
         var held = b.Add("value", -400, 100, (0, 1f));
         var position = b.Add("value", -400, 0, (0, 0.5f));
 
-        var player = b.Add(NodeCatalog.SampleTypeId, 0, 0);
+        var player = b.Add(SourceModules.SampleTypeId, 0, 0);
         SampleExtra.Set(player, Ramp());
 
-        var sink = b.Add(NodeCatalog.OutputTypeId, 200, 0);
+        var sink = b.Add(OutputModule.TypeId, 200, 0);
 
         b.Wire(position, 0, player, 0)
          .Wire(held, 0, player, 2)
-         .Wire(player, 0, sink, NodeCatalog.OutputColorPort);
+         .Wire(player, 0, sink, OutputModule.ColorPort);
 
         // Halfway up the ramp, exactly as it reads with no trigger at all —
         // rather than the nought a collapsed position would give.
@@ -477,14 +477,14 @@ public sealed class SampleTests : IDisposable
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var player = b.Add(NodeCatalog.SampleTypeId, 0, 0);
+        var player = b.Add(SourceModules.SampleTypeId, 0, 0);
         SampleExtra.Set(player, Ramp());
 
-        var probe = b.Add(NodeCatalog.ProbeTypeId, 200, 0);
-        var sink = b.Add(NodeCatalog.OutputTypeId, 400, 0);
+        var probe = b.Add(ChartModules.ProbeTypeId, 200, 0);
+        var sink = b.Add(OutputModule.TypeId, 400, 0);
 
         b.Wire(player, 0, probe, 0)
-         .Wire(probe, 0, sink, NodeCatalog.OutputColorPort);
+         .Wire(probe, 0, sink, OutputModule.ColorPort);
 
         var compiled = b.Patch.CompileForProbe(probe.Id, NodeCatalog.BuiltIn, Library());
 
@@ -550,18 +550,18 @@ public sealed class SampleTests : IDisposable
         var early = b.Add("value", -200, 0, (0, 0.25f));
         var late = b.Add("value", -200, 100, (0, 0.75f));
 
-        var first = b.Add(NodeCatalog.SampleTypeId, 0, 0);
-        var second = b.Add(NodeCatalog.SampleTypeId, 0, 100);
+        var first = b.Add(SourceModules.SampleTypeId, 0, 0);
+        var second = b.Add(SourceModules.SampleTypeId, 0, 100);
 
         SampleExtra.Set(first, path);
         SampleExtra.Set(second, path);
 
         var mix = b.Add("math.add", 200, 0);
-        var sink = b.Add(NodeCatalog.OutputTypeId, 400, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = b.Add(OutputModule.TypeId, 400, 0, (OutputModule.VolumePort, 1f));
 
         b.Wire(early, 0, first, 0)
          .Wire(late, 0, second, 0)
-         .Wire(first, 0, mix, 0).Wire(second, 0, mix, 1).Wire(mix, 0, sink, NodeCatalog.OutputLeftPort);
+         .Wire(first, 0, mix, 0).Wire(second, 0, mix, 1).Wire(mix, 0, sink, OutputModule.LeftPort);
 
         var compiled = b.Patch.CompileForAudio(NodeCatalog.BuiltIn, Library());
 

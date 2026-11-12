@@ -88,9 +88,9 @@ public sealed class StatusCountTests : EditorTest
     {
         var builder = new PatchBuilder();
         var sine = builder.Add("osc.sine", (1, 220f));
-        var output = builder.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.5f));
+        var output = builder.Add(OutputModule.TypeId, (OutputModule.VolumePort, 0.5f));
 
-        return builder.Wire(sine, 0, output, sound ? NodeCatalog.OutputLeftPort : NodeCatalog.OutputColorPort).Build();
+        return builder.Wire(sine, 0, output, sound ? OutputModule.LeftPort : OutputModule.ColorPort).Build();
     }
 
 }

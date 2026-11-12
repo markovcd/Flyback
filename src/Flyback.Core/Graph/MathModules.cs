@@ -1,0 +1,460 @@
+﻿using Flyback.Core.Compile;
+using Flyback.Core.Graph.Extras;
+using static Flyback.Core.Graph.Sockets;
+
+namespace Flyback.Core.Graph;
+
+/// <summary>The arithmetic modules, Mixer, Desk and Expression.</summary>
+internal static class MathModules
+{
+    internal static IEnumerable<NodeDef> Defs()
+    {
+        var primitives = Primitives().ToList();
+
+        foreach (var def in primitives) yield return def;
+
+        yield return Mixer();
+
+        yield return Desk();
+
+        yield return Expression(Formula.Functions(primitives));
+    }
+
+    /// <summary>
+    /// The Maths modules that are one op or a handful — everything an Expression
+    /// may call.
+    /// </summary>
+    private static IEnumerable<NodeDef> Primitives()
+    {
+        yield return Binary("math.add", "Add", OpCode.Add, 0f, "a + b",
+            "Added to 'b'.", "Added to 'a'.", "The sum.");
+        yield return Binary("math.sub", "Subtract", OpCode.Sub, 0f, "a - b",
+            "What 'b' is taken from.", "Taken from 'a'.", "The difference, 'a' less 'b'.");
+        yield return Binary("math.mul", "Multiply", OpCode.Mul, 1f, "a * b",
+            "Multiplied by 'b'.", "Multiplied by 'a': 0 silences it, 1 passes it through.", "The product.");
+        yield return Binary("math.div", "Divide", OpCode.Div, 1f, "a / b, and 0 when b is 0.",
+            "Divided by 'b'.", "What 'a' is divided by.", "The quotient, or 0 while 'b' is 0.");
+        yield return Binary("math.mod", "Modulo", OpCode.Mod, 1f, "Remainder of a / b. Wraps values into a band.",
+            Wrapped, "How wide the band is.", "The remainder of 'a' over 'b'.");
+        yield return Binary("math.pow", "Power", OpCode.Pow, 2f, "a raised to b.",
+            "The base.", "The power 'a' is raised to.", "The base raised to the power.");
+        yield return Binary("math.min", "Minimum", OpCode.Min, 0f, "Whichever of a and b is smaller.",
+            VersusB, VersusA, "The smaller of the two.");
+        yield return Binary("math.max", "Maximum", OpCode.Max, 0f, "Whichever of a and b is larger.",
+            VersusB, VersusA, "The larger of the two.");
+        yield return Binary("math.atan2", "Atan2", OpCode.Atan2, 1f, "Angle of the vector (b, a).",
+            "The vector's y.", "The vector's x.", "The vector's angle, in radians.");
+        yield return Binary("math.hypot", "Length", OpCode.Hypot, 0f, "Distance from the origin to (a, b).",
+            "One side.", "The other side.", "The length of the vector (a, b).");
+
+        yield return Unary("math.abs", "Absolute", OpCode.Abs, "Drops the sign. Mirrors a signal about zero.",
+            "The value to fold.", "The value without its sign.");
+        yield return Unary("math.neg", "Negate", OpCode.Neg, "Flips the sign.",
+            "The value to flip.", "The value with its sign flipped.");
+        yield return Unary("math.sin", "Sin", OpCode.Sin, "Sine.", Radians, "The sine, -1 to 1.");
+        yield return Unary("math.cos", "Cos", OpCode.Cos, "Cosine.", Radians, "The cosine, -1 to 1.");
+        yield return Unary("math.tan", "Tan", OpCode.Tan, "Tangent.", Radians, "The tangent, which runs off to infinity at a quarter turn.");
+        yield return Unary("math.sqrt", "Square root", OpCode.Sqrt, "Square root, and 0 for negatives.",
+            "The value to take the root of.", "The square root, or 0 below nought.");
+        yield return Unary("math.floor", "Floor", OpCode.Floor, "Rounds down. Quantizes a smooth signal into steps.",
+            "The value to round down.", "The whole number at or below it.");
+        yield return Unary("math.fract", "Fraction", OpCode.Fract, "Just the part after the decimal point. Wraps to 0..1.",
+            Wrapped, "What is after the decimal point, 0 to 1.");
+        yield return Unary("math.sign", "Sign", OpCode.Sign, "-1, 0 or 1.",
+            "The value whose sign is read.", "-1 below nought, 0 at it, 1 above.");
+        yield return Unary("math.exp", "Exp", OpCode.Exp, "e raised to the input.",
+            "The power e is raised to.", "The exponential.");
+        yield return Unary("math.log", "Log", OpCode.Log, "Natural log, and 0 for non-positive input.",
+            "The value to take the log of.", "The natural log, or 0 at or below nought.");
+
+        yield return new NodeDef(
+            "math.clamp", "Clamp", ModuleCategories.Maths,
+            [
+                Any("in") with { Help = "The value to hold in range." },
+                Any("low", -1f) with { Help = "The bottom of the range." },
+                Any("high", 1f) with { Help = "The top of the range." },
+            ],
+            [Any("out") with { Help = "The value, never under 'low' or over 'high'." }],
+            (em, i) => [em.Ternary(OpCode.Clamp, i[0], i[1], i[2])],
+            "Holds the signal inside a range.")
+        {
+            Words = "hold inside a range",
+        };
+
+        yield return new NodeDef(
+            "math.mix", "Mix", ModuleCategories.Maths,
+            [
+                Any("a") with { Help = "What comes out at 't' 0." },
+                Any("b", 1f) with { Help = "What comes out at 't' 1." },
+                Any("t", 0.5f, 0f, 1f) with { Standard = true },
+            ],
+            [Any("out") with { Help = Blended }],
+            (em, i) => [em.Ternary(OpCode.Mix, i[0], i[1], i[2])],
+            "Blends from 'a' to 'b'.")
+        {
+            Words = "blend two signals",
+        };
+
+        yield return new NodeDef(
+            "math.smoothstep", "Smoothstep", ModuleCategories.Maths,
+            [
+                Any("edge0") with { Help = "Where the ramp starts: 0 below it." },
+                Any("edge1", 1f) with { Help = "Where the ramp ends: 1 above it." },
+                Any("in") with { Help = "The value the ramp is read at." },
+            ],
+            [Any("out") with { Help = "0 to 1, eased at both ends." }],
+            (em, i) => [em.Ternary(OpCode.Smoothstep, i[0], i[1], i[2])],
+            "A soft 0-to-1 ramp between the two edges. The anti-aliased threshold.")
+        {
+            Words = "soft threshold",
+        };
+
+        yield return new NodeDef(
+            "math.step", "Threshold", ModuleCategories.Maths,
+            [
+                Any("edge") with { Help = "Where it flips: 0 below it, 1 above it." },
+                Any("in") with { Help = "The value compared with 'edge'." },
+            ],
+            [Any("out") with { Help = "0 or 1." }],
+            (em, i) => [em.Binary(OpCode.Step, i[0], i[1])],
+            "A hard threshold on 'in'.");
+
+        yield return Window();
+
+        yield return Dice();
+
+        yield return new NodeDef(
+            "math.remap", "Remap", ModuleCategories.Maths,
+            [
+                Any("in") with { Help = "The value to rescale." },
+                Num("in low", -1f) with { Help = "The value of 'in' that comes out as 'out low'." },
+                Num("in high", 1f) with { Help = "The value of 'in' that comes out as 'out high'." },
+                Num("out low") with { Help = "Where 'in low' lands." },
+                Num("out high", 1f) with { Help = "Where 'in high' lands." },
+            ],
+            [Any("out") with { Help = "The value, moved from the one range onto the other." }],
+            (em, i) =>
+            {
+                var t = em.Binary(OpCode.Div, em.Binary(OpCode.Sub, i[0], i[1]), em.Binary(OpCode.Sub, i[2], i[1]));
+                return [em.Ternary(OpCode.Mix, i[3], i[4], t)];
+            },
+            "Rescales one range onto another. Bipolar -1..1 into 0..1 is the common one.")
+        {
+            Words = "rescale a range",
+        };
+
+        yield return new NodeDef(
+            AutoRemapTypeId, "Auto remap", ModuleCategories.Maths,
+            [
+                Any("in") with { Help = "The value to rescale. What feeds it sets the range it is read in." },
+                Num("in low", 0f, 0f, 1f) with { Help = "Where it starts, as a fraction of the range of what feeds 'in'." },
+                Num("in high", 1f, 0f, 1f) with { Help = "Where it ends, as a fraction of the range of what feeds 'in'." },
+                Num("out low", 0f, 0f, 1f) with { Help = "Where 'in low' lands, as a fraction of the range of the socket 'out' feeds." },
+                Num("out high", 1f, 0f, 1f) with { Help = "Where 'in high' lands, as a fraction of the range of the socket 'out' feeds." },
+            ],
+            [Any("out") with { Help = "The value, swept across the range of the socket it feeds." }],
+            EmitAutoRemap,
+            "A Remap that reads its ranges off its wires. Each knob is 0 to 1 of the range at "
+            + "its wire's far end, swept the way that socket's own knob sweeps. Where a wire's far "
+            + "end has no range, that pair is plain numbers, as on Remap.")
+        {
+            Words = "rescale from the wires' ranges",
+        };
+    }
+
+    /// <summary>The type id of the Auto remap module.</summary>
+    internal const string AutoRemapTypeId = "math.autoremap";
+
+    /// <summary>
+    /// Remap's arithmetic in travel rather than in value: the input is first read as
+    /// how far along its source's range it is, and the result is turned into the
+    /// destination's range the way that socket's own knob would turn it, so a sweep
+    /// into a cutoff moves in octaves all the way along rather than only at its ends.
+    /// </summary>
+    private static Slot[] EmitAutoRemap(Emitter em, EmitContext node)
+    {
+        var spans = node.Spans ?? RemapSpans.Unwired;
+
+        // A color bound for a single number is its brightness first, so a sweep
+        // follows how light it is rather than an average of three sweeps.
+        var input = spans.Narrow ? em.Coerce(node[AutoRemap.In], 1) : node[AutoRemap.In];
+        var travel = spans.In is { } from ? Travel(em, input, from) : input;
+        var low = node[AutoRemap.InLow];
+
+        var t = em.Binary(OpCode.Div, em.Binary(OpCode.Sub, travel, low), em.Binary(OpCode.Sub, node[AutoRemap.InHigh], low));
+        var along = em.Ternary(OpCode.Mix, node[AutoRemap.OutLow], node[AutoRemap.OutHigh], t);
+
+        return [spans.Out is { } into ? At(em, along, into) : along];
+    }
+
+    /// <summary>How far along <paramref name="span"/> <paramref name="value"/> sits, 0 to 1: the inverse of <see cref="RemapSpan.At"/>, as ops.</summary>
+    private static Slot Travel(Emitter em, Slot value, RemapSpan span)
+    {
+        if (span.Knee <= 0f) return em.Mul(em.Add(value, -span.Min), 1f / (span.Max - span.Min));
+
+        var low = MathF.Min(span.Min, span.Max);
+        var decades = em.Unary(OpCode.Log, em.Add(em.Mul(em.Add(value, -low), 1f / span.Knee), 1f));
+        var up = em.Mul(decades, 1f / MathF.Log(1f + MathF.Abs(span.Max - span.Min) / span.Knee));
+
+        return span.Max < span.Min ? em.Add(em.Mul(up, -1f), 1f) : up;
+    }
+
+    /// <summary><see cref="RemapSpan.At"/> as ops.</summary>
+    private static Slot At(Emitter em, Slot travel, RemapSpan span)
+    {
+        if (span.Knee <= 0f) return em.Add(em.Mul(travel, span.Max - span.Min), span.Min);
+
+        var up = span.Max < span.Min ? em.Add(em.Mul(travel, -1f), 1f) : travel;
+        var rise = em.Unary(OpCode.Exp, em.Mul(up, MathF.Log(1f + MathF.Abs(span.Max - span.Min) / span.Knee)));
+
+        return em.Add(em.Mul(em.Add(rise, -1f), span.Knee), MathF.Min(span.Min, span.Max));
+    }
+
+    /// <summary>
+    /// On between two points: a Smoothstep up from 'from' times one less a
+    /// Smoothstep down to 'to', each ramp inside the window.
+    /// </summary>
+    /// <remarks>A Smoothstep whose edges meet is a Threshold, so with no rise and no fall this is the pair of Thresholds bit for bit.</remarks>
+    private static NodeDef Window() => new(
+        "math.window", "Window", ModuleCategories.Maths,
+        [
+            Any("in") with { Help = "The value the window is read at." },
+            Any("from") with { Help = "Where it starts to turn on." },
+            Any("to", 1f) with { Help = "Where it is off again." },
+            Any("rise", 0f, 0f, 1f) with { Help = "How far past 'from' it is fully on: 0 is a hard edge." },
+            Any("fall", 0f, 0f, 1f) with { Help = "How far before 'to' it starts to turn off: 0 is a hard edge." },
+        ],
+        [Any("out") with { Help = "1 between 'from' and 'to', 0 outside." }],
+        (em, i) =>
+        {
+            var rise = em.Ternary(OpCode.Smoothstep, i[1], em.Add(i[1], i[3]), i[0]);
+            var fall = em.Ternary(OpCode.Smoothstep, em.Sub(i[2], i[4]), i[2], i[0]);
+
+            return [em.Mul(rise, em.Sub(em.Constant(1f), fall))];
+        },
+        "1 while 'in' is between 'from' and 'to', 0 outside, each end hard or ramped.")
+    {
+        Words = "between two points, gate a span, last bar",
+    };
+
+    /// <summary>The prime Dice works modulo: small enough that every product stays a whole number in a float.</summary>
+    private const float DicePrime = 997f;
+
+    /// <summary>
+    /// A stable random for a whole number: a quadratic modulo a prime, so the
+    /// picture's floats and the sound's doubles throw the same.
+    /// </summary>
+    private static NodeDef Dice() => new(
+        "math.dice", "Dice", ModuleCategories.Maths,
+        [
+            Any("in") with { Help = "The whole number thrown for: a step, a note, a cell. Rounded down." },
+            Any("seed", 0f, 0f, 16f) with { Help = "Which die: another whole number gives another sequence." },
+            Any("sides", 6f, 1f, 16f) with { Help = "How many faces 'face' counts." },
+        ],
+        [
+            Any("out") with { Help = "0 to 1, the same each time 'in' comes round." },
+            Any("face") with { Help = "A whole number from 0 to one under 'sides'." },
+        ],
+        (em, i) =>
+        {
+            var prime = em.Constant(DicePrime);
+            var n = em.Binary(OpCode.Mod, em.Unary(OpCode.Floor, em.Add(i[0], em.Mul(i[1], 331f))), prime);
+            var square = em.Binary(OpCode.Mod, em.Mul(n, n), prime);
+            var thrown = em.Binary(OpCode.Mod, em.Add(em.Add(em.Mul(square, 73f), em.Mul(n, 151f)), 17f), prime);
+
+            return
+            [
+                em.Binary(OpCode.Div, thrown, prime),
+                em.Unary(OpCode.Floor, em.Binary(OpCode.Div, em.Mul(thrown, i[2]), prime)),
+            ];
+        },
+        "A random 0 to 1 that is the same every time 'in' comes round, and a face of a die from it. No memory.")
+    {
+        Words = "stable random, hash, pick one",
+    };
+
+    private static NodeDef Unary(string id, string name, OpCode code, string description, string help, string result) => new(
+        id, name, ModuleCategories.Maths, [Any("in") with { Help = help }], [Any("out") with { Help = result }],
+        (em, i) => [em.Unary(code, i[0])], description);
+
+    private const string Radians = "An angle, in radians.";
+
+    private const string VersusA = "Compared with 'a'.", VersusB = "Compared with 'b'.", Wrapped = "The value to wrap.";
+
+    /// <summary>The help on a Mix's or a Blend's output.</summary>
+    internal const string Blended = "The blend.";
+
+    private static NodeDef Binary(
+        string id, string name, OpCode code, float defaultB, string description, string a, string b, string result) => new(
+        id, name, ModuleCategories.Maths,
+        [Any("a") with { Help = a }, Any("b", defaultB) with { Help = b }],
+        [Any("out") with { Help = result }],
+        (em, i) => [em.Binary(code, i[0], i[1])], description);
+
+    /// <summary>
+    /// Four inputs, a level on each, summed into one — the desk, rather than four
+    /// Multiplies wired into a chain of Adds.
+    /// </summary>
+    /// <remarks>
+    /// Every socket is an <see cref="PortKind.Any"/>, so this is one module for both
+    /// halves of the machine: four tones sum to a chord and four fields to an image. A
+    /// level is a socket like any other, which is what makes a fader something an
+    /// oscillator can sweep.
+    /// </remarks>
+    internal const string MixerTypeId = "math.mixer";
+
+    private static NodeDef Mixer()
+    {
+        const int channels = 4;
+
+        var ports = new PortSpec[channels * 2];
+        for (var ch = 0; ch < channels; ch++)
+        {
+            ports[ch * 2] = Any($"in {ch + 1}") with { Help = $"Channel {ch + 1}, added in through 'level {ch + 1}'." };
+            ports[ch * 2 + 1] = Any($"level {ch + 1}", 1f, 0f, 1f) with { Help = $"Multiplies 'in {ch + 1}' before the sum." };
+        }
+
+        return new NodeDef(
+            MixerTypeId, "Mixer", ModuleCategories.Routing,
+            ports, [Any("out") with { Help = "The four channels, each through its level, added." }],
+            (em, i) =>
+            {
+                var sum = em.Mul(i[0], i[1]);
+                for (var ch = 1; ch < channels; ch++)
+                    sum = em.Add(sum, em.Mul(i[ch * 2], i[ch * 2 + 1]));
+                return [sum];
+            },
+            "Four signals summed, each through its level. It sums rather than averages, so "
+            + "four at full is four times as loud. An unused input adds nothing. Colors mix too: "
+            + "the levels are a four-way blend of pictures.")
+        {
+            Words = "sum four signals with levels",
+        };
+    }
+
+    /// <summary>
+    /// The Mixer twice over with the end of the chain built in: four stereo
+    /// channels summed to a left and a right, trimmed, and held to the rails.
+    /// </summary>
+    /// <remarks>
+    /// A track's last box is otherwise the same Mixer built once for each ear, a
+    /// Multiply under unity on each and a Clamp on each. A 'right' left unpatched
+    /// carries its 'left', so a mono voice is one wire. The 'bus' sockets are how
+    /// two of these become one desk of eight: the 'bus' outputs are the sum before
+    /// the trim and the rails, and the next Desk adds them in at unity — so only the
+    /// last in the chain trims and only the last can clip.
+    /// </remarks>
+    internal const string DeskTypeId = "math.desk";
+
+    private static NodeDef Desk()
+    {
+        const int channels = 4;
+        const int busLeft = channels * 3;
+        const int busRight = busLeft + 1;
+        const int trim = busLeft + 2;
+
+        var ports = new PortSpec[trim + 1];
+        for (var ch = 0; ch < channels; ch++)
+        {
+            ports[ch * 3] = new PortSpec($"left {ch + 1}", PatchOnly: true) { Help = $"Channel {ch + 1}'s left side, or the whole of a mono voice." };
+            ports[ch * 3 + 1] = new PortSpec($"right {ch + 1}", NormalledFrom: ch * 3, PatchOnly: true)
+            {
+                Help = $"Carries 'left {ch + 1}' while unpatched, so a mono voice is one wire.",
+            };
+            ports[ch * 3 + 2] = Num($"level {ch + 1}", 1f, 0f, 1f) with { Help = $"Multiplies both 'left {ch + 1}' and 'right {ch + 1}'." };
+        }
+
+        ports[busLeft] = new PortSpec("bus left", PatchOnly: true) { Help = "Another Desk's 'bus left', added in at full level." };
+        ports[busRight] = new PortSpec("bus right", PatchOnly: true) { Help = "Another Desk's 'bus right', added in at full level." };
+        ports[trim] = Num("trim", 1f, 0f, 2f) with { Help = "Multiplies the sum before it is held to -1..1." };
+
+        const string master = "The sum times 'trim', held to -1..1: patch it into the Output.";
+        const string chain = "The sum before 'trim' and the rails, for the same 'bus' input on the next Desk.";
+
+        return new NodeDef(
+            DeskTypeId, "Desk", ModuleCategories.Routing,
+            ports,
+            [
+                Num("left") with { Help = master },
+                Num("right") with { Help = master },
+                Num("bus left") with { Help = chain },
+                Num("bus right") with { Help = chain },
+            ],
+            (em, i) =>
+            {
+                var left = Side(0, busLeft);
+                var right = Side(1, busRight);
+
+                return [Railed(left), Railed(right), left, right];
+
+                Slot Side(int side, int bus)
+                {
+                    var sum = em.Mul(i[side], i[2]);
+                    for (var ch = 1; ch < channels; ch++)
+                        sum = em.Add(sum, em.Mul(i[ch * 3 + side], i[ch * 3 + 2]));
+                    return em.Add(sum, i[bus]);
+                }
+
+                Slot Railed(Slot sum) =>
+                    em.Ternary(OpCode.Clamp, em.Mul(sum, i[trim]), em.Constant(-1f), em.Constant(1f));
+            },
+            "A stereo mixer for the end of a patch: four channels, each a 'left', a 'right' and "
+            + "one 'level'. For more channels chain Desks, 'bus' out into the next one's 'bus' in, "
+            + "and the last Desk is the master.")
+        {
+            Words = "stereo mixer, channels",
+        };
+    }
+
+    /// <summary>
+    /// A formula over four sockets, typed rather than wired: one block where the
+    /// arithmetic would otherwise be a column of Multiplies and Adds.
+    /// </summary>
+    /// <remarks>
+    /// It is the Maths modules its formula names and nothing else — see
+    /// <see cref="Formula"/> — so a formula is heard and seen exactly as the
+    /// modules it spells would be. The sockets rest where the Multiply's do, on
+    /// nought and one, so the formula a fresh one carries passes 'a' through
+    /// until something is wired into it.
+    /// </remarks>
+    private static NodeDef Expression(IReadOnlyDictionary<string, NodeDef> functions) => new(
+        ExpressionTypeId, "Expression", ModuleCategories.Maths,
+        [Operand("a"), Operand("b", 1f), Operand("c"), Operand("d")],
+        [Any("out") with { Help = "What the formula works out to, or 0 while it does not read." }],
+        (em, i) =>
+            [i.Extra<Formula>(FormulaExtra.StateKey) is { } formula ? formula.Lower(em, i.Resolve) : em.Constant(0f)],
+        "A formula over its four sockets: 'a * b + c', 'smoothstep(0.2, 0.8, a) * b'. "
+        + "Exactly the Maths modules it names. It knows + - * / %, a minus in front, "
+        + "brackets, numbers, pi and tau, and " + Formula.Listed(functions)
+        + "; an argument left off is that module's knob at rest. A number to be turned "
+        + "belongs on a socket. A formula that does not read gives 0 and says why.")
+    {
+        Words = "formula",
+        Extras = [new FormulaExtra(functions)],
+        AsksForItsInputs = true,
+    };
+
+    private static PortSpec Operand(string name, float value = 0f) =>
+        Any(name, value) with { Help = $"Read as '{name}' in the formula." };
+
+    /// <summary>The type id of the Expression module.</summary>
+    internal const string ExpressionTypeId = "math.expression";
+
+    /// <summary>An Expression's formula as typed, and null for any other module.</summary>
+    internal static string? FormulaOf(NodeInstance node) =>
+        node.TypeId == ExpressionTypeId ? FormulaExtra.Of(node) : null;
+
+    /// <summary>
+    /// What stops <paramref name="formula"/> being read, and where, or null where
+    /// nothing does. The reading the module compiles with, so the panel can say
+    /// what the compiler is about to.
+    /// </summary>
+    internal static string? FormulaProblem(string formula)
+    {
+        if (NodeCatalog.Get(ExpressionTypeId)?.Extra<FormulaExtra>() is not { } extra) return null;
+
+        Formula.Read(formula, extra.Functions, out var problem);
+        return problem;
+    }
+}
+

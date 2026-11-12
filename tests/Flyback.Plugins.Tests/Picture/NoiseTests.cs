@@ -114,9 +114,9 @@ public class NoiseTests
         node.State = stored is null ? null : new() { ["fractal"] = new JsonObject { ["octaves"] = stored } };
         patch.Nodes.Add(node);
 
-        var screen = NodeInstance.Create(Catalog.Require(NodeCatalog.OutputTypeId), 0, 0);
+        var screen = NodeInstance.Create(Catalog.Require(OutputModule.TypeId), 0, 0);
         patch.Nodes.Add(screen);
-        patch.Connect(node.Id, 0, screen.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(node.Id, 0, screen.Id, OutputModule.ColorPort);
 
         patch.CompileForVideo(Catalog).Program.Ops
             .Count(op => op.Code == OpCode.Noise3).ShouldBe(octaves);
@@ -334,9 +334,9 @@ public class NoiseTests
         var patch = new Patch();
 
         var node = Add(patch, typeId, 4);
-        var sink = Add(patch, NodeCatalog.OutputTypeId, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = Add(patch, OutputModule.TypeId, 0, (OutputModule.VolumePort, 1f));
 
-        patch.Connect(node.Id, 0, sink.Id, NodeCatalog.OutputLeftPort);
+        patch.Connect(node.Id, 0, sink.Id, OutputModule.LeftPort);
 
         var program = patch.CompileForAudio(Catalog).Program;
         var registers = program.AllocateRegisters();
@@ -354,9 +354,9 @@ public class NoiseTests
         var patch = new Patch();
 
         var node = Add(patch, typeId, octaves, knobs);
-        var screen = Add(patch, NodeCatalog.OutputTypeId, 0);
+        var screen = Add(patch, OutputModule.TypeId, 0);
 
-        patch.Connect(node.Id, port, screen.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(node.Id, port, screen.Id, OutputModule.ColorPort);
 
         return patch.CompileForVideo(Catalog).Program;
     }

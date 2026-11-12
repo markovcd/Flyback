@@ -269,9 +269,9 @@ public class RaymarchTests
         var patch = new Patch();
         patch.Nodes.Add(node);
 
-        var sink = NodeInstance.Create(Catalog.Require(NodeCatalog.OutputTypeId), 0, 0);
+        var sink = NodeInstance.Create(Catalog.Require(OutputModule.TypeId), 0, 0);
         patch.Nodes.Add(sink);
-        patch.Connect(node.Id, port, sink.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(node.Id, port, sink.Id, OutputModule.ColorPort);
 
         return patch.CompileForVideo(Catalog).Program;
     }

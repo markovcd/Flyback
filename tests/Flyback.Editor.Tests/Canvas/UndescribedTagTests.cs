@@ -21,11 +21,11 @@ public class UndescribedTagTests : EditorTest
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 700, 40);
+        var output = b.Add(OutputModule.TypeId, 700, 40);
         var sine = b.Add("osc.sine", 360, 40);
         var clock = b.Add("time", 40, 40);
 
-        b.Wire(sine, 0, output, NodeCatalog.OutputColorPort);
+        b.Wire(sine, 0, output, OutputModule.ColorPort);
 
         var window = NewMainWindow();
 

@@ -14,12 +14,12 @@ public class LegacyTypeIdTests
 {
     public static TheoryData<string, string> Aliases => new()
     {
-        { "flyback.voice.filter", NodeCatalog.FilterTypeId },
-        { "flyback.voice.random", NodeCatalog.NoiseTypeId },
-        { "flyback.voice.slew", NodeCatalog.SlewTypeId },
-        { "flyback.voice.drive", NodeCatalog.DriveTypeId },
-        { "flyback.effects.delay", NodeCatalog.DelayTypeId },
-        { "flyback.effects.reverb", NodeCatalog.ReverbTypeId },
+        { "flyback.voice.filter", FilterModule.TypeId },
+        { "flyback.voice.random", NoiseModule.TypeId },
+        { "flyback.voice.slew", SlewModule.TypeId },
+        { "flyback.voice.drive", DriveModule.TypeId },
+        { "flyback.effects.delay", DelayModule.TypeId },
+        { "flyback.effects.reverb", ReverbModule.TypeId },
     };
 
     [Theory]

@@ -12,7 +12,7 @@ namespace Flyback.Engine.Graph;
 /// messages, and this turns them into the numbers a Clock In reads. The beat is
 /// a count of ticks, so it moves in steps; the program smooths between them
 /// against its own clock, which is the one clock every evaluation already has
-/// (see <c>NodeCatalog.EmitClock</c>). The tempo is measured from the spacing
+/// (see <c>MidiModules.EmitClock</c>). The tempo is measured from the spacing
 /// of the ticks on whatever clock the caller keeps, and only its rate matters,
 /// so the shell's stopwatch will do.
 /// <para>

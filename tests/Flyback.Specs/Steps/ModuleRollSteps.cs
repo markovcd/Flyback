@@ -15,8 +15,8 @@ public sealed class ModuleRollSteps(PatchContext context, EditorDriver editor)
     [Given("a sine with its phase wired from a clock")]
     public void GivenASine()
     {
-        context.Add("clock", NodeCatalog.TimeTypeId);
-        context.Add("sine", NodeCatalog.SineTypeId);
+        context.Add("clock", SourceModules.TimeTypeId);
+        context.Add("sine", OscillatorModules.SineTypeId);
         context.Wire("clock", "t", "sine", "phase");
     }
 
@@ -53,5 +53,5 @@ public sealed class ModuleRollSteps(PatchContext context, EditorDriver editor)
     private float At(string input) => editor.InputOf(context.Node("sine").Id, Port(input));
 
     private static int Port(string input) =>
-        NodeCatalog.Get(NodeCatalog.SineTypeId)!.Inputs.ToList().FindIndex(port => port.Name == input);
+        NodeCatalog.Get(OscillatorModules.SineTypeId)!.Inputs.ToList().FindIndex(port => port.Name == input);
 }

@@ -206,6 +206,6 @@ public class PatchWorkbenchWritingTests
         var turned = await Edit(bench, "tone1 |> out.left", "tone1 |> out.left\nout.volume = 0.8");
 
         turned.Ok.ShouldBeTrue(turned.Text);
-        bench.Snapshot().Output.InputValues[NodeCatalog.OutputVolumePort].ShouldBe(0.8f);
+        bench.Snapshot().Output.InputValues[OutputModule.VolumePort].ShouldBe(0.8f);
     }
 }

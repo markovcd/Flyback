@@ -13,7 +13,7 @@ namespace Flyback.Core.Tests.Graph;
 /// </summary>
 public class ExpressionFusionTests
 {
-    private const string Expression = NodeCatalog.ExpressionTypeId;
+    private const string Expression = MathModules.ExpressionTypeId;
 
     private static IEnumerable<(OpCode, int, int, int, int, float)> Fingerprint(CompiledPatch program) =>
         program.Ops.Select(o => (o.Code, o.Out, o.A, o.B, o.C, o.K));
@@ -46,15 +46,15 @@ public class ExpressionFusionTests
 
     private static void Shown(PatchBuilder b, NodeInstance what)
     {
-        var sink = b.Add(NodeCatalog.OutputTypeId);
-        b.Wire(what, 0, sink, NodeCatalog.OutputColorPort);
+        var sink = b.Add(OutputModule.TypeId);
+        b.Wire(what, 0, sink, OutputModule.ColorPort);
     }
 
     [Fact]
     public void A_chain_is_one_formula()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var coord = b.Add(NodeCatalog.CoordTypeId);
+        var coord = b.Add(SourceModules.CoordTypeId);
         var floor = b.Add("math.floor");
         b.Wire(Knobbed(b, "math.add", Knobbed(b, "math.mul", coord, 2f), 0.5f), 0, floor, 0);
         Shown(b, floor);
@@ -70,7 +70,7 @@ public class ExpressionFusionTests
     public void The_last_module_of_a_chain_becomes_the_expression()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var coord = b.Add(NodeCatalog.CoordTypeId);
+        var coord = b.Add(SourceModules.CoordTypeId);
         var last = Knobbed(b, "math.sub", Knobbed(b, "math.mul", coord, 3f), 1f);
         Shown(b, last);
 
@@ -84,7 +84,7 @@ public class ExpressionFusionTests
     public void A_module_read_twice_stands_on_its_own()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var coord = b.Add(NodeCatalog.CoordTypeId);
+        var coord = b.Add(SourceModules.CoordTypeId);
         var shared = Knobbed(b, "math.mul", coord, 2f);
         var sum = b.Add("math.add");
         b.Wire(Knobbed(b, "math.sin", shared, 0f), 0, sum, 0).Wire(Knobbed(b, "math.cos", shared, 0f), 0, sum, 1);
@@ -100,7 +100,7 @@ public class ExpressionFusionTests
     public void A_module_of_more_than_two_inputs_is_left_alone()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var coord = b.Add(NodeCatalog.CoordTypeId);
+        var coord = b.Add(SourceModules.CoordTypeId);
         var ramp = b.Add("math.smoothstep", (0, 0.2f), (1, 0.8f));
         b.Wire(Knobbed(b, "math.mul", coord, 2f), 0, ramp, 2);
         Shown(b, ramp);
@@ -119,7 +119,7 @@ public class ExpressionFusionTests
     public void A_number_on_a_panel_knob_stays_on_a_socket()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var coord = b.Add(NodeCatalog.CoordTypeId);
+        var coord = b.Add(SourceModules.CoordTypeId);
         var scaled = Knobbed(b, "math.mul", coord, 2f);
         var knob = b.Patch.AddControl("Size");
         var link = new ControlLink(knob.Id, 0f, 4f);
@@ -144,8 +144,8 @@ public class ExpressionFusionTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var constant = b.Add("math.add", (0, 0.1f), (1, 0.2f));
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
-        b.Wire(constant, 0, sink, NodeCatalog.OutputLeftPort);
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
+        b.Wire(constant, 0, sink, OutputModule.LeftPort);
 
         var fused = Fused(b.Patch);
 
@@ -166,8 +166,8 @@ public class ExpressionFusionTests
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var ratio = b.Add("math.div", (1, 1e-7f));
         b.Wire(b.Add("math.neg", (0, 1f)), 0, ratio, 0);
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
-        b.Wire(ratio, 0, sink, NodeCatalog.OutputLeftPort);
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
+        b.Wire(ratio, 0, sink, OutputModule.LeftPort);
 
         var fused = Fused(b.Patch);
 
@@ -182,7 +182,7 @@ public class ExpressionFusionTests
     public void A_named_module_keeps_its_name()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var coord = b.Add(NodeCatalog.CoordTypeId);
+        var coord = b.Add(SourceModules.CoordTypeId);
         var scaled = Knobbed(b, "math.mul", coord, 2f);
         scaled.Name = "double";
         Shown(b, Knobbed(b, "math.add", scaled, 1f));
@@ -197,8 +197,8 @@ public class ExpressionFusionTests
     public void A_fifth_signal_starts_another_expression()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var coord = b.Add(NodeCatalog.CoordTypeId);
-        var clock = b.Add(NodeCatalog.TimeTypeId);
+        var coord = b.Add(SourceModules.CoordTypeId);
+        var clock = b.Add(SourceModules.TimeTypeId);
 
         NodeInstance Pair(NodeInstance left, int from, NodeInstance right, int second)
         {
@@ -224,7 +224,7 @@ public class ExpressionFusionTests
     public void A_module_on_a_loop_stands_on_its_own()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var clock = b.Add(NodeCatalog.TimeTypeId);
+        var clock = b.Add(SourceModules.TimeTypeId);
         var sum = b.Add("math.add");
         var keep = Knobbed(b, "math.mul", sum, 0.9f);
         b.Wire(clock, 0, sum, 0).Wire(keep, 0, sum, 1);
@@ -240,7 +240,7 @@ public class ExpressionFusionTests
     public void Expressions_fold_into_one_another()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var coord = b.Add(NodeCatalog.CoordTypeId);
+        var coord = b.Add(SourceModules.CoordTypeId);
         var inner = b.Add(Expression);
         inner.SetState("expression", new System.Text.Json.Nodes.JsonObject { ["formula"] = "a * 60" });
         b.Wire(coord, 0, inner, 0);
@@ -261,7 +261,7 @@ public class ExpressionFusionTests
     public void A_module_whose_call_the_formula_already_makes_stands_on_its_own()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var coord = b.Add(NodeCatalog.CoordTypeId);
+        var coord = b.Add(SourceModules.CoordTypeId);
         var sine = b.Add("math.sin");
         b.Wire(coord, 0, sine, 0);
         var outer = b.Add(Expression);
@@ -288,7 +288,7 @@ public class ExpressionFusionTests
     public void A_long_chain_is_cut_where_its_formula_would_run_long()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var node = b.Add(NodeCatalog.CoordTypeId);
+        var node = b.Add(SourceModules.CoordTypeId);
 
         for (var i = 0; i < 20; i++) node = Knobbed(b, "math.add", node, 0.123456f);
 

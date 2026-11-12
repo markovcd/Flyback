@@ -440,7 +440,7 @@ internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAs
             chosen.FrameRate,
             chosen.JpegQuality,
             withSound ? audio.SampleRate : 0,
-            withSound ? NodeCatalog.AudioChannels : 0,
+            withSound ? OutputModule.AudioChannels : 0,
             ffmpeg);
 
         LiveRecorder started;

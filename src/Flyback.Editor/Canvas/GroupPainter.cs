@@ -289,9 +289,9 @@ internal sealed class GroupPainter(
         {
             static IBrush Plain(double center, double height, double fade, IBrush plain) => plain;
 
-            var spans = node.TypeId == NodeCatalog.AutoRemapTypeId ? AutoRemap.Of(Patch, node) : null;
+            var spans = node.TypeId == MathModules.AutoRemapTypeId ? AutoRemap.Of(Patch, node) : null;
 
-            modules.DrawInputRow(context, node, def, spec, socket.Port, label, bounds, center, follow: false, NodeCatalog.FormulaOf(node), spans, Plain);
+            modules.DrawInputRow(context, node, def, spec, socket.Port, label, bounds, center, follow: false, MathModules.FormulaOf(node), spans, Plain);
             return;
         }
 

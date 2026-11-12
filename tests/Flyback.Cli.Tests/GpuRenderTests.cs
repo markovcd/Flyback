@@ -63,7 +63,7 @@ public class GpuRenderTests
 
         patch.Nodes.Add(add);
         patch.Connect(add.Id, 0, add.Id, 0);
-        patch.Connect(add.Id, 0, patch.Output.Id, NodeCatalog.OutputColorPort);
+        patch.Connect(add.Id, 0, patch.Output.Id, OutputModule.ColorPort);
 
         Agrees(patch);
     }
@@ -74,12 +74,12 @@ public class GpuRenderTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var sine = b.Add("osc.sine", 0, 0);
-        var scope = b.Add(NodeCatalog.ScopeTypeId, 100, 0);
-        var output = b.Add(NodeCatalog.OutputTypeId, 200, 0);
+        var scope = b.Add(ChartModules.ScopeTypeId, 100, 0);
+        var output = b.Add(OutputModule.TypeId, 200, 0);
 
         b.Wire(sine, 0, scope, 0);
-        b.Wire(sine, 0, output, NodeCatalog.OutputLeftPort);
-        b.Wire(scope, 0, output, NodeCatalog.OutputColorPort);
+        b.Wire(sine, 0, output, OutputModule.LeftPort);
+        b.Wire(scope, 0, output, OutputModule.ColorPort);
 
         var program = b.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program;
         var buffer = program.Taps.ShouldHaveSingleItem().Trace.Samples;
@@ -96,12 +96,12 @@ public class GpuRenderTests
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var across = b.Add("osc.sine", 0, 0, (1, 100f), (3, 0.5f));
         var up = b.Add("osc.sine", 0, 100, (1, 100f), (2, 0.25f), (3, 0.5f));
-        var beam = b.Add(NodeCatalog.BeamTypeId, 100, 0);
-        var output = b.Add(NodeCatalog.OutputTypeId, 200, 0);
+        var beam = b.Add(BeamModule.TypeId, 100, 0);
+        var output = b.Add(OutputModule.TypeId, 200, 0);
 
         b.Wire(across, 0, beam, 0);
         b.Wire(up, 0, beam, 1);
-        b.Wire(beam, 0, output, NodeCatalog.OutputColorPort);
+        b.Wire(beam, 0, output, OutputModule.ColorPort);
 
         var program = b.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program;
         var heard = b.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
@@ -130,10 +130,10 @@ public class GpuRenderTests
             using (var file = File.Create(path)) WavWriter.Write(file, samples, 8000, 1);
 
             var b = new PatchBuilder(NodeCatalog.BuiltIn);
-            var player = b.Add(NodeCatalog.SampleTypeId, 0, 0);
+            var player = b.Add(SourceModules.SampleTypeId, 0, 0);
             SampleExtra.Set(player, path);
-            var output = b.Add(NodeCatalog.OutputTypeId, 200, 0);
-            b.Wire(player, 0, output, NodeCatalog.OutputColorPort);
+            var output = b.Add(OutputModule.TypeId, 200, 0);
+            b.Wire(player, 0, output, OutputModule.ColorPort);
 
             var program = b.Patch.CompileForVideo(NodeCatalog.BuiltIn, new SampleLibrary { Beside = folder }).Program;
             program.Tables.ShouldHaveSingleItem();

@@ -121,10 +121,10 @@ internal static class Cycles
     /// </remarks>
     private static IEnumerable<NodeInstance> Roots(Patch patch) =>
         patch.Nodes
-            .Where(node => NodeCatalog.IsSink(node.TypeId))
+            .Where(node => OutputModule.IsSink(node.TypeId))
             .OrderBy(node => node.Id)
             .Concat(patch.Nodes
-                .Where(node => !NodeCatalog.IsSink(node.TypeId))
+                .Where(node => !OutputModule.IsSink(node.TypeId))
                 .OrderBy(node => node.Id));
 
     /// <summary>

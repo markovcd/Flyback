@@ -69,7 +69,7 @@ public class CarriedTests
         });
 
         patch.Nodes.Add(node);
-        patch.Connect(node.Id, 0, patch.Output.Id, NodeCatalog.OutputLeftPort);
+        patch.Connect(node.Id, 0, patch.Output.Id, OutputModule.LeftPort);
 
         return patch;
     }
@@ -147,7 +147,7 @@ public class CarriedTests
         var node = NodeInstance.Create(Dials(), 0, 0);
 
         patch.Nodes.Add(node);
-        patch.Connect(node.Id, 0, patch.Output.Id, NodeCatalog.OutputLeftPort);
+        patch.Connect(node.Id, 0, patch.Output.Id, OutputModule.LeftPort);
 
         var source = PatchPrinter.Print(patch, modules);
 
@@ -363,7 +363,7 @@ public class CarriedTests
 
         load.Issues.ShouldBeEmpty(load.Report);
 
-        var node = load.Patch.Nodes.Single(n => n.TypeId == NodeCatalog.ExpressionTypeId);
+        var node = load.Patch.Nodes.Single(n => n.TypeId == MathModules.ExpressionTypeId);
         node.StateOf("expression")?["formula"]?.GetValue<string>().ShouldBe("clamp(a * 45, 0, 1)");
 
         var printed = PatchPrinter.Print(load.Patch, NodeCatalog.BuiltIn);

@@ -31,9 +31,9 @@ public class ContinuityTests
         var builder = new PatchBuilder();
         var time = builder.Add("time", 0, 0);
         var tone = builder.Add("osc.sine", 0, 0, (1, 440f));
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
 
-        builder.Wire(time, 0, tone, 0).Wire(tone, 0, sink, NodeCatalog.OutputLeftPort);
+        builder.Wire(time, 0, tone, 0).Wire(tone, 0, sink, OutputModule.LeftPort);
 
         return (builder, time, sink);
     }
@@ -86,7 +86,7 @@ public class ContinuityTests
         {
             var added = edited.Add("osc.sine", 0, 0, (1, 300f));
 
-            edited.Wire(time, 0, added, 0).Wire(added, 0, sink, NodeCatalog.OutputRightPort);
+            edited.Wire(time, 0, added, 0).Wire(added, 0, sink, OutputModule.RightPort);
 
             return Audio(edited);
         });
@@ -123,9 +123,9 @@ public class ContinuityTests
         var builder = new PatchBuilder();
         var time = builder.Add("time", 0, 0);
         var tone = builder.Add("osc.sine", 0, 0, (1, 440f));
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
 
-        builder.Wire(time, 0, tone, 0).Wire(tone, 0, sink, NodeCatalog.OutputLeftPort);
+        builder.Wire(time, 0, tone, 0).Wire(tone, 0, sink, OutputModule.LeftPort);
 
         var renderer = new AudioRenderer();
         var before = Audio(builder);
@@ -135,7 +135,7 @@ public class ContinuityTests
 
         var added = builder.Add("osc.sine", 0, 0, (1, 300f));
 
-        builder.Wire(time, 0, added, 0).Wire(added, 0, sink, NodeCatalog.OutputRightPort);
+        builder.Wire(time, 0, added, 0).Wire(added, 0, sink, OutputModule.RightPort);
 
         var after = Audio(builder);
         var carried = renderer.DelayMemoryFor(after, memory).ShouldNotBeNull();
@@ -189,11 +189,11 @@ public class ContinuityTests
         var time = builder.Add("time", 0, 0);
         var left = builder.Add("osc.sine", 0, 0, (1, 440f));
         var right = builder.Add("osc.saw", 0, 0, (1, 110f));
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
 
         builder
-            .Wire(time, 0, left, 0).Wire(left, 0, sink, NodeCatalog.OutputLeftPort)
-            .Wire(time, 0, right, 0).Wire(right, 0, sink, NodeCatalog.OutputRightPort);
+            .Wire(time, 0, left, 0).Wire(left, 0, sink, OutputModule.LeftPort)
+            .Wire(time, 0, right, 0).Wire(right, 0, sink, OutputModule.RightPort);
 
         var owners = Audio(builder).Owners;
 
@@ -212,10 +212,10 @@ public class ContinuityTests
     {
         var builder = new PatchBuilder();
         var time = builder.Add("time", 0, 0);
-        var envelope = builder.Add(NodeCatalog.AdsrTypeId, 0, 0);
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var envelope = builder.Add(EnvelopeModules.AdsrTypeId, 0, 0);
+        var sink = builder.Add(OutputModule.TypeId, 0, 0, (OutputModule.VolumePort, 1f));
 
-        builder.Wire(time, 0, envelope, 0).Wire(envelope, 0, sink, NodeCatalog.OutputLeftPort);
+        builder.Wire(time, 0, envelope, 0).Wire(envelope, 0, sink, OutputModule.LeftPort);
 
         Audio(builder).Owners.Units.ShouldContain(StateOwners.Shared);
     }

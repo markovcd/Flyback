@@ -14,14 +14,14 @@ public sealed class TurningSteps(PatchContext context, EditorDriver editor)
 
     private NodeInstance Sine => context.Node("sine");
 
-    private static int Freq => NodeCatalog.BuiltIn.Require(NodeCatalog.SineTypeId).Inputs.ToList().FindIndex(port => port.Name == "freq");
+    private static int Freq => NodeCatalog.BuiltIn.Require(OscillatorModules.SineTypeId).Inputs.ToList().FindIndex(port => port.Name == "freq");
 
-    private static float Default => NodeCatalog.BuiltIn.Require(NodeCatalog.SineTypeId).Inputs[Freq].Default;
+    private static float Default => NodeCatalog.BuiltIn.Require(OscillatorModules.SineTypeId).Inputs[Freq].Default;
 
     [Given("a sine on its own")]
     public void GivenASine()
     {
-        var sine = context.Add("sine", NodeCatalog.SineTypeId);
+        var sine = context.Add("sine", OscillatorModules.SineTypeId);
         sine.X = 200;
         sine.Y = 120;
     }

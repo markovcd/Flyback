@@ -85,7 +85,7 @@ public sealed class MidiKeyboardDefaultTests : EditorTest
     {
         var window = Open(KeyboardLayout.Scale);
 
-        AddFromPalette(window, "MIDI In", NodeCatalog.MidiTypeId);
+        AddFromPalette(window, "MIDI In", MidiModules.MidiTypeId);
 
         Editor(window).History.Patch.Keyboard.ShouldBe(KeyboardScale.Major);
     }
@@ -95,7 +95,7 @@ public sealed class MidiKeyboardDefaultTests : EditorTest
     {
         var window = Open(KeyboardLayout.Piano);
 
-        AddFromPalette(window, "MIDI In", NodeCatalog.MidiTypeId);
+        AddFromPalette(window, "MIDI In", MidiModules.MidiTypeId);
 
         Editor(window).History.Patch.Keyboard.ShouldBeNull();
     }
@@ -104,12 +104,12 @@ public sealed class MidiKeyboardDefaultTests : EditorTest
     public void A_patch_that_already_has_a_MIDI_In_keeps_its_piano()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        b.Add(NodeCatalog.OutputTypeId, 700, 40);
-        b.Add(NodeCatalog.MidiTypeId, 200, 40);
+        b.Add(OutputModule.TypeId, 700, 40);
+        b.Add(MidiModules.MidiTypeId, 200, 40);
 
         var window = Open(KeyboardLayout.Scale, b.Patch);
 
-        AddFromPalette(window, "MIDI In", NodeCatalog.MidiTypeId);
+        AddFromPalette(window, "MIDI In", MidiModules.MidiTypeId);
 
         Editor(window).History.Patch.Keyboard.ShouldBeNull();
     }
@@ -118,7 +118,7 @@ public sealed class MidiKeyboardDefaultTests : EditorTest
     public void Opening_a_patch_without_a_MIDI_In_is_not_touched()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        b.Add(NodeCatalog.OutputTypeId, 700, 40);
+        b.Add(OutputModule.TypeId, 700, 40);
 
         var window = Open(KeyboardLayout.Scale, b.Patch);
 
@@ -129,12 +129,12 @@ public sealed class MidiKeyboardDefaultTests : EditorTest
     public void A_scale_the_patch_already_chose_is_kept()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        b.Add(NodeCatalog.OutputTypeId, 700, 40);
+        b.Add(OutputModule.TypeId, 700, 40);
         b.Patch.Keyboard = new KeyboardScale(7, "lydian");
 
         var window = Open(KeyboardLayout.Scale, b.Patch);
 
-        AddFromPalette(window, "MIDI In", NodeCatalog.MidiTypeId);
+        AddFromPalette(window, "MIDI In", MidiModules.MidiTypeId);
 
         Editor(window).History.Patch.Keyboard.ShouldBe(new KeyboardScale(7, "lydian"));
     }

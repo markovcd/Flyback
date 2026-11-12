@@ -35,11 +35,11 @@ public class GroupInspectorTests : EditorTest
         var time = b.Add("time", 40, 200);
         var osc = b.Add("osc.sine", 300, 60);
         var product = b.Add("math.mul", 560, 160);
-        var screen = b.Add(NodeCatalog.OutputTypeId, 900, 200);
+        var screen = b.Add(OutputModule.TypeId, 900, 200);
 
         b.Wire(time, 0, osc, 1)
          .Wire(osc, 0, product, 0)
-         .Wire(product, 0, screen, NodeCatalog.OutputLeftPort);
+         .Wire(product, 0, screen, OutputModule.LeftPort);
 
         var window = NewMainWindow();
 
@@ -187,13 +187,13 @@ public class GroupInspectorTests : EditorTest
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
         var time = b.Add("time", 40, 200);
-        var sum = b.Add(NodeCatalog.ExpressionTypeId, 300, 60);
+        var sum = b.Add(MathModules.ExpressionTypeId, 300, 60);
         var osc = b.Add("osc.sine", 560, 160);
-        var screen = b.Add(NodeCatalog.OutputTypeId, 900, 200);
+        var screen = b.Add(OutputModule.TypeId, 900, 200);
 
         b.Wire(time, 0, sum, 0)
          .Wire(sum, 0, osc, 1)
-         .Wire(osc, 0, screen, NodeCatalog.OutputLeftPort);
+         .Wire(osc, 0, screen, OutputModule.LeftPort);
 
         var window = NewMainWindow();
 
@@ -219,7 +219,7 @@ public class GroupInspectorTests : EditorTest
     public void A_socket_row_carries_the_help_its_module_row_does()
     {
         var window = Open(out _);
-        var freq = NodeCatalog.Require(NodeCatalog.SineTypeId).Inputs[1];
+        var freq = NodeCatalog.Require(OscillatorModules.SineTypeId).Inputs[1];
 
         All<Control>(Panel(window))
             .ShouldContain(c => ToolTip.GetTip(c) as string == freq.Help && c.GetVisualDescendants()
@@ -475,12 +475,12 @@ public class GroupInspectorTests : EditorTest
         var osc = b.Add("osc.sine", 300, 40);
         var second = b.Add("time", 40, 320);
         var other = b.Add("osc.sine", 300, 320);
-        var screen = b.Add(NodeCatalog.OutputTypeId, 700, 180);
+        var screen = b.Add(OutputModule.TypeId, 700, 180);
 
         b.Wire(clock, 0, osc, 0)
-         .Wire(osc, 0, screen, NodeCatalog.OutputLeftPort)
+         .Wire(osc, 0, screen, OutputModule.LeftPort)
          .Wire(second, 0, other, 0)
-         .Wire(other, 0, screen, NodeCatalog.OutputRightPort);
+         .Wire(other, 0, screen, OutputModule.RightPort);
 
         var window = NewMainWindow();
 

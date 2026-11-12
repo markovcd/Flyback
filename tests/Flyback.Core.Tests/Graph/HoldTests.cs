@@ -35,16 +35,16 @@ public class HoldTests
             signal = b.Add("value", 0, 0);
             trigger = b.Add("value", 0, 100, (0, 0f));
 
-            var hold = b.Add(NodeCatalog.HoldTypeId, 200, 0);
-            var sink = b.Add(NodeCatalog.OutputTypeId, 400, 0, (NodeCatalog.OutputVolumePort, 1f));
+            var hold = b.Add(SequencerModules.HoldTypeId, 200, 0);
+            var sink = b.Add(OutputModule.TypeId, 400, 0, (OutputModule.VolumePort, 1f));
 
             // Both sinks, because the two answers differ and both are the point:
             // the speakers read 'left' and the screen reads 'color', and a node
             // wired only to one of them is never visited by the other.
             b.Wire(signal, 0, hold, 0)
              .Wire(trigger, 0, hold, 1)
-             .Wire(hold, 0, sink, NodeCatalog.OutputLeftPort)
-             .Wire(hold, 0, sink, NodeCatalog.OutputColorPort);
+             .Wire(hold, 0, sink, OutputModule.LeftPort)
+             .Wire(hold, 0, sink, OutputModule.ColorPort);
 
             patch = b.Patch;
 

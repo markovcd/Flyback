@@ -12,7 +12,7 @@ namespace Flyback.Core.Tests.Graph;
 /// </summary>
 public class AnalyzerTests
 {
-    private const string Analyzer = NodeCatalog.AnalyzerTypeId;
+    private const string Analyzer = ChartModules.AnalyzerTypeId;
     private const string Sine = "osc.sine";
 
     private const int In = 0;
@@ -45,7 +45,7 @@ public class AnalyzerTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        b.Add(NodeCatalog.OutputTypeId, 900, 0);
+        b.Add(OutputModule.TypeId, 900, 0);
 
         var tone = b.Add(Sine, 0, 0, (Frequency, hertz), (Amplitude, amplitude));
         var analyzer = b.Add(Analyzer, 400, 0, knobs);
@@ -85,7 +85,7 @@ public class AnalyzerTests
         var def = NodeCatalog.BuiltIn.Require(Analyzer);
 
         new Patch().CanAdd(Analyzer).ShouldBeTrue();
-        NodeCatalog.IsChart(Analyzer).ShouldBeTrue();
+        ChartModules.IsChart(Analyzer).ShouldBeTrue();
 
         def.TapsSignal.ShouldBeTrue();
         def.ChartsSignal.ShouldBeTrue();
@@ -117,8 +117,8 @@ public class AnalyzerTests
     public void Only_the_analyzer_asks_for_a_spectrum()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        b.Add(NodeCatalog.OutputTypeId, 900, 0);
-        var scope = b.Add(NodeCatalog.ScopeTypeId, 400, 0);
+        b.Add(OutputModule.TypeId, 900, 0);
+        var scope = b.Add(ChartModules.ScopeTypeId, 400, 0);
 
         b.Patch.CompileForProbe(scope.Id, NodeCatalog.BuiltIn).Program
             .Taps.ShouldHaveSingleItem().Chart.ShouldBe(ChartKind.Trace);

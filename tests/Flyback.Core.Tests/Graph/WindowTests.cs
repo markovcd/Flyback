@@ -68,7 +68,7 @@ public class WindowTests
     private static double[] Swept(string formula)
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var expression = b.Add(NodeCatalog.ExpressionTypeId);
+        var expression = b.Add(MathModules.ExpressionTypeId);
         expression.SetState("expression", new JsonObject { ["formula"] = formula });
         b.Wire(b.Add("coord"), 0, expression, 0);
 
@@ -78,8 +78,8 @@ public class WindowTests
     /// <summary>One module's output while x runs from -2 to 14, the one input a test can vary a sample at a time.</summary>
     private static double[] Swept(PatchBuilder b, NodeInstance module)
     {
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
-        b.Wire(module, 0, sink, NodeCatalog.OutputLeftPort);
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
+        b.Wire(module, 0, sink, OutputModule.LeftPort);
 
         var result = b.Patch.CompileForAudio(NodeCatalog.BuiltIn);
         result.HasErrors.ShouldBeFalse(string.Join("; ", result.Issues.Select(i => i.Message)));

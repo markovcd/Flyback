@@ -33,10 +33,10 @@ public class MidiInputTests : EditorTest
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 700, 40);
-        var midi = b.Add(NodeCatalog.MidiTypeId, 200, 40);
+        var output = b.Add(OutputModule.TypeId, 700, 40);
+        var midi = b.Add(MidiModules.MidiTypeId, 200, 40);
 
-        if (wired) b.Wire(midi, 0, output, NodeCatalog.OutputColorPort);
+        if (wired) b.Wire(midi, 0, output, OutputModule.ColorPort);
 
         return (b.Patch, midi);
     }
@@ -63,7 +63,7 @@ public class MidiInputTests : EditorTest
     [AvaloniaFact]
     public void The_module_is_in_the_catalog_under_Sources()
     {
-        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.MidiTypeId);
+        var def = NodeCatalog.BuiltIn.Require(MidiModules.MidiTypeId);
 
         def.Category.ShouldBe(ModuleCategories.Sources);
         def.Inputs.ShouldBeEmpty();

@@ -63,10 +63,10 @@ internal static class ArrangementNotation
             return [];
         }
 
-        if (parts.FirstOrDefault(part => part.Count > NodeCatalog.MaxSections) is { } longest)
+        if (parts.FirstOrDefault(part => part.Count > SequencerModules.MaxSections) is { } longest)
         {
             issues.Add(new LanguageIssue(line, column, IssueCode.TooManyParts,
-                $"part {parts.IndexOf(longest) + 1} has {longest.Count} sections, and an Arrangement holds at most {NodeCatalog.MaxSections}."));
+                $"part {parts.IndexOf(longest) + 1} has {longest.Count} sections, and an Arrangement holds at most {SequencerModules.MaxSections}."));
 
             return [];
         }

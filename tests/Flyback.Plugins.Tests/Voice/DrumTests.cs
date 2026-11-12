@@ -87,18 +87,18 @@ public class DrumTests
         var bent = b.Add("math.pow", (1, 4f));
         var pitch = b.Add("math.remap", (1, 0f), (2, 1f), (3, 45f), (4, 170f));
         var tone = b.Add("osc.sine");
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
         b.Wire(level, 0, bent, 0).Wire(bent, 0, pitch, 0).Wire(pitch, 0, tone, 1).Wire(level, 0, tone, 3);
 
         if (drive > 0f)
         {
-            var driven = b.Add(NodeCatalog.DriveTypeId, (1, drive));
-            b.Wire(tone, 0, driven, 0).Wire(driven, 0, sink, NodeCatalog.OutputLeftPort);
+            var driven = b.Add(DriveModule.TypeId, (1, drive));
+            b.Wire(tone, 0, driven, 0).Wire(driven, 0, sink, OutputModule.LeftPort);
         }
         else
         {
-            b.Wire(tone, 0, sink, NodeCatalog.OutputLeftPort);
+            b.Wire(tone, 0, sink, OutputModule.LeftPort);
         }
 
         var envelope = Falling(Rate / 2);
@@ -121,9 +121,9 @@ public class DrumTests
         var b = new PatchBuilder(Catalog);
         var coord = b.Add("coord");
         var drum = b.Add(DrumType, knobs);
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
-        b.Wire(coord, 0, drum, LevelPort).Wire(drum, 0, sink, NodeCatalog.OutputLeftPort);
+        b.Wire(coord, 0, drum, LevelPort).Wire(drum, 0, sink, OutputModule.LeftPort);
 
         return Interpreted.Run(b.Patch, level);
     }

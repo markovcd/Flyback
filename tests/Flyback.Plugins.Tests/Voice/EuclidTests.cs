@@ -126,9 +126,9 @@ public class EuclidTests
         var euclid = b.Add(EuclidType, (RatePort, Rate), (StepsPort, 16f), (HitsPort, 5f), (RotatePort, 7f));
         var envelope = b.Add("flyback.voice.stroke", (1, Rate), (3, 7f));
         var let = b.Add("math.mul");
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
-        b.Wire(envelope, 0, let, 0).Wire(euclid, Hit, let, 1).Wire(let, 0, sink, NodeCatalog.OutputLeftPort);
+        b.Wire(envelope, 0, let, 0).Wire(euclid, Hit, let, 1).Wire(let, 0, sink, OutputModule.LeftPort);
 
         var byHand = b.Patch.CompileForAudio(Catalog).Program;
         var registers = byHand.AllocateRegisters();
@@ -177,12 +177,12 @@ public class EuclidTests
         euclid.InputValues[RatePort] = Rate;
         foreach (var (at, value) in knobs) euclid.InputValues[at] = value;
 
-        var sink = NodeInstance.Create(Catalog.Require(NodeCatalog.OutputTypeId), 0, 0);
-        sink.InputValues[NodeCatalog.OutputVolumePort] = 1f;
+        var sink = NodeInstance.Create(Catalog.Require(OutputModule.TypeId), 0, 0);
+        sink.InputValues[OutputModule.VolumePort] = 1f;
 
         patch.Nodes.Add(euclid);
         patch.Nodes.Add(sink);
-        patch.Connect(euclid.Id, port, sink.Id, video ? NodeCatalog.OutputColorPort : NodeCatalog.OutputLeftPort);
+        patch.Connect(euclid.Id, port, sink.Id, video ? OutputModule.ColorPort : OutputModule.LeftPort);
 
         var program = video ? patch.CompileForVideo(Catalog).Program : patch.CompileForAudio(Catalog).Program;
         var registers = program.AllocateRegisters();

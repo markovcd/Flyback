@@ -24,7 +24,7 @@ public class WirePanTests : EditorTest
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         var source = builder.Add("osc.sine", 40, 40);
         var fed = builder.Add("math.add", 500, 300);
-        builder.Add(NodeCatalog.OutputTypeId, 900, 40);
+        builder.Add(OutputModule.TypeId, 900, 40);
 
         var editor = NewCanvas(Wide, Tall);
         var window = Show(editor, Wide);

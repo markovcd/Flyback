@@ -733,7 +733,7 @@ public class LanguageTests
     {
         var patch = Build("midi.in() |> clamp(36, 84) |> out.color");
 
-        var keys = patch.Nodes.Single(n => n.TypeId == NodeCatalog.MidiTypeId);
+        var keys = patch.Nodes.Single(n => n.TypeId == MidiModules.MidiTypeId);
         var clamp = patch.Nodes.Single(n => n.TypeId == "math.clamp");
 
         patch.IncomingTo(clamp.Id, 0).ShouldBe(new Connection(keys.Id, 0, clamp.Id, 0));
@@ -755,7 +755,7 @@ public class LanguageTests
             sine(in: beats, freq: 1) |> out.left
             """);
 
-        var tempo = patch.Nodes.Single(n => n.TypeId == NodeCatalog.TempoTypeId);
+        var tempo = patch.Nodes.Single(n => n.TypeId == SequencerModules.TempoTypeId);
         var sine = patch.Nodes.Single(n => n.TypeId == "osc.sine");
 
         var beats = Index(NodeCatalog.BuiltIn.Require(tempo.TypeId).Outputs, "beats");
@@ -779,9 +779,9 @@ public class LanguageTests
             tempo(bpm: 104).beats |> notes(rate: 2) [ A2 E3 ].gate |> adsr(gate: _) |> out.left
             """);
 
-        var tempo = patch.Nodes.Single(n => n.TypeId == NodeCatalog.TempoTypeId);
+        var tempo = patch.Nodes.Single(n => n.TypeId == SequencerModules.TempoTypeId);
         var steps = patch.Nodes.Single(n => n.TypeId == "seq.notes");
-        var envelope = patch.Nodes.Single(n => n.TypeId == NodeCatalog.AdsrTypeId);
+        var envelope = patch.Nodes.Single(n => n.TypeId == EnvelopeModules.AdsrTypeId);
 
         patch.Connections.ShouldContain(c => c.SourceNode == tempo.Id && c.SourcePort == 1 && c.TargetNode == steps.Id);
         patch.Connections.ShouldContain(c => c.SourceNode == steps.Id && c.SourcePort == 1 && c.TargetNode == envelope.Id);
@@ -884,7 +884,7 @@ public class LanguageTests
     [Fact]
     public void The_bracketed_form_is_what_was_meant() =>
         Build("let s = notes() [ C2 ]\nlet pitch = (s |> note(note: _)) * 2\nsaw(freq: pitch) |> out.left").Nodes
-            .Single(n => n.TypeId == NodeCatalog.ExpressionTypeId).StateOf("expression")!["formula"]!.GetValue<string>().ShouldBe("a * 2");
+            .Single(n => n.TypeId == MathModules.ExpressionTypeId).StateOf("expression")!["formula"]!.GetValue<string>().ShouldBe("a * 2");
 
     /// <summary>A comma before the bracket is a habit, not a mistake worth a refusal.</summary>
     [Fact]
@@ -946,7 +946,7 @@ public class LanguageTests
     {
         var patch = Build("rings(freq: t * 2, offset: t * 3) |> out.color");
 
-        patch.Nodes.Count(n => n.TypeId == NodeCatalog.TimeTypeId).ShouldBe(1);
+        patch.Nodes.Count(n => n.TypeId == SourceModules.TimeTypeId).ShouldBe(1);
     }
 
     [Fact]
@@ -959,7 +959,7 @@ public class LanguageTests
     public void A_duration_is_written_as_a_time_and_stored_as_a_decade()
     {
         var patch = Build("adsr(attack: 10ms, decay: 100ms, sustain: 0.5, release: 1s) |> out.left");
-        var adsr = patch.Nodes.Single(n => n.TypeId == NodeCatalog.AdsrTypeId);
+        var adsr = patch.Nodes.Single(n => n.TypeId == EnvelopeModules.AdsrTypeId);
 
         adsr.InputValues[1].ShouldBe(-2f, 0.0001f);
         adsr.InputValues[2].ShouldBe(-1f, 0.0001f);
@@ -986,7 +986,7 @@ public class LanguageTests
     [Fact]
     public void A_time_written_as_one_is_taken() =>
         Build("adsr(attack: 10ms) |> out.left").Nodes
-            .Single(n => n.TypeId == NodeCatalog.AdsrTypeId).InputValues[1].ShouldBe(-2f, 0.0001f);
+            .Single(n => n.TypeId == EnvelopeModules.AdsrTypeId).InputValues[1].ShouldBe(-2f, 0.0001f);
 
     /// <summary>
     /// The kick the assistant's briefing offers as a worked example. It is in
@@ -1030,7 +1030,7 @@ public class LanguageTests
             .Select(n => n.Id)
             .ToHashSet();
 
-        foreach (var adsr in patch.Nodes.Where(n => n.TypeId == NodeCatalog.AdsrTypeId))
+        foreach (var adsr in patch.Nodes.Where(n => n.TypeId == EnvelopeModules.AdsrTypeId))
         {
             var gate = patch.IncomingTo(adsr.Id, 0).ShouldNotBeNull();
 
@@ -1071,11 +1071,11 @@ public class LanguageTests
     {
         var patch = Build("value(0.5) * t |> out.color");
 
-        var expression = patch.Nodes.Single(n => n.TypeId == NodeCatalog.ExpressionTypeId);
+        var expression = patch.Nodes.Single(n => n.TypeId == MathModules.ExpressionTypeId);
 
         Formula(expression).ShouldBe("a * b");
         patch.Nodes.ShouldNotContain(n => n.TypeId.StartsWith("math.", StringComparison.Ordinal)
-            && n.TypeId != NodeCatalog.ExpressionTypeId);
+            && n.TypeId != MathModules.ExpressionTypeId);
     }
 
     [Fact]
@@ -1085,7 +1085,7 @@ public class LanguageTests
         // feeding the oscillator's domain.
         var patch = Build("t * 0.2 |> sine() |> out.left");
 
-        var expression = patch.Nodes.Single(n => n.TypeId == NodeCatalog.ExpressionTypeId);
+        var expression = patch.Nodes.Single(n => n.TypeId == MathModules.ExpressionTypeId);
         var sine = patch.Nodes.Single(n => n.TypeId == "osc.sine");
 
         Formula(expression).ShouldBe("a * 0.2");
@@ -1101,12 +1101,12 @@ public class LanguageTests
     {
         var patch = Build("(x * 2 - 1) * (y + 0.5) - -x / 3 |> out.color");
 
-        var expression = patch.Nodes.Single(n => n.TypeId == NodeCatalog.ExpressionTypeId);
-        var coord = patch.Nodes.Single(n => n.TypeId == NodeCatalog.CoordTypeId);
+        var expression = patch.Nodes.Single(n => n.TypeId == MathModules.ExpressionTypeId);
+        var coord = patch.Nodes.Single(n => n.TypeId == SourceModules.CoordTypeId);
 
         Formula(expression).ShouldBe("(a * 2 - 1) * (b + 0.5) - -a / 3");
-        patch.IncomingTo(expression.Id, 0)!.SourcePort.ShouldBe(NodeCatalog.CoordXPort);
-        patch.IncomingTo(expression.Id, 1)!.SourcePort.ShouldBe(NodeCatalog.CoordYPort);
+        patch.IncomingTo(expression.Id, 0)!.SourcePort.ShouldBe(SourceModules.CoordXPort);
+        patch.IncomingTo(expression.Id, 1)!.SourcePort.ShouldBe(SourceModules.CoordYPort);
         patch.IncomingTo(expression.Id, 0)!.SourceNode.ShouldBe(coord.Id);
     }
 
@@ -1127,7 +1127,7 @@ public class LanguageTests
     [InlineData("x * (1 / 12)", "a * 0.083333336")]
     public void A_formula_groups_as_the_text_did(string written, string formula) =>
         Formula(Build($"{written} |> out.color").Nodes
-            .Single(n => n.TypeId == NodeCatalog.ExpressionTypeId)).ShouldBe(formula);
+            .Single(n => n.TypeId == MathModules.ExpressionTypeId)).ShouldBe(formula);
 
     /// <summary>
     /// Four sockets, so a sum reading five signals hands its busier side to an
@@ -1138,7 +1138,7 @@ public class LanguageTests
     {
         var patch = Build("(x + y + t + radius) * angle |> out.color");
 
-        var expressions = patch.Nodes.Where(n => n.TypeId == NodeCatalog.ExpressionTypeId).ToList();
+        var expressions = patch.Nodes.Where(n => n.TypeId == MathModules.ExpressionTypeId).ToList();
 
         expressions.Select(Formula).Order().ShouldBe(["a * b", "a + b + c + d"]);
 
@@ -1159,7 +1159,7 @@ public class LanguageTests
 
     [Fact]
     public void Every_patch_has_its_output_already() =>
-        Build(string.Empty).Nodes.ShouldHaveSingleItem().TypeId.ShouldBe(NodeCatalog.OutputTypeId);
+        Build(string.Empty).Nodes.ShouldHaveSingleItem().TypeId.ShouldBe(OutputModule.TypeId);
 
     [Fact]
     public void A_second_output_is_refused() =>
@@ -1257,12 +1257,12 @@ public class LanguageTests
     [Fact]
     public void A_scale_block_becomes_the_pitch_classes() =>
         ScaleExtra.Of(Build("quantiser() [ C D E G A ] |> out.left").Nodes
-            .Single(n => n.TypeId == NodeCatalog.QuantiserTypeId)).ShouldBe([0, 2, 4, 7, 9]);
+            .Single(n => n.TypeId == PitchModules.QuantiserTypeId)).ShouldBe([0, 2, 4, 7, 9]);
 
     [Fact]
     public void A_player_names_its_file() =>
         SampleExtra.Of(Build("""sample("kick.wav") |> out.left""").Nodes
-            .Single(n => n.TypeId == NodeCatalog.SampleTypeId)).ShouldBe("kick.wav");
+            .Single(n => n.TypeId == SourceModules.SampleTypeId)).ShouldBe("kick.wav");
 
     /// <summary>A normalled socket has no knob, and the refusal says what is driving it instead.</summary>
     [Fact]
@@ -1308,7 +1308,7 @@ public class LanguageTests
         patch.Nodes.ShouldContain(n => n.Name == "level");
 
         // Both results reach the multiply, which is what taking them apart was for.
-        var mul = patch.Nodes.Single(n => n.TypeId == NodeCatalog.ExpressionTypeId);
+        var mul = patch.Nodes.Single(n => n.TypeId == MathModules.ExpressionTypeId);
 
         patch.IncomingTo(mul.Id, 0).ShouldNotBeNull();
         patch.IncomingTo(mul.Id, 1).ShouldNotBeNull();

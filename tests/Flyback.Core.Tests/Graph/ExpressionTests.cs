@@ -18,7 +18,7 @@ namespace Flyback.Core.Tests.Graph;
 /// </remarks>
 public class ExpressionTests
 {
-    private const string Expression = NodeCatalog.ExpressionTypeId;
+    private const string Expression = MathModules.ExpressionTypeId;
 
     [Fact]
     public void It_is_four_sockets_and_a_formula()
@@ -98,14 +98,14 @@ public class ExpressionTests
     public void It_is_the_modules_it_spells_op_for_op(string formula)
     {
         var typed = new PatchBuilder(NodeCatalog.BuiltIn);
-        var coord = typed.Add(NodeCatalog.CoordTypeId);
+        var coord = typed.Add(SourceModules.CoordTypeId);
         var expression = typed.Add(Expression);
         Formula(expression, formula);
-        typed.Wire(coord, NodeCatalog.CoordXPort, expression, 0).Wire(coord, NodeCatalog.CoordYPort, expression, 1);
+        typed.Wire(coord, SourceModules.CoordXPort, expression, 0).Wire(coord, SourceModules.CoordYPort, expression, 1);
         Shown(typed, expression);
 
         var wired = new PatchBuilder(NodeCatalog.BuiltIn);
-        var x = wired.Add(NodeCatalog.CoordTypeId);
+        var x = wired.Add(SourceModules.CoordTypeId);
         Shown(wired, formula switch
         {
             "(floor(a * 45) + 0.5) / 45" =>
@@ -115,7 +115,7 @@ public class ExpressionTests
                 Pair(wired, "math.mul", x, Knobbed(wired, "math.add", Knobbed(wired, "math.mul", Pair(wired, "math.mul", x, x, 1, 1), 0.035f), 1f)),
 
             _ => Pair(wired, "math.add",
-                Pair(wired, "math.mul", Ramp(wired, x), Through(wired, "math.neg", x, NodeCatalog.CoordYPort)),
+                Pair(wired, "math.mul", Ramp(wired, x), Through(wired, "math.neg", x, SourceModules.CoordYPort)),
                 Remap(wired, x)),
         });
 
@@ -133,10 +133,10 @@ public class ExpressionTests
         int Ops(string formula)
         {
             var b = new PatchBuilder(NodeCatalog.BuiltIn);
-            var coord = b.Add(NodeCatalog.CoordTypeId);
+            var coord = b.Add(SourceModules.CoordTypeId);
             var expression = b.Add(Expression);
             Formula(expression, formula);
-            b.Wire(coord, NodeCatalog.CoordXPort, expression, 0);
+            b.Wire(coord, SourceModules.CoordXPort, expression, 0);
             Shown(b, expression);
 
             return b.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program.Ops.Length;
@@ -160,8 +160,8 @@ public class ExpressionTests
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var expression = b.Add(Expression, (0, 0.5f));
         Formula(expression, formula);
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
-        b.Wire(expression, 0, sink, NodeCatalog.OutputLeftPort);
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
+        b.Wire(expression, 0, sink, OutputModule.LeftPort);
 
         var result = b.Patch.CompileForAudio(NodeCatalog.BuiltIn);
 
@@ -182,7 +182,7 @@ public class ExpressionTests
     [InlineData("wobble(a)", "there is no function 'wobble', at character 1")]
     [InlineData("", "there is nothing in it, at character 1")]
     public void What_stops_a_formula_reading_can_be_asked_for(string formula, string? problem) =>
-        NodeCatalog.FormulaProblem(formula).ShouldBe(problem);
+        MathModules.FormulaProblem(formula).ShouldBe(problem);
 
     /// <summary>Each as long as the field holds, and each far deeper than the text language reads.</summary>
     public static TheoryData<string, string> Deep => new()
@@ -205,7 +205,7 @@ public class ExpressionTests
     {
         string? problem = null;
 
-        var thread = new Thread(() => problem = NodeCatalog.FormulaProblem(formula), maxStackSize: 1 << 20);
+        var thread = new Thread(() => problem = MathModules.FormulaProblem(formula), maxStackSize: 1 << 20);
         thread.Start();
         thread.Join(TimeSpan.FromSeconds(30)).ShouldBeTrue(shape);
 
@@ -214,7 +214,7 @@ public class ExpressionTests
 
     [Fact]
     public void A_formula_as_deep_as_the_language_reads_is_read() =>
-        NodeCatalog.FormulaProblem(new string('-', Core.Graph.Formula.MostDeep - 1) + "a").ShouldBeNull();
+        MathModules.FormulaProblem(new string('-', Core.Graph.Formula.MostDeep - 1) + "a").ShouldBeNull();
 
     [Fact]
     public void A_color_on_a_socket_is_worked_on_a_channel_at_a_time()
@@ -350,14 +350,14 @@ public class ExpressionTests
 
     private static void Shown(PatchBuilder b, NodeInstance what)
     {
-        var sink = b.Add(NodeCatalog.OutputTypeId);
-        b.Wire(what, 0, sink, NodeCatalog.OutputColorPort);
+        var sink = b.Add(OutputModule.TypeId);
+        b.Wire(what, 0, sink, OutputModule.ColorPort);
     }
 
     private static double Heard(PatchBuilder b, NodeInstance what)
     {
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
-        b.Wire(what, 0, sink, NodeCatalog.OutputLeftPort);
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
+        b.Wire(what, 0, sink, OutputModule.LeftPort);
 
         var result = b.Patch.CompileForAudio(NodeCatalog.BuiltIn);
         result.HasErrors.ShouldBeFalse(string.Join("; ", result.Issues.Select(i => i.Message)));

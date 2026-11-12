@@ -43,7 +43,7 @@ internal static class Sound
     /// already running.
     /// </remarks>
     public static bool VolumeIsUp(Patch patch) =>
-        patch.IncomingTo(patch.Output.Id, NodeCatalog.OutputVolumePort) is not null
-        || ControlMap.Of(patch.Output, NodeCatalog.OutputVolumePort) is not null
-        || patch.Output.InputValues[NodeCatalog.OutputVolumePort] > 0f;
+        patch.IncomingTo(patch.Output.Id, OutputModule.VolumePort) is not null
+        || ControlMap.Of(patch.Output, OutputModule.VolumePort) is not null
+        || patch.Output.InputValues[OutputModule.VolumePort] > 0f;
 }

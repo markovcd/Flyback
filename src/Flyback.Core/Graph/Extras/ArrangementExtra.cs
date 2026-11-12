@@ -22,14 +22,14 @@ public sealed record ArrangementExtra(IReadOnlyList<IReadOnlyList<PartLevel>> De
 
     /// <summary>
     /// At most <see cref="NodeCatalog.MaxParts"/> parts of at most
-    /// <see cref="NodeCatalog.MaxSections"/> sections, every one as long as the
+    /// <see cref="SequencerModules.MaxSections"/> sections, every one as long as the
     /// longest, a short part held at nought to the end.
     /// </summary>
     internal static List<List<PartLevel>> Tidy(IEnumerable<IEnumerable<PartLevel>> parts)
     {
         var kept = parts
             .Take(NodeCatalog.MaxParts)
-            .Select(part => part.Take(NodeCatalog.MaxSections).Select(level => level.Sane()).ToList())
+            .Select(part => part.Take(SequencerModules.MaxSections).Select(level => level.Sane()).ToList())
             .ToList();
 
         var sections = kept.Count == 0 ? 0 : kept.Max(part => part.Count);
@@ -46,7 +46,7 @@ public sealed record ArrangementExtra(IReadOnlyList<IReadOnlyList<PartLevel>> De
 
     /// <inheritdoc/>
     public override string Announce() =>
-        $"  arrangement  up to {NodeCatalog.MaxParts} parts of up to {NodeCatalog.MaxSections} sections — not knobs";
+        $"  arrangement  up to {NodeCatalog.MaxParts} parts of up to {SequencerModules.MaxSections} sections — not knobs";
 
     /// <inheritdoc/>
     public override string Help =>

@@ -20,7 +20,7 @@ public sealed class TouchSteps(PatchContext context, EditorDriver editor)
     public void GivenASineBesideTheClock()
     {
         var clock = context.Node("clock");
-        var sine = context.Add("sine", NodeCatalog.SineTypeId);
+        var sine = context.Add("sine", OscillatorModules.SineTypeId);
 
         sine.X = clock.X + 400;
         sine.Y = clock.Y;
@@ -76,7 +76,7 @@ public sealed class TouchSteps(PatchContext context, EditorDriver editor)
     {
         var sine = context.Node("sine");
 
-        var input = editor.Read(canvas => canvas.Geometry.InputPort(sine, NodeCatalog.Require(NodeCatalog.SineTypeId), 0));
+        var input = editor.Read(canvas => canvas.Geometry.InputPort(sine, NodeCatalog.Require(OscillatorModules.SineTypeId), 0));
 
         editor.TapFinger(new Point(sine.X + NodeGeometry.Width / 3, input.Y));
     }
@@ -100,7 +100,7 @@ public sealed class TouchSteps(PatchContext context, EditorDriver editor)
 
         var (from, to) = editor.Read(canvas =>
         {
-            var input = canvas.Geometry.InputPort(sine, NodeCatalog.Require(NodeCatalog.SineTypeId), 0);
+            var input = canvas.Geometry.InputPort(sine, NodeCatalog.Require(OscillatorModules.SineTypeId), 0);
 
             return (canvas.GraphToScreen.Transform(NodeGeometry.OutputPort(clock, 0)),
                 canvas.GraphToScreen.Transform(input) - new Vector(Fingers.Reach - 4, 0));
@@ -157,9 +157,9 @@ public sealed class TouchSteps(PatchContext context, EditorDriver editor)
     [Then("a sine stands where the finger was held")]
     public void ThenASineStandsThere()
     {
-        var sine = context.Patch.Nodes.Where(node => node.TypeId == NodeCatalog.SineTypeId).ShouldHaveSingleItem();
+        var sine = context.Patch.Nodes.Where(node => node.TypeId == OscillatorModules.SineTypeId).ShouldHaveSingleItem();
 
-        editor.Read(canvas => canvas.Geometry.Bounds(sine, NodeCatalog.Require(NodeCatalog.SineTypeId)))
+        editor.Read(canvas => canvas.Geometry.Bounds(sine, NodeCatalog.Require(OscillatorModules.SineTypeId)))
             .Inflate(1).Contains(heldAt).ShouldBeTrue();
     }
 

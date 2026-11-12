@@ -326,10 +326,10 @@ public sealed class PatchSteps(PatchContext context)
     [Given("chip noise is playing")]
     public void GivenChipNoise()
     {
-        context.Add("clock", NodeCatalog.TimeTypeId);
+        context.Add("clock", SourceModules.TimeTypeId);
         context.Add("faster", "math.mul");
         context.SetInput("faster", "b", 300f);
-        context.Add("noise", NodeCatalog.NoiseTypeId);
+        context.Add("noise", NoiseModule.TypeId);
         context.SetInput("noise", "rate", 64f);
         context.Wire("clock", "t", "faster", "a");
         context.Wire("faster", "out", "noise", "in");
@@ -342,8 +342,8 @@ public sealed class PatchSteps(PatchContext context)
     {
         context.Add("tone", "osc.sine");
         context.SetInput("tone", "freq", frequency);
-        context.Add("filter", NodeCatalog.FilterTypeId);
-        context.Add("delay", NodeCatalog.DelayTypeId);
+        context.Add("filter", FilterModule.TypeId);
+        context.Add("delay", DelayModule.TypeId);
         context.Wire("tone", "out", "filter", "in");
         context.Wire("filter", "low", "delay", "in");
         Hear("delay");
@@ -357,7 +357,7 @@ public sealed class PatchSteps(PatchContext context)
     [Given("a drifting rainbow that trails, with noise through a filter and a delay at the speakers")]
     public void GivenAnEverythingPatch()
     {
-        context.Add("clock", NodeCatalog.TimeTypeId);
+        context.Add("clock", SourceModules.TimeTypeId);
         context.Add("coords", "coord");
         context.Add("drift", "math.add");
         context.Add("tint", "color.hsv");
@@ -376,9 +376,9 @@ public sealed class PatchSteps(PatchContext context)
         context.Wire("fade", "color", "trail", "b");
         Show("trail");
 
-        context.Add("noise", NodeCatalog.NoiseTypeId);
-        context.Add("filter", NodeCatalog.FilterTypeId);
-        context.Add("delay", NodeCatalog.DelayTypeId);
+        context.Add("noise", NoiseModule.TypeId);
+        context.Add("filter", FilterModule.TypeId);
+        context.Add("delay", DelayModule.TypeId);
         context.Wire("clock", "t", "noise", "in");
         context.Wire("noise", "random", "filter", "in");
         context.Wire("filter", "low", "delay", "in");
@@ -507,7 +507,7 @@ public sealed class PatchSteps(PatchContext context)
 
         for (var voice = 1; voice <= voices; voice++)
         {
-            context.Add($"voice {voice}", NodeCatalog.MidiTypeId).SetState(
+            context.Add($"voice {voice}", MidiModules.MidiTypeId).SetState(
                 MidiExtra.StateKey,
                 new JsonObject
                 {
@@ -558,7 +558,7 @@ public sealed class PatchSteps(PatchContext context)
     public void GivenAnUnsetClock()
     {
         Written($"let c = midi.clock(){(char)10}c.beats |> out.left");
-        context.Patch.Nodes.Single(n => n.TypeId == NodeCatalog.ClockTypeId).SetState(MidiClockExtra.StateKey, new JsonObject());
+        context.Patch.Nodes.Single(n => n.TypeId == MidiModules.ClockTypeId).SetState(MidiClockExtra.StateKey, new JsonObject());
     }
 
     [Given("the beats of a clock following the computer keyboard, on the speakers")]
@@ -575,7 +575,7 @@ public sealed class PatchSteps(PatchContext context)
         var index = Chords.All.Select(c => c.Name).ToList().IndexOf(chord);
         index.ShouldBeGreaterThanOrEqualTo(0, $"no chord called {chord}");
 
-        Chorded($"chord(note: {root}, chord: {index})", NodeCatalog.ChordTypeId);
+        Chorded($"chord(note: {root}, chord: {index})", ChordModules.ChordTypeId);
     }
 
     [Given(@"^an Auto Chord in the (.+) scale of (\S+), (-?\d+) steps? from the tonic$")]
@@ -583,7 +583,7 @@ public sealed class PatchSteps(PatchContext context)
     {
         var mode = Chords.Scales.Single(s => s.Name.Equals(scale, StringComparison.OrdinalIgnoreCase));
 
-        Chorded($"autochord(tonic: {tonic}, root: {root}, scale: \"{mode.Id}\")", NodeCatalog.AutoChordTypeId);
+        Chorded($"autochord(tonic: {tonic}, root: {root}, scale: \"{mode.Id}\")", ChordModules.AutoChordTypeId);
     }
 
     [Given(@"^an Auto Chord in the (.+) scale of (\S+), played (\S+)$")]
@@ -596,7 +596,7 @@ public sealed class PatchSteps(PatchContext context)
         var mode = Chords.Scales.Single(s => s.Name.Equals(scale, StringComparison.OrdinalIgnoreCase));
         var played = Number(SpeakerSteps.Note(note));
 
-        Chorded($"autochord(tonic: {tonic}, note: value({played}), root: {root}, scale: \"{mode.Id}\")", NodeCatalog.AutoChordTypeId);
+        Chorded($"autochord(tonic: {tonic}, note: value({played}), root: {root}, scale: \"{mode.Id}\")", ChordModules.AutoChordTypeId);
     }
 
     /// <summary>A chord module, named "chord", with its root on the left speaker.</summary>
@@ -725,7 +725,7 @@ public sealed class PatchSteps(PatchContext context)
         load.Ok.ShouldBeTrue(load.Report);
 
         context.Replace(load.Patch);
-        context.Name("screen", load.Patch.Nodes.Single(n => NodeCatalog.IsSink(n.TypeId)));
+        context.Name("screen", load.Patch.Nodes.Single(n => OutputModule.IsSink(n.TypeId)));
         context.SetInput("screen", "volume", 1f);
     }
 
@@ -826,7 +826,7 @@ public sealed class PatchSteps(PatchContext context)
     private void Ducked(float pad, float depth)
     {
         Level("pad", pad);
-        context.Add("duck", NodeCatalog.DuckTypeId);
+        context.Add("duck", DuckModule.TypeId);
         context.SetInput("duck", "depth", depth);
         context.SetInput("duck", "release", -1f);
         context.Wire("pad", "out", "duck", "left");
@@ -834,13 +834,13 @@ public sealed class PatchSteps(PatchContext context)
         Hear("duck", "left");
     }
 
-    private void Send(string name, string bus) => OnBus(context.Add(name, NodeCatalog.SendTypeId), bus);
+    private void Send(string name, string bus) => OnBus(context.Add(name, BusModules.SendTypeId), bus);
 
     /// <summary>A fresh Receive on <paramref name="bus"/>, named for how many there are.</summary>
     private string Receive(string bus)
     {
         var name = $"receive {++receives}";
-        OnBus(context.Add(name, NodeCatalog.ReceiveTypeId), bus);
+        OnBus(context.Add(name, BusModules.ReceiveTypeId), bus);
         return name;
     }
 

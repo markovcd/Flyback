@@ -59,9 +59,9 @@ public class FadeTests
             var b = new PatchBuilder(Catalog);
             var song = b.Add("value", (0, level));
             var fade = b.Add(FadeType, (FromPort, 0.4f), (ToPort, 0.6f));
-            var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+            var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
-            b.Wire(song, 0, fade, LevelPort).Wire(fade, Out, sink, NodeCatalog.OutputLeftPort);
+            b.Wire(song, 0, fade, LevelPort).Wire(fade, Out, sink, OutputModule.LeftPort);
 
             Exact(b.Patch).ShouldBe(Exact(Wired(Gate, 1f, level, 0.4f, 0.6f)));
         }
@@ -73,9 +73,9 @@ public class FadeTests
         var b = new PatchBuilder(Catalog);
         var orange = b.Add("color.rgb", (0, 1f), (1, 0.5f), (2, 0f));
         var fade = b.Add(FadeType, (LevelPort, 0.5f), (FromPort, 0.4f), (ToPort, 0.6f));
-        var sink = b.Add(NodeCatalog.OutputTypeId);
+        var sink = b.Add(OutputModule.TypeId);
 
-        b.Wire(orange, 0, fade, InPort).Wire(fade, Out, sink, NodeCatalog.OutputColorPort);
+        b.Wire(orange, 0, fade, InPort).Wire(fade, Out, sink, OutputModule.ColorPort);
 
         var program = b.Patch.CompileForVideo(Catalog).Program;
         var registers = program.AllocateRegisters();
@@ -97,10 +97,10 @@ public class FadeTests
             var song = b.Add("value", (0, level));
             var rises = b.Add("math.smoothstep", (0, 0.42f), (1, 0.48f));
             var product = b.Add("math.mul");
-            var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+            var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
             b.Wire(song, 0, rises, 2).Wire(signal, 0, product, 0).Wire(rises, 0, product, 1)
-             .Wire(product, 0, sink, NodeCatalog.OutputLeftPort);
+             .Wire(product, 0, sink, OutputModule.LeftPort);
 
             Exact(Wired(Out, 0.7311f, level, 0.42f, 0.48f)).ShouldBe(Exact(b.Patch));
         }
@@ -117,10 +117,10 @@ public class FadeTests
         var source = b.Add("value", (0, signal));
         var song = b.Add("value", (0, level));
         var fade = b.Add(FadeType, (FromPort, from), (ToPort, to));
-        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var sink = b.Add(OutputModule.TypeId, (OutputModule.VolumePort, 1f));
 
         b.Wire(source, 0, fade, InPort).Wire(song, 0, fade, LevelPort)
-         .Wire(fade, port, sink, NodeCatalog.OutputLeftPort);
+         .Wire(fade, port, sink, OutputModule.LeftPort);
 
         return b.Patch;
     }

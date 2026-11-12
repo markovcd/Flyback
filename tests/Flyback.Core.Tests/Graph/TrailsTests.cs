@@ -61,7 +61,7 @@ public class TrailsTests
         var before = byHand.Add("feedback");
         var dimmed = byHand.Add("color.gain", (1, persist));
         var brighter = byHand.Add("math.max");
-        var sink = byHand.Add(NodeCatalog.OutputTypeId);
+        var sink = byHand.Add(OutputModule.TypeId);
 
         byHand.Wire(scaled, 0, turned, 0).Wire(scaled, 1, turned, 1)
             .Wire(turned, 0, moved, 0).Wire(turned, 1, moved, 1)
@@ -69,16 +69,16 @@ public class TrailsTests
             .Wire(before, 0, dimmed, 0)
             .Wire(dimmed, 0, brighter, 0)
             .Wire(Spark(byHand), 0, brighter, 1)
-            .Wire(brighter, 0, sink, NodeCatalog.OutputColorPort);
+            .Wire(brighter, 0, sink, OutputModule.ColorPort);
 
         var wrapped = new PatchBuilder(NodeCatalog.BuiltIn);
         var trails = wrapped.Add(Trails, (Zoom, zoom), (Angle, angle), (Dx, dx), (Dy, dy), (Persist, persist));
-        var sink2 = wrapped.Add(NodeCatalog.OutputTypeId);
+        var sink2 = wrapped.Add(OutputModule.TypeId);
 
         wrapped.Wire(Spark(wrapped), 0, trails, In)
-            .Wire(trails, Color, sink2, NodeCatalog.OutputColorPort);
+            .Wire(trails, Color, sink2, OutputModule.ColorPort);
 
-        Rendered(wrapped.Patch, NodeCatalog.TrailsFrameRate).ShouldBe(Rendered(byHand.Patch, NodeCatalog.TrailsFrameRate));
+        Rendered(wrapped.Patch, FeedbackModules.TrailsFrameRate).ShouldBe(Rendered(byHand.Patch, FeedbackModules.TrailsFrameRate));
     }
 
     /// <summary>A flash left to fade for a second is as faint at any frame rate.</summary>
@@ -89,7 +89,7 @@ public class TrailsTests
     public void A_trail_lasts_as_long_at_any_frame_rate(double fps)
     {
         // Within a step of the byte the frame is written in.
-        Faded(fps).ShouldBe(Faded(NodeCatalog.TrailsFrameRate), 1d);
+        Faded(fps).ShouldBe(Faded(FeedbackModules.TrailsFrameRate), 1d);
     }
 
     [Fact]
@@ -104,10 +104,10 @@ public class TrailsTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var trails = b.Add(Trails, (Persist, 1f));
-        var sink = b.Add(NodeCatalog.OutputTypeId);
+        var sink = b.Add(OutputModule.TypeId);
 
         b.Wire(Spark(b), 0, trails, In)
-         .Wire(trails, Tail, sink, NodeCatalog.OutputColorPort);
+         .Wire(trails, Tail, sink, OutputModule.ColorPort);
 
         // Nothing but the tail reaches the screen, so there is never a frame for it
         // to be the tail of.
@@ -141,10 +141,10 @@ public class TrailsTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var trails = b.Add(Trails, (Persist, persist));
-        var sink = b.Add(NodeCatalog.OutputTypeId);
+        var sink = b.Add(OutputModule.TypeId);
 
         b.Wire(Spark(b), 0, trails, In)
-         .Wire(trails, Color, sink, NodeCatalog.OutputColorPort);
+         .Wire(trails, Color, sink, OutputModule.ColorPort);
 
         return b.Patch;
     }
@@ -168,10 +168,10 @@ public class TrailsTests
         var flash = new PatchBuilder(NodeCatalog.BuiltIn);
         var lit = flash.Add(Trails, (Persist, 0.99f));
         flash.Wire(flash.Add("color.rgb"), 0, lit, In)
-            .Wire(lit, Color, flash.Add(NodeCatalog.OutputTypeId), NodeCatalog.OutputColorPort);
+            .Wire(lit, Color, flash.Add(OutputModule.TypeId), OutputModule.ColorPort);
 
         var dark = new PatchBuilder(NodeCatalog.BuiltIn);
-        dark.Wire(dark.Add(Trails, (Persist, 0.99f)), Color, dark.Add(NodeCatalog.OutputTypeId), NodeCatalog.OutputColorPort);
+        dark.Wire(dark.Add(Trails, (Persist, 0.99f)), Color, dark.Add(OutputModule.TypeId), OutputModule.ColorPort);
 
         var renderer = new SynthRenderer();
         var stride = Width * 4;
