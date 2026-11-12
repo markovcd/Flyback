@@ -98,6 +98,8 @@ public sealed class EditorTargetTests : IAsyncDisposable
 
             return new ChannelReply(request.Id, true, "measured, for nobody.");
         });
+        var freed = new TaskCompletionSource();
+        server.Disconnected += () => freed.TrySetResult();
         server.Start();
 
         using var arguments = JsonDocument.Parse("{}");
@@ -110,6 +112,7 @@ public sealed class EditorTargetTests : IAsyncDisposable
         }
 
         await ended.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        await freed.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
 
         await using var next = new EditorTarget(Name);
         var answered = await next.Say("back again", CancellationToken.None);
