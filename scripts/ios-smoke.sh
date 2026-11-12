@@ -13,7 +13,8 @@
 # comes; the last one is the whole JSON on stdout. Exit 0 when every check holds, 1
 # naming the first that did not, with the app's output after it, and 2 for a usage error.
 # With SMOKE_SHOTS naming a folder, the screen is left there, and on a failure the app's
-# output, its log and any crash report too. A crash says so, with the crashed thread.
+# output, its log, any crash report and a sample of an unanswered Play too. A crash
+# says so, with the crashed thread.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -168,7 +169,22 @@ asked_at=$SECONDS
 loaded() { ask && [ "$(field soundRunsOn)" != null ] && [ -n "$(field soundRunsOn)" ]; }
 
 await 120 loaded || fail "the patch did not open within two minutes; the last answer: ${state:-none}"
-ask PLAY || fail "the editor did not answer PLAY"
+
+# A Play that goes unanswered is sampled while it hangs, then given longer only to
+# say whether the answer was late or never came; either way the run fails.
+unanswered() {
+  local pid
+  pid="$(pgrep -nx "$executable" || true)"
+  [ -n "$pid" ] && sample "$pid" 3 -file "$logs/hang-sample.txt" >/dev/null 2>&1 || true
+  [ -f "$logs/hang-sample.txt" ] && echo "the app's threads while Play went unanswered are in hang-sample.txt" >&2
+  local since=$SECONDS
+  if await 30 test -f "$readout"; then
+    fail "the editor answered PLAY $(( SECONDS - since + 5 ))s after it was asked, past the 5s an answer gets"
+  fi
+  fail "the editor did not answer PLAY within 35s"
+}
+
+ask PLAY || unanswered
 echo "$(( SECONDS - asked_at ))s, Play pressed: $state" >&2
 
 settled() {
