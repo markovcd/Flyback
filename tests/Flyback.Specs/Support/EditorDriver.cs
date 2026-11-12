@@ -554,7 +554,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
         if (!menu.IsOpen) throw new InvalidOperationException("the toolbar's menu did not open");
 
         // Only an item laid out in the open popup is one a finger can reach.
-        return (menu.ItemsSource ?? Array.Empty<object>()).OfType<MenuItem>().Where(item => TopLevel.GetTopLevel(item) is not null).ToList();
+        return menu.Items.OfType<MenuItem>().Where(item => TopLevel.GetTopLevel(item) is not null).ToList();
     }
 
     /// <summary>The names of the transport row's shown buttons, left to right.</summary>
