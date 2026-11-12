@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.LogicalTree;
+using Avalonia.Media;
 using Flyback.Assist;
 using Flyback.Assist.Keys;
 using Flyback.Editor.Assist;
@@ -252,6 +253,7 @@ public sealed class AssistantPanelHandbookTests : AssistantPanelTest
 
         var footer = All<TextBlock>(window).Single(t => t.Name == "footer");
         footer.Text.ShouldBe("No assistant is selected. Pick one in Settings.");
+        ((ISolidColorBrush)footer.Foreground!).Color.ShouldBe(Flyback.Ui.Controls.Colors.Warning, "a blocked send is a warning");
     }
 
     /// <summary>

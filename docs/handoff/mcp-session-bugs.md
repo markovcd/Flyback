@@ -58,7 +58,7 @@ Everything below came from driving `flyback-cli mcp --editor` for an hour and a 
 
 ## Editor (Low)
 
-30. **The assistant panel misreports an outside MCP client.** It showed "mcpc stopped driving the editor." and then "No assistant is selected. Pick one in Settings." in success-green. An outside client is a legitimate assistant, and with a reconnect per call, "stopped driving" likely followed every call. *Fix:* show who is connected, collapse connect/disconnect churn, and draw the warning as a warning.
+30. **Partly fixed:** the column's "not set up" footer and beacon are drawn in the scheme's warning color, not the green of Phosphor's accent, and the header already reads "Driven by" the program while one is connected. `mcp --editor` now keeps one connection for its whole run, so the churn comes only from a client that starts it afresh for each call; collapsing that would change what the driving spec asserts, so it waits for Arek. As found: **The assistant panel misreports an outside MCP client.** It showed "mcpc stopped driving the editor." and then "No assistant is selected. Pick one in Settings." in success-green. An outside client is a legitimate assistant, and with a reconnect per call, "stopped driving" likely followed every call. *Fix:* show who is connected, collapse connect/disconnect churn, and draw the warning as a warning.
 31. **Fixed.** The cells had half a pixel of margin at each side, which layout rounding turned into a one-pixel gap at some edges and none at others. They meet edge to edge now.
 
 ## Setup (Low, maybe not Flyback)

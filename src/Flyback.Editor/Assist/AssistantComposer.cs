@@ -18,7 +18,8 @@ namespace Flyback.Editor.Assist;
 /// </summary>
 internal sealed class AssistantComposer
 {
-    private static readonly IBrush Lit = new ImmutableSolidColorBrush(Colors.Attention);
+    /// <summary>What blocks a send is a warning, not a success, in every scheme.</summary>
+    private static readonly IBrush Blocked = new ImmutableSolidColorBrush(Colors.Warning);
     private static readonly IBrush Chrome = new ImmutableSolidColorBrush(Colors.Panel);
     private static readonly IBrush Rule = new ImmutableSolidColorBrush(Colors.Edge);
 
@@ -192,7 +193,7 @@ internal sealed class AssistantComposer
         if (excuse is null) return;
 
         footer.Text = excuse;
-        footer.Foreground = Lit;
+        footer.Foreground = Blocked;
     }
 
     /// <summary>
