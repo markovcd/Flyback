@@ -4,6 +4,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.VisualTree;
 using Flyback.Editor.Bars;
 using Flyback.Editor.Composition;
+using Flyback.Editor.Shell;
 using Shouldly;
 
 namespace Flyback.Editor.Tests.Bars;
@@ -130,5 +131,26 @@ public sealed class ToolbarOverflowTests : EditorTest
 
         overflow.LegendsShown.ShouldBeFalse();
         Folded(window).Length.ShouldBeLessThan(labeled);
+    }
+
+    [AvaloniaFact]
+    public void A_menu_opened_on_a_narrow_window_lists_only_what_a_wider_one_folds()
+    {
+        var window = Open(setup: new EditorSetup { Host = new() { Place = EditorPlace.Page } });
+        var overflow = Service<Toolbar>(window).Overflow;
+        var menu = overflow.More.Flyout.ShouldBeOfType<MenuFlyout>();
+
+        Resize(window, 412);
+        menu.ShowAt(overflow.More);
+        Settle(window);
+        menu.Hide();
+        Resize(window, 760);
+        menu.ShowAt(overflow.More);
+        Settle(window);
+
+        var shown = All<MenuItem>(window).Where(item => item.IsEffectivelyVisible).Select(item => item.Tag).ToHashSet();
+
+        shown.SetEquals(overflow.Folded).ShouldBeTrue();
+        overflow.Folded.ShouldNotContain(control => control.Name == "code");
     }
 }

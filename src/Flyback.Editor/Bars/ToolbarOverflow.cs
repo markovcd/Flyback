@@ -86,7 +86,9 @@ internal sealed class ToolbarOverflow
             Fold(width);
         }
 
-        menu.ItemsSource = Items();
+        // Refilled rather than replaced: the menu's presenter, once shown, keeps the collection it was shown with.
+        menu.Items.Clear();
+        foreach (var item in Items()) menu.Items.Add(item);
     }
 
     /// <summary>Brings back every folded button, then folds them in order until the row fits.</summary>
@@ -172,7 +174,7 @@ internal sealed class ToolbarOverflow
     /// <summary>Has each item say whether its button can be pressed, and whether a toggle is in.</summary>
     private void Refresh()
     {
-        foreach (var item in (menu.ItemsSource as IEnumerable<MenuItem>) ?? [])
+        foreach (var item in menu.Items.OfType<MenuItem>())
         {
             var control = (Control)item.Tag!;
 
