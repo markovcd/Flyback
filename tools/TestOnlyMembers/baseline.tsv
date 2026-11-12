@@ -1,4 +1,4 @@
-Flyback.Core	Field	Internal	NodeCatalog.CoordAspectPort	Flyback.Core.Graph.NodeCatalog
+Flyback.Core	Field	Internal	SourceModules.CoordAspectPort	Flyback.Core.Graph.SourceModules
 Flyback.Core	Ordinary	Internal	Emitter.ToProgram()	Flyback.Core.Compile.Emitter
 Flyback.Core	Ordinary	Internal	ExtraState.Toggle(string)	Flyback.Core.Graph.ExtraState
 Flyback.Core	Ordinary	Public	MidiFileExtra.Set(NodeInstance, string)	Flyback.Core.Graph.Extras.MidiFileExtra
