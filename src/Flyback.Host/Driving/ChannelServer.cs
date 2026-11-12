@@ -11,7 +11,7 @@ internal sealed class ChannelServer(string name, Func<ChannelRequest, Cancellati
 {
     private readonly CancellationTokenSource stop = new();
     private Task? accepting;
-    private int busy;
+    private string? holder;
     private int disposed;
 
     /// <summary>A client greeted the editor, by the name it gave.</summary>
@@ -68,9 +68,9 @@ internal sealed class ChannelServer(string name, Func<ChannelRequest, Cancellati
                 return;
             }
 
-            if (Interlocked.CompareExchange(ref busy, 1, 0) != 0)
+            if (Interlocked.CompareExchange(ref holder, client, null) is { } other)
             {
-                await lines.Write(EditorChannel.Write(new ChannelReply(0, false, "another program is driving the editor already.")), cancel).ConfigureAwait(false);
+                await lines.Write(EditorChannel.Write(new ChannelReply(0, false, $"{other} is driving the editor already.")), cancel).ConfigureAwait(false);
                 return;
             }
 
@@ -79,24 +79,55 @@ internal sealed class ChannelServer(string name, Func<ChannelRequest, Cancellati
                 Connected?.Invoke(client);
                 await lines.Write(EditorChannel.Write(new ChannelReply(0, true, "connected.")), cancel).ConfigureAwait(false);
 
-                while (await lines.Read(cancel).ConfigureAwait(false) is { } line)
-                {
-                    var reply = EditorChannel.Read<ChannelRequest>(line) is { } request
-                        ? await answer(request, cancel).ConfigureAwait(false)
-                        : new ChannelReply(0, false, "that line is not a request.");
+                var next = lines.Read(cancel);
 
-                    await lines.Write(EditorChannel.Write(reply), cancel).ConfigureAwait(false);
+                while (await next.ConfigureAwait(false) is { } line)
+                {
+                    if (EditorChannel.Read<ChannelRequest>(line) is not { } request)
+                    {
+                        next = lines.Read(cancel);
+                        await lines.Write(EditorChannel.Write(new ChannelReply(0, false, "that line is not a request.")), cancel).ConfigureAwait(false);
+                        continue;
+                    }
+
+                    // Read on while answering, so a client that hangs up mid-call ends the call
+                    // rather than holding the editor until a long measure finishes for nobody.
+                    using var call = CancellationTokenSource.CreateLinkedTokenSource(cancel);
+                    var answering = answer(request, call.Token);
+                    next = lines.Read(cancel);
+
+                    if (await Task.WhenAny(answering, next).ConfigureAwait(false) == next && await next.ConfigureAwait(false) is null)
+                    {
+                        await call.CancelAsync().ConfigureAwait(false);
+                        await Abandoned(answering).ConfigureAwait(false);
+                        return;
+                    }
+
+                    await lines.Write(EditorChannel.Write(await answering.ConfigureAwait(false)), cancel).ConfigureAwait(false);
                 }
             }
             finally
             {
-                Volatile.Write(ref busy, 0);
+                Volatile.Write(ref holder, null);
                 Disconnected?.Invoke();
             }
         }
         catch (Exception ex) when (ex is IOException or OperationCanceledException or ObjectDisposedException)
         {
             // A client that went away mid-line, or the editor closing.
+        }
+    }
+
+    /// <summary>Waits out a call whose client went away, whatever it ends in.</summary>
+    private static async Task Abandoned(Task<ChannelReply> answering)
+    {
+        try
+        {
+            await answering.ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // What the cancel asked for.
         }
     }
 

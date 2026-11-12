@@ -53,13 +53,28 @@ internal sealed class EditorTarget(string name) : IToolTarget, IAsyncDisposable
             client = connected;
         }
 
-        var reply = await ask(client).ConfigureAwait(false);
+        ChannelReply reply;
+
+        try
+        {
+            reply = await ask(client).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // The client gave up on the call. Hanging up ends it in the editor too, which a
+            // reply still on its way would otherwise answer to the next call.
+            var gone = client;
+            client = null;
+            await gone.DisposeAsync().ConfigureAwait(false);
+            throw;
+        }
 
         // The editor closed: the next call connects again.
         if (reply.Id == 0)
         {
-            await client.DisposeAsync().ConfigureAwait(false);
+            var gone = client;
             client = null;
+            await gone.DisposeAsync().ConfigureAwait(false);
         }
 
         return new ToolAnswered(reply.Ok, reply.Text, Picture(reply.Png));

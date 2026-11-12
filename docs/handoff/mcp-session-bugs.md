@@ -3,7 +3,7 @@
 Found on 2026-11-06, on `main` at `9688c230`, in Flyback 0.12.0. It is on TODO.md; take an item off here as it lands, and delete this file, and its TODO.md item, in the commit that lands the last.
 
 - **Severity:** Critical (item 4), Medium or Low for the rest, marked on each
-- **Status:** Open; items 1 to 12, 16 to 18, 20 to 22, 31, 33, 34 and 36 fixed
+- **Status:** Open; items 1 to 12, 14, 16 to 18, 20 to 22, 24 to 26, 31, 33, 34 and 36 to 39 fixed
 
 Everything below came from driving `flyback-cli mcp --editor` for an hour and a half while building a patch with the user. It was all confirmed by running; none of it was read from the code. The session's own client was a stdio script that started one `flyback-cli mcp` process per call, because `flyback` was not registered for Claude Code (item 33). Arrangement chaining is being built separately and is left out.
 
@@ -28,8 +28,8 @@ Everything below came from driving `flyback-cli mcp --editor` for an hour and a 
 
 12. **Fixed.** `write_patch` with `source: ""` clears the patch, and a patch of nothing but the Output can be proposed. As found: **A patch can't be cleared.** `write_patch` treats `""` as a missing `source`, and `propose` refuses a patch with nothing wired to the Output.
 13. **There's no scratch bench.** Trying visual variants meant edit, `render`, then `write_patch` the whole saved patch back each time. A `render` that takes a temporary edit, or a `try_patch` that leaves the bench alone, would make iteration safe.
-14. **Nothing warns when the sum clips.** With a Speak at full level on a Desk channel, the master measured exactly `..1`, clamped. Neither the compiler nor `measure` said so, though the briefing asks the assistant to keep the peak under -1 dBFS.
-15. **`measure` shows a pinned signal as a plain range.** A four-saw Mixer read `-2..1.968`, and 2 is the socket's edge, not the real peak. Nothing marks it.
+14. **Fixed.** `measure` says a signal of many values that sat flat at its highest or lowest is clipped, and for how much of the window: `flat at 1 for 23% of it: clipped`. A square or a step, which holds its edge by design, is left alone. As found: **Nothing warns when the sum clips.** With a Speak at full level on a Desk channel, the master measured exactly `..1`, clamped. Neither the compiler nor `measure` said so, though the briefing asks the assistant to keep the peak under -1 dBFS.
+15. Where the signal was held at a limit, the clipped note from 14 now marks it; a range that only reaches a socket's edge without sitting there is still a plain range, and the four-saw patch was not kept to check which this was. As found: **`measure` shows a pinned signal as a plain range.** A four-saw Mixer read `-2..1.968`, and 2 is the socket's edge, not the real peak. Nothing marks it.
 
 ## `measure` (Low)
 
@@ -46,11 +46,11 @@ Everything below came from driving `flyback-cli mcp --editor` for an hour and a 
 
 ## Modules and their descriptions (Low)
 
-Not started: each is a change to a module's description or behavior in a `NodeCatalog.*.cs` file, and a change there has to take `NodeCatalog` apart first (TODO.md's partial types item). 27 also changes how saved patches sound, which is Arek's call.
+27 changes how saved patches sound, which is Arek's call.
 
-24. **There's no plain way to fade in over several sections.** A Slew starts settled (25), and Fade's `from` and `to` only span 0..1 of its level. Fading a pad in over four bars took an Expression on `section + progress`.
-25. **Slew starts settled.** Fed a constant from the first sample it never rises from 0, and neither the module nor the briefing says so.
-26. **Noise's `drift` has no stated speed.** At `rate: 0.047` it barely moved in a minute, and nothing says how `rate` maps to how far and how fast drift wanders.
+24. **Fixed:** an Arrangement's and a Song's description and `fade` say that a level written `>` glides across its section, so `0 >0.25 >0.5 >0.75 >1` fades a part in over four. As found: **There's no plain way to fade in over several sections.** A Slew starts settled (25), and Fade's `from` and `to` only span 0..1 of its level. Fading a pad in over four bars took an Expression on `section + progress`.
+25. **Fixed:** the Slew's description says it starts where `in` is, and points at a gliding level for a fade-in. As found: **Slew starts settled.** Fed a constant from the first sample it never rises from 0, and neither the module nor the briefing says so.
+26. **Fixed:** `drift` says it arrives at a new value every 1/`rate` seconds. As found: **Noise's `drift` has no stated speed.** At `rate: 0.047` it barely moved in a minute, and nothing says how `rate` maps to how far and how fast drift wanders.
 27. **A Note Sequencer's rest drops `out` to note 0** (8 Hz). That's harmless while the gate is shut, but a Slew or a long release after it sweeps down on every rest. Holding the last note may be the better rest.
 
 ## The briefing (Medium)
@@ -82,14 +82,14 @@ The same patch, reopened in an editor and a `flyback-cli` built from source.
 
 ## Found on `main` at `b50021d6` (Medium)
 
-37. **`mcp --editor` never reconnects after the editor restarts.** Once the editor it was attached to closed, every tool answered `Pipe is broken.` until the client restarted the server; reopening the editor did not help. *Fix:* on a broken pipe, drop the connection and attach to whichever editor is open on the next call, saying so if none is.
+37. **Fixed.** Closing the connection to an editor that had gone threw `Pipe is broken.` out of the dispose, so the dead connection was kept and every call after it threw the same. As found: **`mcp --editor` never reconnects after the editor restarts.** Once the editor it was attached to closed, every tool answered `Pipe is broken.` until the client restarted the server; reopening the editor did not help. *Fix:* on a broken pipe, drop the connection and attach to whichever editor is open on the next call, saying so if none is.
 
 ## Found on `main` at `979db514` (Medium)
 
 An editor built from `main`, driven through the installed 0.13.0 `Flyback.app`'s `flyback-cli mcp --editor`.
 
-38. **A `measure` that times out leaves the editor locked against the same client.** A 56 s `measure` of six handles ended in `Request timed out`; every call after it, `describe_module` included, answered `another program is driving the editor already.` The only other `flyback-cli mcp` processes on the machine were idle. It recurs: `measure loudness1.short` alone over 56 s on this 6,300-op patch times out the same way, while nine section-level outputs over the same window answer at once, so the time goes into running the whole sound graph. *Fix:* when a request is abandoned, release the editor or let the same server reattach to its own session; and say who holds the editor rather than "another program".
-39. **An editor and a `flyback-cli` from either side of 26e1888 cannot find each other.** The installed 0.13.0 CLI looks for `$TMPDIR/CoreFxPipe_flyback-editor-<user>` (and the desktop app starts it without `TMPDIR`, so `/tmp`), while an editor from `main` listens on `~/Library/Caches/Flyback/flyback-editor.sock`. The CLI says the editor's setting is off, which sends the user to the wrong fix. *Fix:* have the CLI try both paths until the old one is gone, and word the error as "no editor found at <path>".
+38. **Fixed.** The editor reads on while it answers, so a client that hangs up mid-call cancels the call and frees the editor; a client that gives up on a call hangs up; and a second program is told who holds the editor. As found: **A `measure` that times out leaves the editor locked against the same client.** A 56 s `measure` of six handles ended in `Request timed out`; every call after it, `describe_module` included, answered `another program is driving the editor already.` The only other `flyback-cli mcp` processes on the machine were idle. It recurs: `measure loudness1.short` alone over 56 s on this 6,300-op patch times out the same way, while nine section-level outputs over the same window answer at once, so the time goes into running the whole sound graph. *Fix:* when a request is abandoned, release the editor or let the same server reattach to its own session; and say who holds the editor rather than "another program".
+39. **Fixed** as far as the wording: with no editor answering, the CLI says `no editor found at <path>` and that the editor has to be the same version. Trying the old path too was left out: each release ships its CLI beside its own editor, so only a hand-mixed pair meets this. As found: **An editor and a `flyback-cli` from either side of 26e1888 cannot find each other.** The installed 0.13.0 CLI looks for `$TMPDIR/CoreFxPipe_flyback-editor-<user>` (and the desktop app starts it without `TMPDIR`, so `/tmp`), while an editor from `main` listens on `~/Library/Caches/Flyback/flyback-editor.sock`. The CLI says the editor's setting is off, which sends the user to the wrong fix. *Fix:* have the CLI try both paths until the old one is gone, and word the error as "no editor found at <path>".
 
 ## What worked
 

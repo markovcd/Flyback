@@ -9,6 +9,7 @@
 ### Assistant
 
 - The chat-completions and Gemini assistants are part of Flyback rather than plugins, and a plugin can no longer add one. The plugins window no longer marks the plugin the assistant sends to. The Decision server is part of Flyback too, and a plugin can no longer add a decision model. So are the Windows, macOS and Linux key stores, and a plugin can no longer add one, so the plugin contract is modules, presets and sound and MIDI backends. `flyback-cli plugin allow --secrets` is gone, since no plugin keeps keys.
+- `measure` says when a signal was clipped: held flat at its highest or lowest, and for how much of the window, as a Desk's master is when its sum passes the rails.
 - The assistant, and a program driving the editor over MCP, are told to read presets only for their techniques and to leave unread the preset in the genre asked for, unless the person names it.
 
 ### Editor
@@ -42,6 +43,7 @@
 ### Fixes
 
 - `flyback-cli mcp --editor` started by Claude's desktop app finds the open editor on a Mac.
+- `flyback-cli mcp --editor` finds the editor again after it closes and reopens, and a call the client gives up on stops in the editor and frees it for the next one. A program turned away is told which program holds the editor.
 
 ## 0.13.0 — 2026-11-07
 

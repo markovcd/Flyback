@@ -47,7 +47,7 @@ internal static class NoiseModule
             new PortSpec("white", PortKind.Scalar, 0f, -1f, 1f) { Help = "Bright hiss, for hats and snares." },
             new PortSpec("pink", PortKind.Scalar, 0f, -1f, 1f) { Help = "Darker, like rain." },
             new PortSpec("random", PortKind.Scalar, 0f, -1f, 1f) { Help = "Jumps to a new value 'rate' times a second and holds it." },
-            new PortSpec("drift", PortKind.Scalar, 0f, -1f, 1f) { Help = "Glides between the values 'random' jumps to." },
+            new PortSpec("drift", PortKind.Scalar, 0f, -1f, 1f) { Help = "Glides between the values 'random' jumps to, arriving at a new one every 1/'rate' seconds: at 0.05, every 20 s." },
         ],
         NoiseEmit,
         "Noise and chance. For a smooth field, use Clouds.")

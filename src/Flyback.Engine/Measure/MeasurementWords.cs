@@ -28,6 +28,9 @@ public static class MeasurementWords
         else if (stats.StepsPerSecond is { } steps) parts.Add($"{Number(steps)} steps/s");
         else if (stats.Slope is { } slope) parts.Add($"changing, up to {Number(slope)}/s");
 
+        if (stats.FlatTop is { } top) parts.Add($"flat at {Number(stats.Max)} for {Percent(top)} of it: clipped");
+        if (stats.FlatBottom is { } bottom) parts.Add($"flat at {Number(stats.Min)} for {Percent(bottom)} of it: clipped");
+
         if (stats.Held is { } held) parts.Add("holds " + string.Join(", ", held.Select(value => Value(value, display))));
 
         return string.Join(" · ", parts);
@@ -83,6 +86,10 @@ public static class MeasurementWords
         display == PortDisplay.Note && Math.Abs(value - Math.Round(value)) < 1e-4
             ? $"{Pitch.Name((float)value)} ({Number(value)})"
             : Number(value);
+
+    /// <summary>A share as a percentage, to a tenth where it is under ten.</summary>
+    private static string Percent(double share) =>
+        (share * 100d).ToString(share < 0.1d ? "0.#" : "0", CultureInfo.InvariantCulture) + "%";
 
     /// <summary>Four places at most, and never "-0".</summary>
     public static string Number(double value)

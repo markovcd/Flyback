@@ -19,7 +19,8 @@ internal sealed class ChannelClient : IAsyncDisposable
     /// <summary>A client greeted by the editor, or null with why not in <c>Why</c>.</summary>
     public static async Task<(ChannelClient? Client, string Why)> Connect(string name, string client, TimeSpan wait, CancellationToken cancel)
     {
-        const string closed = "no editor is open with \"Let a program on this computer edit the open patch\" on.";
+        var closed = $"no editor found at {name}: open one with \"Let a program on this computer edit the open patch\" on, "
+            + "from the same version as this program.";
 
         // A socket that is not there would only time out.
         if (Path.IsPathRooted(name) && !File.Exists(name)) return (null, closed);
@@ -82,9 +83,17 @@ internal sealed class ChannelClient : IAsyncDisposable
         }
     }
 
-    public ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
-        lines.Dispose();
-        return pipe.DisposeAsync();
+        try
+        {
+            lines.Dispose();
+        }
+        catch (IOException)
+        {
+            // The editor closed first, so there is nobody to flush to.
+        }
+
+        await pipe.DisposeAsync().ConfigureAwait(false);
     }
 }

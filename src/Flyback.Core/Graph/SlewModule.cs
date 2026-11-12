@@ -39,7 +39,9 @@ internal static class SlewModule
         [new PortSpec("out") { Help = "The value, catching up with 'in' as fast as 'rise' and 'fall' let it." }],
         SlewEmit,
         "Follows 'in', taking its time: between a Note Sequencer and a Note it is glide, and "
-        + "after a gate it smooths the steps. Audio only: a wire on the picture.")
+        + "after a gate it smooths the steps. It starts where 'in' is, so a constant passes "
+        + "straight through: to fade in, glide a level up in an Arrangement or a Song. "
+        + "Audio only: a wire on the picture.")
     {
         Words = "glide, portamento, smoothing",
         Sinks = ModuleSinks.Audio,

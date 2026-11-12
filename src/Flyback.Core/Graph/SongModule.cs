@@ -37,7 +37,8 @@ internal static class SongModule
             },
             new PortSpec("fade", PortKind.Scalar, 0f, 0f, 1f)
             {
-                Help = "How long a change of level takes at the start of a section, as a fraction of the section.",
+                Help = "How long a change of level takes at the start of a section, as a fraction of the section. "
+                    + "A level written '>' glides across its whole section instead.",
             },
         ],
         [

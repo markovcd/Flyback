@@ -67,14 +67,76 @@ public sealed class EditorTargetTests : IAsyncDisposable
         server.Start();
 
         await using var first = new EditorTarget(Name);
+        first.Greet("Claude Code");
         await first.Say("hello", CancellationToken.None);
 
         await using var second = new EditorTarget(Name);
         var refused = await second.Say("me too", CancellationToken.None);
 
         refused.Ok.ShouldBeFalse();
-        refused.Text.ShouldContain("driving the editor already");
+        refused.Text.ShouldContain("Claude Code is driving the editor already");
         heard.ShouldHaveSingleItem().Say.ShouldBe("hello");
+    }
+
+    [Fact]
+    public async Task A_program_that_gives_up_on_a_long_call_ends_it_and_frees_the_editor()
+    {
+        var ended = new TaskCompletionSource();
+
+        await using var server = new ChannelServer(Name, async (request, cancel) =>
+        {
+            if (request.Tool is null) return new ChannelReply(request.Id, true, "said.");
+
+            try
+            {
+                await Task.Delay(Timeout.Infinite, cancel);
+            }
+            finally
+            {
+                ended.TrySetResult();
+            }
+
+            return new ChannelReply(request.Id, true, "measured, for nobody.");
+        });
+        server.Start();
+
+        using var arguments = JsonDocument.Parse("{}");
+
+        await using (var impatient = new EditorTarget(Name))
+        {
+            using var giveUp = new CancellationTokenSource(TimeSpan.FromMilliseconds(300));
+
+            await Should.ThrowAsync<OperationCanceledException>(() => impatient.Call("measure", arguments.RootElement, giveUp.Token));
+        }
+
+        await ended.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+
+        await using var next = new EditorTarget(Name);
+        var answered = await next.Say("back again", CancellationToken.None);
+
+        answered.Ok.ShouldBeTrue(answered.Text);
+    }
+
+    [Fact]
+    public async Task A_program_finds_the_editor_again_once_it_has_closed_and_opened()
+    {
+        await using var target = new EditorTarget(Name);
+
+        await using (var before = Serve())
+        {
+            before.Start();
+            (await target.Say("first", CancellationToken.None)).Ok.ShouldBeTrue();
+        }
+
+        (await target.Say("while it is shut", CancellationToken.None)).Ok.ShouldBeFalse();
+
+        await using var after = Serve();
+        after.Start();
+
+        var answered = await target.Say("second", CancellationToken.None);
+
+        answered.Ok.ShouldBeTrue(answered.Text);
+        heard.Select(request => request.Say).ShouldBe(["first", "second"]);
     }
 
     [Fact]
@@ -85,6 +147,7 @@ public sealed class EditorTargetTests : IAsyncDisposable
         var answered = await target.Say("anyone?", CancellationToken.None);
 
         answered.Ok.ShouldBeFalse();
+        answered.Text.ShouldContain($"no editor found at {Name}");
         answered.Text.ShouldContain("Let a program on this computer edit the open patch");
     }
 

@@ -20,10 +20,15 @@ internal sealed class ComponentTracker(double steppedShare, double fastest)
     /// <summary>The most distinct values a stepped signal is listed with; one with more has none listed.</summary>
     public const int Listed = 12;
 
+    /// <summary>The least share of evaluations a signal sits flat at its edge for to be called clipped.</summary>
+    private const double FlatShare = 0.005;
+
     /// <summary>Every value seen, up to one past <see cref="Listed"/>.</summary>
     private readonly SortedSet<double> held = [];
 
     private long changes;
+    private long flatTop;
+    private long flatBottom;
     private double min = double.PositiveInfinity;
     private double max = double.NegativeInfinity;
     private double last;
@@ -63,6 +68,14 @@ internal sealed class ComponentTracker(double steppedShare, double fastest)
         }
 
         if ((Count == 0 || value != last) && held.Count <= Listed) held.Add(value);
+
+        // Evaluations held at the highest and the lowest seen, counted again from
+        // nothing each time the edge moves out.
+        if (value > max) flatTop = 0;
+        else if (value == max && Count > 0 && value == last) flatTop++;
+
+        if (value < min) flatBottom = 0;
+        else if (value == min && Count > 0 && value == last) flatBottom++;
 
         min = Math.Min(min, value);
         max = Math.Max(max, value);
@@ -123,7 +136,7 @@ internal sealed class ComponentTracker(double steppedShare, double fastest)
         {
             var hz = timed / (lastRise - firstRise);
 
-            if (hz <= fastest) return new ComponentStats(low, high, mean, true, across, Hz: hz);
+            if (hz <= fastest) return Flattened(new ComponentStats(low, high, mean, true, across, Hz: hz), overall is null);
         }
 
         if (changes < Count * steppedShare && seconds > 0d)
@@ -140,6 +153,20 @@ internal sealed class ComponentTracker(double steppedShare, double fastest)
             };
         }
 
-        return new ComponentStats(low, high, mean, true, across, Slope: slope);
+        return Flattened(new ComponentStats(low, high, mean, true, across, Slope: slope), overall is null);
+    }
+
+    /// <summary>
+    /// <paramref name="stats"/> with the share of the window it sat flat at either edge, for a
+    /// signal of many values: a wave clipped at a rail, where a square or a step holds its
+    /// edge by design and has only a few.
+    /// </summary>
+    private ComponentStats Flattened(ComponentStats stats, bool own)
+    {
+        if (!own || held.Count <= Listed || Count == 0) return stats;
+
+        double? Share(long flat) => flat >= Count * FlatShare ? (double)flat / Count : null;
+
+        return stats with { FlatTop = Share(flatTop), FlatBottom = Share(flatBottom) };
     }
 }

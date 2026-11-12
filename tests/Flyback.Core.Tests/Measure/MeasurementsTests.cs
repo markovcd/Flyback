@@ -110,6 +110,39 @@ public class MeasurementsTests
     }
 
     [Fact]
+    public void A_sum_held_at_the_desks_rails_is_called_clipped()
+    {
+        var b = new PatchBuilder(Modules);
+        b.Add(OutputModule.TypeId);
+        var desk = b.Add("math.desk");
+        b.Wire(b.Add("osc.sine", (1, 110f)), 0, desk, 0).Wire(b.Add("osc.sine", (1, 110f)), 0, desk, 3);
+
+        var left = Of(Take(b), desk).Sound.Single();
+
+        left.Max.ShouldBe(1d);
+        left.FlatTop!.Value.ShouldBeGreaterThan(0.1d);
+        left.FlatBottom!.Value.ShouldBeGreaterThan(0.1d);
+        MeasurementWords.Describe(left, 1d).ShouldContain("flat at 1 for");
+    }
+
+    [Theory]
+    [InlineData("osc.sine")]
+    [InlineData("osc.square")]
+    [InlineData("osc.saw")]
+    public void A_wave_at_full_scale_is_not_called_clipped(string wave)
+    {
+        var b = new PatchBuilder(Modules);
+        b.Add(OutputModule.TypeId);
+        var tone = b.Add(wave, (1, 110f));
+
+        var sound = Of(Take(b), tone).Sound.Single();
+
+        sound.FlatTop.ShouldBeNull();
+        sound.FlatBottom.ShouldBeNull();
+        MeasurementWords.Describe(sound, 1d).ShouldNotContain("clipped");
+    }
+
+    [Fact]
     public void Held_notes_are_written_by_name_with_their_numbers()
     {
         var stats = new ComponentStats(60d, 67d, 63d, true, false, StepsPerSecond: 4d) { Held = [60d, 64d, 67d] };

@@ -180,7 +180,8 @@ internal static class SequencerModules
                 },
                 Num("fade", 0f, 0f, 1f) with
                 {
-                    Help = "How long a change of level takes at the start of a section, as a fraction of the section.",
+                    Help = "How long a change of level takes at the start of a section, as a fraction of the section. "
+                        + "A level written '>' glides across its whole section instead.",
                 },
                 .. Enumerable.Range(1, MaxParts).Select(part => new PortSpec($"part {part}", PatchOnly: true)
                 {
@@ -206,7 +207,8 @@ internal static class SequencerModules
             EmitArrangement,
             "Which parts play in each section of a piece, and how loud: a row of levels for each "
             + "part, stepping a section at a time. Wire a part into a Desk's level or a drum's "
-            + "velocity to bring it in and out. For more than " + MaxSections + " sections, chain them: "
+            + "velocity to bring it in and out. A level written '>' glides there across its section, so "
+            + "'0 >0.25 >0.5 >0.75 >1' fades a part in over four. For more than " + MaxSections + " sections, chain them: "
             + "'next' into the next one's 'in', each part into the next one's part, and 'loop' off on all but the last.")
         {
             Words = "sections of a song",
