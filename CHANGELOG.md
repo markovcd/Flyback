@@ -26,7 +26,7 @@
 - The phone and tablet editors leave out Measure.
 - The phone and tablet editors leave out Record and its settings.
 - The Record button turns red while a take is recording.
-- The assistant column's note that nothing is set up to send to is drawn in the warning color rather than the accent, which in Phosphor read as a success.
+- The assistant column's note that nothing is set up to send to is drawn in the warning color, not the accent.
 
 ### Viewer
 
