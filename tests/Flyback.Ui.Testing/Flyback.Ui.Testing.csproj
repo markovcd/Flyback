@@ -17,6 +17,12 @@
     which makes a project one the test runner is pointed at.
   -->
   <ItemGroup>
+    <PackageReference Include="HarfBuzzSharp" />
+    <PackageReference Include="HarfBuzzSharp.NativeAssets.Linux" />
+    <PackageReference Include="HarfBuzzSharp.NativeAssets.WebAssembly" />
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
+    <PackageReference Include="SkiaSharp.NativeAssets.WebAssembly" />
     <PackageReference Include="xunit.v3.extensibility.core" />
     <PackageReference Include="Avalonia.Headless" />
     <PackageReference Include="Avalonia.Skia" />

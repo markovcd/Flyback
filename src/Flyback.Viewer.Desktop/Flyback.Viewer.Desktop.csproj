@@ -37,7 +37,9 @@
     <PackageReference Include="Avalonia.Desktop" />
     <PackageReference Include="Avalonia.Fonts.Inter" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="HarfBuzzSharp.NativeAssets.WebAssembly" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="SkiaSharp.NativeAssets.WebAssembly" />
     <PackageReference Include="System.CommandLine" />
     <!--
       The editor's Skia and HarfBuzz, which its SVG controls take newer than Avalonia does:

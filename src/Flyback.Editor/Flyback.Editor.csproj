@@ -76,6 +76,12 @@
       ADR-0019's rule is the engine's, and Core still answers to it: this is the
       shell, which already carries Avalonia, Skia and a font.
     -->
+    <PackageReference Include="HarfBuzzSharp" />
+    <PackageReference Include="HarfBuzzSharp.NativeAssets.Linux" />
+    <PackageReference Include="HarfBuzzSharp.NativeAssets.WebAssembly" />
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
+    <PackageReference Include="SkiaSharp.NativeAssets.WebAssembly" />
     <PackageReference Include="Svg.Controls.Skia.Avalonia" />
 
     <!--
