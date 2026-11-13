@@ -8,7 +8,7 @@ description: Use when writing or reviewing C# in src/ or tests/ - which C# 12 to
 ## Write the newest language the SDK ships
 
 `Directory.Build.props` sets `<LangVersion>latest</LangVersion>`, which is the
-newest stable C# of the SDK in `global.json`: C# 15 with the .NET 11 SDK. Never
+newest stable C# of the SDK in `global.json`: C# 14 on the .NET 10 SDK. Never
 `preview`, and never pin a number in a project file.
 
 **Why:** the user asked for it outright. The newest features say more with
@@ -20,7 +20,10 @@ alone unless the change already touches that member; rewriting a file into the
 new dialect is a refactor to propose (`propose-refactors.md`), not something
 to fold into a feature commit.
 
-## C# 15
+## C# 15, once the SDK is .NET 11
+
+These do not compile on the .NET 10 SDK. Use them only after `global.json`
+moves to .NET 11; until then they are what to reach for on that day.
 
 **Union types** for a value that is exactly one of a few unrelated types. The
 compiler checks a `switch` over it for exhaustiveness, so no `_ => throw`.
@@ -106,7 +109,7 @@ public string Name { get; set => field = value.Trim(); } = "";
 `TryRead parse = (text, out value) => double.TryParse(text, out value);`
 
 **Implicit span conversions**: pass an array straight to a `ReadOnlySpan<T>`
-parameter. Take `ReadOnlySpan<T>` for a buffer that is only read (CA1517).
+parameter. Take `ReadOnlySpan<T>` for a buffer that is only read.
 
 **User-defined compound assignment** (`public void operator +=(T x)`) only
 where an in-place update saves an allocation on the sound path; measure it
