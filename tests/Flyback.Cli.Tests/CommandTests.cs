@@ -62,7 +62,7 @@ public class CommandTests
         var (_, json, _) = Run((o, e) => CheckCommand.Run(Preset("Plasma"), "plasma.fbk", true, o, e));
 
         text.ShouldContain("plugins: ");
-        JsonElement.Parse(json).TryGetProperty("plugins", out var plugins).ShouldBeTrue(json);
+        JsonDocument.Parse(json).RootElement.TryGetProperty("plugins", out var plugins).ShouldBeTrue(json);
         plugins.ValueKind.ShouldBe(JsonValueKind.Array);
     }
 
@@ -212,7 +212,7 @@ public class CommandTests
 
         code.ShouldBe(Exit.Ok);
 
-        var listed = JsonElement.Parse(output).GetProperty("groups").EnumerateArray().Single();
+        var listed = JsonDocument.Parse(output).RootElement.GetProperty("groups").EnumerateArray().Single();
 
         listed.GetProperty("name").GetString().ShouldBe("Heart");
         listed.GetProperty("modules").GetInt32().ShouldBe(3);

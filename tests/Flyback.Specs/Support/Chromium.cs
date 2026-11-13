@@ -107,22 +107,12 @@ internal sealed partial class Chromium : IDisposable
     }
 
     /// <summary>The DevTools address of the page the browser opened with.</summary>
-    /// <remarks>The browser can listen a moment before it lists its first page.</remarks>
     private static Uri BlankPage(Uri browser)
     {
-        var deadline = Stopwatch.StartNew();
+        var targets = JsonNode.Parse(Http.GetStringAsync(new Uri(browser, "/json/list")).Result)!.AsArray();
 
-        while (true)
-        {
-            var targets = JsonNode.Parse(Http.GetStringAsync(new Uri(browser, "/json/list")).Result)!.AsArray();
-
-            if (targets.SingleOrDefault(target => (string?)target!["type"] == "page") is { } page)
-                return new Uri((string)page["webSocketDebuggerUrl"]!);
-
-            if (deadline.Elapsed > Starting) throw new TimeoutException($"Chromium listed no page within {Starting.TotalSeconds:0} s.");
-
-            Thread.Sleep(50);
-        }
+        var page = targets.Single(target => (string?)target!["type"] == "page")!;
+        return new Uri((string)page["webSocketDebuggerUrl"]!);
     }
 
     private static string? Find()

@@ -11,7 +11,7 @@ A test run that passes still has something to say. After running the suite, rank
 the tests by how long each took and look at the top of the list:
 
 ```bash
-./tests/Flyback.Editor.Tests/bin/Release/net11.0/Flyback.Editor.Tests.exe -xml results.xml
+./tests/Flyback.Editor.Tests/bin/Release/net10.0/Flyback.Editor.Tests.exe -xml results.xml
 ```
 
 The runner takes `-xml` directly, and the file has a `time` on every `<test>`.
@@ -60,7 +60,7 @@ it.
 While iterating, run only the test classes a change touches:
 
 ```bash
-./tests/Flyback.Editor.Tests/bin/Release/net11.0/Flyback.Editor.Tests -class "*PresetLibraryTests" -class "*EditorServicesTests"
+./tests/Flyback.Editor.Tests/bin/Release/net10.0/Flyback.Editor.Tests -class "*PresetLibraryTests" -class "*EditorServicesTests"
 ```
 
 A change to how a clip is written runs `-trait "Category=ffmpeg"` across the projects;

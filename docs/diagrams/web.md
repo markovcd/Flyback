@@ -14,8 +14,8 @@ flowchart TB
     subgraph flyback["Flyback"]
         webEditor["<b>Web editor</b><br/>[Container: WebAssembly, Avalonia]<br/>The editor in a page, with no assistant and no plugins window; opens and saves nothing."]:::container
         webViewer["<b>Web viewer</b><br/>[Container: WebAssembly, JavaScript, WebGL 2]<br/>Plays a patch or a shared preset in a page."]:::container
-        androidEditor["<b>Android editor</b><br/>[Container: .NET 11, Avalonia]<br/>The editor on a phone or a tablet, with its plugins linked in."]:::container
-        iosEditor["<b>iOS editor</b><br/>[Container: .NET 11, Avalonia]<br/>The editor on an iPhone or an iPad, with its plugins linked in; built by hand, not released."]:::container
+        androidEditor["<b>Android editor</b><br/>[Container: .NET 10, Avalonia]<br/>The editor on a phone or a tablet, with its plugins linked in."]:::container
+        iosEditor["<b>iOS editor</b><br/>[Container: .NET 10, Avalonia]<br/>The editor on an iPhone or an iPad, with its plugins linked in; built by hand, not released."]:::container
         browserStorage[("<b>Browser storage</b><br/>[Container: Local storage]<br/>The web editor's settings and the web viewer's volume.")]:::store
         dataFolder[("<b>Data folder</b><br/>[Container: Files]<br/>Settings, saved presets and recovery; the app's private folder on Android and iOS.")]:::store
     end

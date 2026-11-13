@@ -138,7 +138,7 @@ public sealed class AskCommandTests : IDisposable
 
         code.ShouldBe(Exit.Ok);
 
-        var line = JsonElement.Parse(said);
+        var line = JsonDocument.Parse(said).RootElement;
 
         line.GetProperty("kind").GetString().ShouldBe("brief");
         line.GetProperty("text").GetString().ShouldBe("heard 1 messages");

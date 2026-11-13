@@ -167,7 +167,7 @@ public sealed class ProsePolicyTests : IDisposable
 
         var read = await bench.InvokeAsync(
             "describe_preset",
-            System.Text.Json.JsonElement.Parse("""{"name":"Plasma"}"""),
+            System.Text.Json.JsonDocument.Parse("""{"name":"Plasma"}""").RootElement,
             CancellationToken.None);
 
         read.Ok.ShouldBeTrue(read.Text);

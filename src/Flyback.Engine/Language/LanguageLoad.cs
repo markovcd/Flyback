@@ -65,7 +65,7 @@ public sealed record LanguageLoad(Patch Patch, IReadOnlyList<LanguageIssue> Issu
                 var line = lines[issue.Line - 1];
 
                 text.Append("    ").AppendLine(line);
-                text.Append("    ").Append(' ', Math.Clamp(issue.Column - 1, 0, line.Length))
+                text.Append("    ").Append(new string(' ', Math.Clamp(issue.Column - 1, 0, line.Length)))
                     .AppendLine("^");
             }
 

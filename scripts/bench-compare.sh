@@ -152,7 +152,7 @@ if ! $web_only; then
   for (( round = 1; round <= rounds; round++ )); do
     for side in $(order "$round"); do
       echo "bench-compare: benchmarks, round $round of $rounds, $side" >&2
-      exe="$(checkout "$(side_sha "$side")")/tests/Flyback.Core.Benchmarks/bin/Release/net11.0/Flyback.Core.Benchmarks"
+      exe="$(checkout "$(side_sha "$side")")/tests/Flyback.Core.Benchmarks/bin/Release/net10.0/Flyback.Core.Benchmarks"
       [ -f "$exe.exe" ] && exe="$exe.exe"
       log="$out/run-$side-r$round.log"
 

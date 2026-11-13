@@ -55,7 +55,7 @@ public sealed class PluginDescribeCommandTests : IDisposable
 
         code.ShouldBe(Exit.Ok);
 
-        var root = JsonElement.Parse(output);
+        var root = JsonDocument.Parse(output).RootElement;
         root.GetProperty("sha256").GetString().ShouldBe(Convert.ToHexStringLower(SHA256.HashData(bytes)));
         root.GetProperty("signer").GetString().ShouldBe(PackageSigner.Of(key).Fingerprint);
         root.TryGetProperty("refused", out _).ShouldBeFalse();
@@ -87,7 +87,7 @@ public sealed class PluginDescribeCommandTests : IDisposable
 
         code.ShouldBe(Exit.Problems);
 
-        var root = JsonElement.Parse(output);
+        var root = JsonDocument.Parse(output).RootElement;
         root.GetProperty("refused").GetString().ShouldBe("It is not a zip file.");
         root.GetProperty("sha256").GetString().ShouldBe(Convert.ToHexStringLower(SHA256.HashData(bytes)));
         root.TryGetProperty("builds", out _).ShouldBeFalse();

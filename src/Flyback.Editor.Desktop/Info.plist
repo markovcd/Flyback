@@ -46,7 +46,7 @@
   <key>NSMicrophoneUsageDescription</key>
   <string>Flyback listens to the microphone while a patch with a Line In plays.</string>
 
-  <!-- The oldest macOS the .NET 11 runtime supports. -->
+  <!-- The oldest macOS the .NET 10 runtime supports. -->
   <key>LSMinimumSystemVersion</key>
   <string>13.0</string>
 

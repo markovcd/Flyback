@@ -31,12 +31,6 @@
       restore on the next SDK patch.
     -->
     <RestorePackagesWithLockFile>false</RestorePackagesWithLockFile>
-
-    <!--
-      The runtime is copied into the build's wwwroot/_framework, where hear.mjs runs it
-      under Node with no static web assets server to find it in obj.
-    -->
-    <_WasmFrameworkCopyToOutputDirectory>PreserveNewest</_WasmFrameworkCopyToOutputDirectory>
   </PropertyGroup>
 
   <ItemGroup>

@@ -40,7 +40,7 @@ public sealed class HelpSteps
 
         answered = await bench.InvokeAsync(
             tool,
-            System.Text.Json.JsonElement.Parse(arguments),
+            System.Text.Json.JsonDocument.Parse(arguments).RootElement,
             CancellationToken.None);
 
         answered.Ok.ShouldBeTrue(answered.Text);

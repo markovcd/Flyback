@@ -21,7 +21,7 @@ Each time a shot is listed, look at the whole list. Once it holds **four or more
 `patch-*.webp` (the patch figures) and `skin-*.webp` (the plugin guide's backgrounds, kept beside it in `docs/images/plugin-guide/`) are headless captures of a real `NodeEditor`, cropped to the modules. Nothing here is driven by hand:
 
 ```bash
-SHOT_DIR=<somewhere> ./tests/Flyback.Editor.Tests/bin/Release/net11.0/Flyback.Editor.Tests.exe -method "*PatchShotTests*"
+SHOT_DIR=<somewhere> ./tests/Flyback.Editor.Tests/bin/Release/net10.0/Flyback.Editor.Tests.exe -method "*PatchShotTests*"
 ```
 
 `SkinShotTests` for the other set. Both skip without `SHOT_DIR`. Convert the PNGs to webp at quality 88 and copy them in, keeping the `width`/`height` attributes on the site's `<img>` in step with the new pixel size. A new patch figure is a new `.fbks` in `PatchShotTests`, never a drawing — see ADR-0119.

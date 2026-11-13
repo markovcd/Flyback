@@ -44,7 +44,7 @@ public sealed class ValidateSubmissionsTests
         (await ValidateSubmissionsCommand.Run(client, Browser, lacks: false, output, TextWriter.Null, TestContext.Current.CancellationToken))
             .ShouldBe(Exit.Ok);
 
-        var sent = site.Asked.Where(a => a.Method == HttpMethod.Put).ToDictionary(a => a.Path, a => JsonElement.Parse(a.Body!));
+        var sent = site.Asked.Where(a => a.Method == HttpMethod.Put).ToDictionary(a => a.Path, a => JsonDocument.Parse(a.Body!).RootElement);
 
         sent["/api/v1/admin/presets/p1/check"].GetProperty("name").GetString().ShouldBe("Night bus");
         sent["/api/v1/admin/presets/p2/check"].GetProperty("accepted").GetBoolean().ShouldBeFalse();

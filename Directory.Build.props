@@ -8,7 +8,7 @@
       Flyback.Editor.Desktop.csproj) needs the name listed to show up in one at all.
     -->
     <Configurations>Debug;Release;All plugins</Configurations>
-    <TargetFramework>net11.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>

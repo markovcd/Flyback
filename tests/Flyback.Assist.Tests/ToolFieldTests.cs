@@ -11,7 +11,7 @@ public class ToolFieldTests
 {
     private static readonly PatchWorkbench Bench = new(NodeCatalog.BuiltIn, new Patch(), vision: true, hearing: Listener.Itself);
 
-    private static JsonElement Arguments(string json) => JsonElement.Parse(json);
+    private static JsonElement Arguments(string json) => JsonDocument.Parse(json).RootElement;
 
     [Fact]
     public void A_schema_describes_each_field_and_lists_the_required_ones()

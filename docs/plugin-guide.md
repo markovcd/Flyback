@@ -45,7 +45,7 @@ Four things matter, and each of them fixes a specific failure. This is the shape
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net11.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>Flyback.Plugins.Yours</AssemblyName>
     <RootNamespace>Flyback.Plugins.Yours</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -645,7 +645,7 @@ Drop your build output into a folder under `plugins/` beside the executable (on 
 ```bash
 dotnet build -c Release
 rm -rf "$FLYBACK/plugins/Flyback.Plugins.Yours"
-cp -r bin/Release/net11.0 "$FLYBACK/plugins/Flyback.Plugins.Yours"
+cp -r bin/Release/net10.0 "$FLYBACK/plugins/Flyback.Plugins.Yours"
 cd "$FLYBACK"
 ./flyback-cli plugin allow plugins/Flyback.Plugins.Yours
 ./flyback-cli plugin list --json
@@ -677,7 +677,7 @@ To hand a plugin to somebody else, pack it as a `.fbkp`, signed with your key. O
 ```bash
 flyback-cli plugin-key -o yours.key
 flyback-cli pack-plugin Flyback.Plugins.Yours.csproj -o yours.fbkp --key yours.key
-flyback-cli pack-plugin bin/Release/net11.0 -o yours.fbkp --key yours.key
+flyback-cli pack-plugin bin/Release/net10.0 -o yours.fbkp --key yours.key
 flyback-cli plugin describe yours.fbkp --json
 ```
 
@@ -755,7 +755,7 @@ A provider appears only if at least one of its modules was accepted, so a patch 
 `plugin list` answers whether a folder is allowed to load, not what happened when it did: a plugin refused during `Register` still reads `"loads": true`, and the only sign is its provider missing from `flyback-cli modules`. To read why, pack the build. `pack-plugin` loads it the way the editor does and prints the refusal:
 
 ```bash
-flyback-cli pack-plugin bin/Release/net11.0 -o probe.fbkp --key yours.key
+flyback-cli pack-plugin bin/Release/net10.0 -o probe.fbkp --key yours.key
 ```
 
 ```text

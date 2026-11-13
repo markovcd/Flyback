@@ -36,7 +36,7 @@ internal static class PackPluginCommand
         var source = new Argument<FileSystemInfo>("source")
         {
             Description = "The plugin's project, published here for each runtime it names, "
-                + "or the folder the SDK already built it into, such as bin/Release/net11.0.",
+                + "or the folder the SDK already built it into, such as bin/Release/net10.0.",
         };
 
         var output = new Option<FileInfo>("--out", "-o")
@@ -247,7 +247,7 @@ internal static class PackPluginCommand
 
         Fail(error, (Missing(Path.Combine(root, PublishFolder)) ?? Missing(root)) is { } why
             ? why
-            : $"{Path.GetFileName(root)} holds no plugin build. Point it at the folder the SDK built into, such as bin/Release/net11.0, or at the project.");
+            : $"{Path.GetFileName(root)} holds no plugin build. Point it at the folder the SDK built into, such as bin/Release/net10.0, or at the project.");
         return null;
     }
 

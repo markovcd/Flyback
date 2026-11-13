@@ -49,7 +49,7 @@ RUN npm ci --no-audit --no-fund
 COPY worker/ ./
 RUN npx tsc --noEmit && npx vitest run && touch /tested
 
-FROM mcr.microsoft.com/dotnet/sdk:11.0.100@sha256:65f3c7c6a25a239ab3e6719f2896147e7b68242ff2d8818dd70498bde6ef8bea AS sdk
+FROM mcr.microsoft.com/dotnet/sdk:10.0.403@sha256:de4fe90a98845d75910b9769662465c84de1a934665c431279d1382b2bddc02b AS sdk
 
 # What the SDK image does not already have, in three stages so each package is
 # listed once and a stage takes only what it needs. An argument declared above the
@@ -90,7 +90,7 @@ FROM base AS tools
 RUN apt-get update \
  && apt-get install --yes --no-install-recommends python3 \
  && rm -rf /var/lib/apt/lists/* \
- && dotnet workload install wasm-tools --version 11.0.100
+ && dotnet workload install wasm-tools --version 10.0.402
 
 # Hugo builds the website (ADR-0222), for the site's build and the specs that read
 # it: one binary, pinned by version and checksum in the script.
@@ -221,7 +221,7 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
         --report-xunit-junit --results-directory /test-results'; \
     echo $? > /test-results/exit-code; \
     echo $(( $(date +%s) - started )) > /test-results/seconds; \
-    cp "tests/Flyback.Specs/bin/$CONFIGURATION/net11.0/reqnroll_report.html" /test-results/specs.html || true
+    cp "tests/Flyback.Specs/bin/$CONFIGURATION/net10.0/reqnroll_report.html" /test-results/specs.html || true
 
 # The reports, the exit code, the seconds and the specs' page, which gate.sh asks
 # for with --output to write the run's summary.

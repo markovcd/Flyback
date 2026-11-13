@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -71,7 +70,6 @@ internal static class IlOps
     [MethodImpl(Inline)] public static void ClockWrite(DelayState? delays, float k, double a) => delays?.WriteClock((int)k, a);
 
     [MethodImpl(Inline)]
-    [SuppressMessage("Performance", "CA1517", Justification = "Emitted IL passes the evaluator's Span<float>.")]
     public static double PlaneRead(DelayState? delays, Span<float> planes, float k)
     {
         var slot = (int)k;

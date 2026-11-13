@@ -33,7 +33,7 @@ internal sealed class StaticAssets(string[] roots, JsonObject tree)
 
             // A folder served whole: the rest of the path is under the pattern's root.
             return node["Patterns"]?.AsArray()
-                .Select(pattern => Path.Combine([roots[(int)pattern!["ContentRootIndex"]!], .. parts[i..]]))
+                .Select(pattern => Path.Combine(roots[(int)pattern!["ContentRootIndex"]!], Path.Combine(parts[i..])))
                 .FirstOrDefault(File.Exists);
         }
 

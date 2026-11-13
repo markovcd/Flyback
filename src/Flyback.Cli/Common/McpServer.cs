@@ -39,7 +39,7 @@ internal sealed class McpServer(PluginCatalog plugins, IToolTarget target, strin
 
             if (await Answer(line, cancel).ConfigureAwait(false) is not { } answer) continue;
 
-            await output.WriteAsync(answer.ToJsonString() + "\n", cancel).ConfigureAwait(false);
+            await output.WriteAsync(answer.ToJsonString() + "\n").ConfigureAwait(false);
             await output.FlushAsync(cancel).ConfigureAwait(false);
         }
     }

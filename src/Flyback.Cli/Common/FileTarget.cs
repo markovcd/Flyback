@@ -27,14 +27,14 @@ internal sealed class FileTarget(PluginCatalog plugins, ToolHistory history, Fil
 
         if (ran is null) return new ToolAnswered(false, said.ToString().Trim());
 
-        if (said.ToString() is { Length: > 0 } aside) await log.WriteAsync(aside, cancel).ConfigureAwait(false);
+        if (said.ToString() is { Length: > 0 } aside) await log.WriteAsync(aside).ConfigureAwait(false);
 
         return new ToolAnswered(ran.Outcome.Ok, ran.Outcome.Text, ran.Outcome.Png);
     }
 
     public async Task<ToolAnswered> Say(string text, CancellationToken cancel)
     {
-        await log.WriteLineAsync(text, cancel).ConfigureAwait(false);
+        await log.WriteLineAsync(text).ConfigureAwait(false);
         await log.FlushAsync(cancel).ConfigureAwait(false);
 
         return new ToolAnswered(true, "said.");

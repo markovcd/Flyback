@@ -58,7 +58,7 @@ public sealed class CompleteCommandTests : IDisposable
 
         code.ShouldBe(Exit.Ok, error);
 
-        var root = JsonElement.Parse(output);
+        var root = JsonDocument.Parse(output).RootElement;
         root.GetProperty("line").GetInt32().ShouldBe(2);
         root.GetProperty("column").GetInt32().ShouldBe(5);
         root.GetProperty("typed").GetString().ShouldBe("fr");

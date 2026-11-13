@@ -97,10 +97,10 @@ public sealed class PackPluginCommandTests : IDisposable
     [Fact]
     public void A_folder_the_sdk_built_into_is_packed_as_it_lays_its_builds_out()
     {
-        var root = Build("net11.0");
-        Build("net11.0/publish");
-        Build("net11.0/win-x64/publish");
-        Build("net11.0/linux-x64");
+        var root = Build("net10.0");
+        Build("net10.0/publish");
+        Build("net10.0/win-x64/publish");
+        Build("net10.0/linux-x64");
 
         var (code, output, _) = Run(new DirectoryInfo(root));
 
@@ -122,7 +122,7 @@ public sealed class PackPluginCommandTests : IDisposable
     [Fact]
     public void A_package_is_not_packed_without_a_key()
     {
-        var (code, _, error) = Run(new DirectoryInfo(Build("net11.0")), signed: false);
+        var (code, _, error) = Run(new DirectoryInfo(Build("net10.0")), signed: false);
 
         code.ShouldBe(Exit.Failed);
         error.ShouldContain("--key");
@@ -134,7 +134,7 @@ public sealed class PackPluginCommandTests : IDisposable
     {
         File.WriteAllText(Key.FullName, "not a key");
 
-        var (code, _, error) = Run(new DirectoryInfo(Build("net11.0")));
+        var (code, _, error) = Run(new DirectoryInfo(Build("net10.0")));
 
         code.ShouldBe(Exit.Failed);
         error.ShouldContain("author.key: It holds no P-256 private key");
@@ -158,7 +158,7 @@ public sealed class PackPluginCommandTests : IDisposable
     [Fact]
     public void A_folder_with_only_a_portable_build_is_packed_for_any_system()
     {
-        Run(new DirectoryInfo(Build("net11.0"))).Code.ShouldBe(Exit.Ok);
+        Run(new DirectoryInfo(Build("net10.0"))).Code.ShouldBe(Exit.Ok);
 
         Written.Builds.ShouldBe([PluginPackage.AnyPlatform]);
     }
@@ -169,7 +169,7 @@ public sealed class PackPluginCommandTests : IDisposable
         File.WriteAllText(Key.FullName, PackageSigner.NewKey());
         var output = new FileInfo(Path.Combine(folder, "out", "sample.fbkp"));
 
-        PackPluginCommand.Run(new DirectoryInfo(Build("net11.0")), output, new StringWriter(), new StringWriter(), NoSdk, Key, checkKeys: true)
+        PackPluginCommand.Run(new DirectoryInfo(Build("net10.0")), output, new StringWriter(), new StringWriter(), NoSdk, Key, checkKeys: true)
             .ShouldBe(Exit.Ok);
 
         output.Exists.ShouldBeTrue();
@@ -178,10 +178,10 @@ public sealed class PackPluginCommandTests : IDisposable
     [Fact]
     public void Two_runtimes_for_one_system_are_refused_by_name()
     {
-        Build("net11.0/win-x64");
-        Build("net11.0/win-arm64");
+        Build("net10.0/win-x64");
+        Build("net10.0/win-arm64");
 
-        var (code, _, error) = Run(new DirectoryInfo(Path.Combine(folder, "net11.0")));
+        var (code, _, error) = Run(new DirectoryInfo(Path.Combine(folder, "net10.0")));
 
         code.ShouldBe(Exit.Failed);
         error.ShouldContain("win-x64 is a second build for Windows");
@@ -191,7 +191,7 @@ public sealed class PackPluginCommandTests : IDisposable
     [Fact]
     public void A_plugin_not_built_with_dynamic_loading_is_refused()
     {
-        var build = Build("net11.0");
+        var build = Build("net10.0");
         File.Delete(Directory.GetFiles(build, "*.runtimeconfig.json").Single());
 
         var (code, _, error) = Run(new DirectoryInfo(build));
@@ -204,10 +204,10 @@ public sealed class PackPluginCommandTests : IDisposable
     [Theory]
     [InlineData("Flyback.Core.dll")]
     [InlineData("Flyback.Plugins.dll")]
-    [InlineData("runtimes/win-x64/lib/net11.0/Flyback.Core.dll")]
+    [InlineData("runtimes/win-x64/lib/net10.0/Flyback.Core.dll")]
     public void A_build_carrying_the_hosts_own_assemblies_is_refused(string copy)
     {
-        var build = Build("net11.0");
+        var build = Build("net10.0");
         var path = Path.Combine(build, copy);
 
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
@@ -224,7 +224,7 @@ public sealed class PackPluginCommandTests : IDisposable
     [Fact]
     public void An_assembly_that_does_not_reference_the_contract_is_named()
     {
-        var build = Directory.CreateDirectory(Path.Combine(folder, "net11.0")).FullName;
+        var build = Directory.CreateDirectory(Path.Combine(folder, "net10.0")).FullName;
         File.Copy(typeof(HttpClient).Assembly.Location, Path.Combine(build, "Ripple.dll"));
 
         var (code, _, error) = Run(new DirectoryInfo(build));
@@ -236,7 +236,7 @@ public sealed class PackPluginCommandTests : IDisposable
     [Fact]
     public void An_assembly_that_references_the_contract_but_has_no_plugin_is_named()
     {
-        var build = Directory.CreateDirectory(Path.Combine(folder, "net11.0")).FullName;
+        var build = Directory.CreateDirectory(Path.Combine(folder, "net10.0")).FullName;
         File.Copy(typeof(PackPluginCommand).Assembly.Location, Path.Combine(build, "Ripple.dll"));
 
         var (code, _, error) = Run(new DirectoryInfo(build));

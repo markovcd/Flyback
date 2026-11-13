@@ -203,7 +203,7 @@ public class WireTests
         call.Id.ShouldBe("call_1");
         call.Name.ShouldBe("describe_module");
 
-        JsonElement.Parse(call.Arguments)
+        JsonDocument.Parse(call.Arguments).RootElement
             .GetProperty("type_id").GetString().ShouldBe("osc.sine");
     }
 

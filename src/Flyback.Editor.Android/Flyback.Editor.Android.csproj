@@ -7,7 +7,7 @@
     image carries, so Flyback.slnx lists it without building it and it is built by path.
   -->
   <PropertyGroup>
-    <TargetFramework>net11.0-android</TargetFramework>
+    <TargetFramework>net10.0-android</TargetFramework>
     <SupportedOSPlatformVersion>26</SupportedOSPlatformVersion>
     <OutputType>Exe</OutputType>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
