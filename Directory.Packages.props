@@ -44,10 +44,12 @@
 
     <!--
       The editor in a browser: the natives Avalonia.Browser brings are older than
-      the managed SkiaSharp and HarfBuzzSharp the editor resolves.
+      the managed SkiaSharp and HarfBuzzSharp the editor resolves. Each matches the
+      managed version Flyback.Editor.Web resolves, not the viewer's below: SkiaSharp
+      refuses a native of another version at startup.
     -->
-    <PackageVersion Include="SkiaSharp.NativeAssets.WebAssembly" Version="4.156.0" />
-    <PackageVersion Include="HarfBuzzSharp.NativeAssets.WebAssembly" Version="14.4.0.100" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.WebAssembly" Version="4.148.0" />
+    <PackageVersion Include="HarfBuzzSharp.NativeAssets.WebAssembly" Version="14.2.0" />
 
     <!-- The viewer, held to the same Skia and HarfBuzz as the editor it shares a folder with. -->
     <PackageVersion Include="SkiaSharp" Version="4.156.0" />
