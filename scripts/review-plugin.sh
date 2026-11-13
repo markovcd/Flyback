@@ -40,7 +40,7 @@ mkdir -p "$work"
 # flyback-cli reads a package the way the editor does, and its folder holds the contract the
 # decompiler resolves Flyback's types against.
 dotnet build "$repo/src/Flyback.Cli/Flyback.Cli.csproj" -c Release -v q --nologo >&2
-refs="$repo/src/Flyback.Cli/bin/Release/net10.0"
+refs="$repo/src/Flyback.Cli/bin/Release/net11.0"
 flyback() { dotnet "$refs/flyback-cli.dll" "$@"; }
 
 # The lines of one array in describe's indented JSON, across every build.

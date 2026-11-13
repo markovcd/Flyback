@@ -180,7 +180,7 @@ public sealed class AskSteps : IDisposable
     {
         code.ShouldBe(Exit.Ok, said);
 
-        var turn = lines.Select(line => JsonDocument.Parse(line).RootElement)
+        var turn = lines.Select(line => JsonElement.Parse(line))
             .Last(line => line.GetProperty("kind").GetString() != "wrote");
 
         turn.GetProperty("kind").GetString().ShouldBe("turn");

@@ -218,7 +218,7 @@ internal sealed partial record PluginDescription(
                 case UnicodeCategory.Format or UnicodeCategory.PrivateUse or UnicodeCategory.OtherNotAssigned:
                     break;
                 default:
-                    kept.Append(rune.ToString());
+                    kept.Append(rune);
                     break;
             }
         }

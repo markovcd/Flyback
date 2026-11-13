@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia.Controls;
 
 namespace Flyback.Editor.Controls;
@@ -17,8 +18,19 @@ internal static class Boxed
     /// <summary>Inside <see cref="decimal.MaxValue"/> by more than a float's rounding.</summary>
     private const float Furthest = 7.9e28f;
 
+    /// <inheritdoc cref="Furthest"/>
+    private const double FurthestDouble = 7.9e28;
+
+    /// <summary>The float's shortest round-trip digits, not its exact binary expansion.</summary>
     public static decimal Of(float value) =>
-        float.IsNaN(value) ? 0m : (decimal)Math.Clamp(value, -Furthest, Furthest);
+        float.IsNaN(value) ? 0m : Digits(Math.Clamp(value, -Furthest, Furthest).ToString(CultureInfo.InvariantCulture));
+
+    /// <inheritdoc cref="Of(float)"/>
+    public static decimal Of(double value) =>
+        double.IsNaN(value) ? 0m : Digits(Math.Clamp(value, -FurthestDouble, FurthestDouble).ToString(CultureInfo.InvariantCulture));
+
+    private static decimal Digits(string text) =>
+        decimal.Parse(text, NumberStyles.Float, CultureInfo.InvariantCulture);
 
     /// <summary>
     /// Has a box say the number in force once it is left, where it was left empty.

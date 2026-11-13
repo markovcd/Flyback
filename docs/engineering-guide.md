@@ -857,11 +857,11 @@ the repository are `Assert.SkipWhen` and `Assert.SkipUnless`.
 `dotnet test --filter` is ignored by this platform. Run the assembly itself:
 
 ```bash
-./tests/Flyback.Core.Tests/bin/Release/net10.0/Flyback.Core.Tests.exe -class "Flyback.Core.Tests.Graph.MixerTests"
+./tests/Flyback.Core.Tests/bin/Release/net11.0/Flyback.Core.Tests.exe -class "Flyback.Core.Tests.Graph.MixerTests"
 ```
 
 ```bash
-./tests/Flyback.Editor.Tests/bin/Release/net10.0/Flyback.Editor.Tests.exe -method "*WireDrop*"
+./tests/Flyback.Editor.Tests/bin/Release/net11.0/Flyback.Editor.Tests.exe -method "*WireDrop*"
 ```
 
 `-list tests` lists them and `-xml results.xml` writes a time per test.
@@ -884,8 +884,8 @@ A test is filed under what it needs beyond the .NET runtime, as its `Category` t
 The gate's image has all of them. The coverage run leaves out `unmeasured`, since it adds nothing to the figure; a test or scenario goes there only once a coverage run of it alone covers no line that every run of its project already does. Pick a category out, or leave one out:
 
 ```bash
-./tests/Flyback.Core.Tests/bin/Release/net10.0/Flyback.Core.Tests -trait "Category=ffmpeg"
-./tests/Flyback.Specs/bin/Release/net10.0/Flyback.Specs -trait- "Category=browser" -trait- "Category=gpu"
+./tests/Flyback.Core.Tests/bin/Release/net11.0/Flyback.Core.Tests -trait "Category=ffmpeg"
+./tests/Flyback.Specs/bin/Release/net11.0/Flyback.Specs -trait- "Category=browser" -trait- "Category=gpu"
 ```
 
 A test asks for its tool with `TestCategory.Ffmpeg.Require(Encoder is not null, "no ffmpeg on this machine")`, and a step with `Needs.Tool(runtime, TestCategory.Ffmpeg, …)`. Either skips where the tool is missing, and fails on any machine when the test is not filed under the category.
@@ -1121,7 +1121,7 @@ itself, and an unexplained one is a defect, fixed in a commit of its own. After 
 run, rank by duration:
 
 ```bash
-./tests/Flyback.Editor.Tests/bin/Release/net10.0/Flyback.Editor.Tests.exe -xml results.xml
+./tests/Flyback.Editor.Tests/bin/Release/net11.0/Flyback.Editor.Tests.exe -xml results.xml
 ```
 
 The usual causes are waiting on a wall clock, waiting out a deadline to prove

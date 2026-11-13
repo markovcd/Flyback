@@ -16,6 +16,8 @@
 
 ### Installing
 
+- Flyback runs on .NET 11; building it from source or building a plugin takes the .NET 11 SDK.
+
 ### Performance
 
 ### Fixes

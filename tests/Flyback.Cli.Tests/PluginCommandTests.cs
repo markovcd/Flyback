@@ -107,7 +107,7 @@ public sealed class PluginCommandTests : IDisposable
 
         code.ShouldBe(Exit.Ok);
 
-        return [.. JsonDocument.Parse(output).RootElement.GetProperty("folders").EnumerateArray()];
+        return [.. JsonElement.Parse(output).GetProperty("folders").EnumerateArray()];
     }
 
     /// <summary>A plugin folder with one file in it: the hash is all that is checked here, and nothing is loaded.</summary>

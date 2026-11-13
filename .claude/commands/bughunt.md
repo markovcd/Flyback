@@ -37,7 +37,7 @@ $ARGUMENTS narrows the hunt to a subsystem when it is given. With nothing, sweep
 `dotnet test` hides the failure text. Build, then run the assembly:
 
 ```bash
-dotnet build tests/Flyback.Core.Tests -c Debug -v q --nologo && ./tests/Flyback.Core.Tests/bin/Debug/net10.0/Flyback.Core.Tests.exe -class "Flyback.Core.Tests.BugHunt"
+dotnet build tests/Flyback.Core.Tests -c Debug -v q --nologo && ./tests/Flyback.Core.Tests/bin/Debug/net11.0/Flyback.Core.Tests.exe -class "Flyback.Core.Tests.BugHunt"
 ```
 
 `-method "*Name*"` for one test. `-list tests` to see what is there. The runner

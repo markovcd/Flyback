@@ -85,7 +85,7 @@ public sealed class LevelsCommandTests : IDisposable
 
         code.ShouldBe(Exit.Ok, error);
 
-        var levels = JsonDocument.Parse(output).RootElement;
+        var levels = JsonElement.Parse(output);
         levels.GetArrayLength().ShouldBe(2);
 
         var pass = levels[1].GetProperty("inside")[1];
@@ -103,7 +103,7 @@ public sealed class LevelsCommandTests : IDisposable
 
         code.ShouldBe(Exit.Ok, error);
 
-        var bass = JsonDocument.Parse(output).RootElement[0];
+        var bass = JsonElement.Parse(output)[0];
         var call = bass.GetProperty("inside")[0];
 
         call.GetProperty("args").EnumerateArray().Select(a => a.GetString()).ShouldBe(["freq = 55"]);

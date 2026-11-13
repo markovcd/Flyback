@@ -234,7 +234,7 @@ internal static class ToolCommand
 
         try
         {
-            given = JsonDocument.Parse(arguments).RootElement.Clone();
+            given = JsonElement.Parse(arguments);
         }
         catch (JsonException ex)
         {

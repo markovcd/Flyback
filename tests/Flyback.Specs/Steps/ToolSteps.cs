@@ -170,7 +170,7 @@ public sealed class ToolSteps : IDisposable
         var output = new StringWriter();
         ToolCommand.History(History, new FileInfo(Path(patch)), null, true, output, TextWriter.Null).ShouldBe(Exit.Ok);
 
-        var last = JsonDocument.Parse(output.ToString()).RootElement.GetProperty("steps").EnumerateArray().Last();
+        var last = JsonElement.Parse(output.ToString()).GetProperty("steps").EnumerateArray().Last();
 
         last.GetProperty("tool").GetString().ShouldBe("edit_patch");
         last.GetProperty("arguments").GetRawText().ShouldContain("rings(x: lfo)");

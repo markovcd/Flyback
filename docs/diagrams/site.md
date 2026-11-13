@@ -18,7 +18,7 @@ flowchart TB
         worker["<b>Worker</b><br/>[Container: TypeScript, Cloudflare Workers]<br/>Serves the API, the pages, the media, the web editor and the web viewer, and admin.html."]:::container
         d1[("<b>Database</b><br/>[Container: Cloudflare D1]<br/>Presets, plugins, tags, ratings, reports, letters and rate limits.")]:::store
         r2[("<b>Bucket</b><br/>[Container: Cloudflare R2]<br/>Preset and plugin files, stills, loops, tracks, and framework files too large to be assets.")]:::store
-        flybackSite["<b>flyback-site</b><br/>[Container: .NET 10 console]<br/>Checks submissions with Flyback's own readers, and pushes media and the default presets."]:::container
+        flybackSite["<b>flyback-site</b><br/>[Container: .NET 11 console]<br/>Checks submissions with Flyback's own readers, and pushes media and the default presets."]:::container
     end
     cloudflareAccess["<b>Cloudflare Access</b><br/>[Software System]<br/>Signs the admin in with a one-time PIN."]:::external
     github["<b>GitHub</b><br/>[Software System]<br/>Releases signed builds, and runs the workflow that checks submissions."]:::external

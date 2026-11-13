@@ -63,7 +63,7 @@
                       ReferenceOutputAssembly="false"
                       SkipGetTargetFrameworkProperties="true"
                       AdditionalProperties="Configuration=All plugins" />
-    <AssemblyMetadata Include="WebViewer" Value="$(MSBuildThisFileDirectory)..\..\src\Flyback.Viewer.Web\bin\All plugins\net10.0" />
+    <AssemblyMetadata Include="WebViewer" Value="$(MSBuildThisFileDirectory)..\..\src\Flyback.Viewer.Web\bin\All plugins\net11.0" />
   </ItemGroup>
 
   <!--
@@ -74,7 +74,7 @@
     <ProjectReference Include="..\..\src\Flyback.Editor.Web\Flyback.Editor.Web.csproj"
                       ReferenceOutputAssembly="false"
                       SkipGetTargetFrameworkProperties="true" />
-    <AssemblyMetadata Include="WebEditor" Value="$(MSBuildThisFileDirectory)..\..\src\Flyback.Editor.Web\bin\$(Configuration)\net10.0" />
+    <AssemblyMetadata Include="WebEditor" Value="$(MSBuildThisFileDirectory)..\..\src\Flyback.Editor.Web\bin\$(Configuration)\net11.0" />
   </ItemGroup>
 
   <!--

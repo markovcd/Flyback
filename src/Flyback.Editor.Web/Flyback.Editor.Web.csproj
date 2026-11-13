@@ -26,7 +26,9 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia.Browser" />
-    <!-- The natives Avalonia.Browser brings are older than the managed SkiaSharp the editor resolves. -->
+    <!-- The natives Avalonia.Browser brings do not link on this runtime, so the editor names its own and their managed side. -->
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="HarfBuzzSharp" />
     <PackageReference Include="SkiaSharp.NativeAssets.WebAssembly" />
     <PackageReference Include="HarfBuzzSharp.NativeAssets.WebAssembly" />
   </ItemGroup>
