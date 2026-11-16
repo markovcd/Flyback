@@ -210,7 +210,7 @@ internal sealed class ExpressionParser
                 var open = Current;
                 parser.Advance();
 
-                if (Pipeline() is not { } inner) return null;
+                if (Condition() is not { } inner) return null;
 
                 if (Current.Kind == TokenKind.Comma) return Tupled(inner, open);
 
@@ -222,6 +222,9 @@ internal sealed class ExpressionParser
 
             case TokenKind.Identifier when AtLoop():
                 return Loop(line, column);
+
+            case TokenKind.Identifier when AtIf():
+                return If(line, column);
 
             case TokenKind.Identifier:
                 return NameOrCall(line, column);
@@ -320,6 +323,140 @@ internal sealed class ExpressionParser
 
         return Built(new ForExpr(names, tupled, source, body, result, results, line, column), source);
     }
+
+    /// <summary>Whether an <c>if</c> starts here, rather than a binding or a socket somebody called that.</summary>
+    private bool AtIf() =>
+        Current.Text == "if"
+        && Ahead().Kind is not (TokenKind.Assign or TokenKind.Colon or TokenKind.Dot or TokenKind.Pipe
+            or TokenKind.Comma or TokenKind.CloseParen or TokenKind.NewLine or TokenKind.End);
+
+    /// <summary><c>if condition { ... } else { ... }</c>, the <c>else</c> optional and allowed on the next line.</summary>
+    private Expr? If(int line, int column)
+    {
+        parser.Advance();
+
+        if (Condition() is not { } condition) return null;
+        if (Branch("if") is not { } then) return null;
+
+        var mark = 0;
+        while (Ahead(mark).Kind == TokenKind.NewLine) mark++;
+
+        if (Ahead(mark) is not { Kind: TokenKind.Identifier, Text: "else" }) return Built(new IfExpr(condition, then, null, line, column), condition);
+
+        parser.Advance(mark + 1);
+
+        Branch otherwise;
+
+        if (Current is { Kind: TokenKind.Identifier, Text: "if" })
+        {
+            var nested = Current;
+
+            if (If(nested.Line, nested.Column) is not { } next) return null;
+
+            otherwise = new Branch([], next, null);
+        }
+        else if (Branch("else") is { } written)
+        {
+            otherwise = written;
+        }
+        else
+        {
+            return null;
+        }
+
+        return Built(new IfExpr(condition, then, otherwise, line, column), condition);
+    }
+
+    /// <summary>A branch's braces and what is in them.</summary>
+    private Branch? Branch(string word)
+    {
+        if (!parser.Take(TokenKind.OpenBrace))
+        {
+            parser.Complain(IssueCode.Syntax, $"expected '{{' to open what '{word}' builds, but found {parser.Found()}.");
+            return null;
+        }
+
+        return parser.Braced(out var body, out var result, out var results) ? new Branch(body, result, results) : null;
+    }
+
+    /// <summary>
+    /// What an <c>if</c> decides on: comparisons joined by <c>and</c>, <c>or</c> and
+    /// <c>not</c>, or a plain value, which holds where it is not zero.
+    /// </summary>
+    private Expr? Condition()
+    {
+        if (Both() is not { } left) return null;
+
+        while (Current is { Kind: TokenKind.Identifier, Text: "or" })
+        {
+            var (line, column) = (Current.Line, Current.Column);
+
+            parser.Advance();
+
+            if (Both() is not { } right) return null;
+            if (Built(new LogicExpr(false, left, right, line, column), left, right) is not { } joined) return null;
+
+            left = joined;
+        }
+
+        return left;
+    }
+
+    private Expr? Both()
+    {
+        if (Negated() is not { } left) return null;
+
+        while (Current is { Kind: TokenKind.Identifier, Text: "and" })
+        {
+            var (line, column) = (Current.Line, Current.Column);
+
+            parser.Advance();
+
+            if (Negated() is not { } right) return null;
+            if (Built(new LogicExpr(true, left, right, line, column), left, right) is not { } joined) return null;
+
+            left = joined;
+        }
+
+        return left;
+    }
+
+    private Expr? Negated()
+    {
+        if (Current is not { Kind: TokenKind.Identifier, Text: "not" } || !Starts(Ahead())) return Compared();
+
+        var (line, column) = (Current.Line, Current.Column);
+
+        parser.Advance();
+
+        return Negated() is { } operand ? Built(new NotExpr(operand, line, column), operand) : null;
+    }
+
+    private Expr? Compared()
+    {
+        if (Pipeline() is not { } left) return null;
+        if (!Comparing(Current.Kind)) return left;
+
+        var op = Current.Kind;
+        var (line, column) = (Current.Line, Current.Column);
+
+        parser.Advance();
+
+        if (Pipeline() is not { } right) return null;
+
+        if (Comparing(Current.Kind))
+            return Refuse(IssueCode.Syntax, $"'{Current.Text}' follows a comparison. Join two comparisons with 'and' or 'or'.");
+
+        return Built(new CompareExpr(op, left, right, line, column), left, right);
+    }
+
+    internal static bool Comparing(TokenKind kind) => kind
+        is TokenKind.Equal or TokenKind.NotEqual or TokenKind.Less or TokenKind.LessOrEqual
+        or TokenKind.Greater or TokenKind.GreaterOrEqual;
+
+    /// <summary>Whether a value can start at <paramref name="token"/>, so a word before it is an operator rather than a name.</summary>
+    private static bool Starts(Token token) => token.Kind
+        is TokenKind.Number or TokenKind.Text or TokenKind.Identifier or TokenKind.OpenParen or TokenKind.Minus or TokenKind.Block;
 
     /// <summary>
     /// A dotted name, which is either a module to place or a binding to read —

@@ -63,6 +63,7 @@
   <RuleSet name="Code" ignoreCase="false">
 
     <Rule color="Keyword">\b(?:let|def|group|for|off)\b</Rule>
+    <Rule color="Keyword">(?&lt;!\.)\b(?:if|else|and|or|not)\b(?![ \t]*[:=.])</Rule>
 
     <!-- A loop's "in", which is never the socket of that name nor a def's parameter. -->
     <Rule color="Keyword">\bin\b(?=\s+(?:[^\s:,)=.]|$))</Rule>

@@ -342,9 +342,7 @@ public static class Lexer
                 string.Create(CultureInfo.InvariantCulture, $"an invisible character, U+{(int)c:X4}, means nothing here. Delete it."));
         }
 
-        return new LanguageIssue(line, column, IssueCode.StrayCharacter, c == '>'
-            ? "'>' means nothing here: nothing is compared, and a pipe is written '|>'."
-            : $"'{c}' means nothing here.");
+        return new LanguageIssue(line, column, IssueCode.StrayCharacter, $"'{c}' means nothing here.");
     }
 
     /// <summary>A name, or a note written as one.</summary>
@@ -477,6 +475,10 @@ public static class Lexer
         if (rest.StartsWith("<-", StringComparison.Ordinal)) return Two(TokenKind.BackWire, "<-");
         if (rest.StartsWith("...", StringComparison.Ordinal)) return Two(TokenKind.Spread, "...");
         if (rest.StartsWith("..", StringComparison.Ordinal)) return Two(TokenKind.Range, "..");
+        if (rest.StartsWith("==", StringComparison.Ordinal)) return Two(TokenKind.Equal, "==");
+        if (rest.StartsWith("!=", StringComparison.Ordinal)) return Two(TokenKind.NotEqual, "!=");
+        if (rest.StartsWith("<=", StringComparison.Ordinal)) return Two(TokenKind.LessOrEqual, "<=");
+        if (rest.StartsWith(">=", StringComparison.Ordinal)) return Two(TokenKind.GreaterOrEqual, ">=");
 
         return source[i] switch
         {
@@ -493,6 +495,8 @@ public static class Lexer
             '*' => Two(TokenKind.Star, "*"),
             '/' => Two(TokenKind.Slash, "/"),
             '%' => Two(TokenKind.Percent, "%"),
+            '<' => Two(TokenKind.Less, "<"),
+            '>' => Two(TokenKind.Greater, ">"),
             _ => null,
         };
     }

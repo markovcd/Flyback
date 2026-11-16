@@ -806,6 +806,48 @@ named one is numbered for its pass: `group "Voice"` is "Voice 1", "Voice 2" and
 on, and "Voice 2.3" in a loop inside a loop. One patch's loops stamp out at most 4096 passes between them. A printing
 writes a loop out unrolled.
 
+### If
+
+`if` builds one branch and leaves the other out, chosen as the text is built
+([0234](adr/0234-the-text-has-if-decided-as-it-is-built.md)). As with a loop,
+nothing is decided while the patch plays: the patch is the modules the branch
+placed.
+
+```fbks {play="An if in a loop"}
+def voice(pitch, dark = 0) = {
+  let tone = saw(freq: note(pitch), amp: 0.3)
+  if dark { tone |> filter(cutoff: 600) } else { tone }
+}
+
+let voices = for pitch in [A2, C3, E3, A3] {
+  if pitch < E3 { voice(pitch) } else { voice(pitch, dark: 1) }
+}
+
+sum(voices) |> out.left
+```
+
+- **The condition** compares with `==`, `!=`, `<`, `<=`, `>` and `>=`, joins
+  with `and` and `or`, and turns round with `not`. A plain number holds where it
+  is not zero. Numbers, notes and durations compare by size; texts only with
+  `==` and `!=`.
+- **It reads only what the text writes down**: numbers, notes, durations, texts,
+  and the names a `let`, a def's parameter or a loop bound them to. A signal or a
+  panel knob changes while the patch plays, after the text is built, and is
+  refused. To choose between signals as the patch plays, mix them:
+  `mix(a, b, step(0.5, signal))`.
+- **`else`** is optional and may start the next line; `else if` chains. Each
+  branch is a block like a loop's body: statements, then what it is worth. An
+  `if` with no branch taken is worth an empty list and places nothing.
+- **Names bound in a branch stay in it.** A panel knob and the lines about the
+  whole patch are written outside an `if`, as outside a loop.
+- **A comparison means something only in a condition.** `let big = k > 2` is
+  refused.
+- **A number a condition reads is not a knob's to turn.** Turning a knob on the
+  canvas never rewrites it, as for any number read through a name twice, so a
+  knob never changes which modules exist.
+
+A printing writes out the branch that was taken.
+
 ---
 
 ## 11. Groups
@@ -1011,13 +1053,18 @@ expr       = term { ("+" | "-") term } ;
 term       = ranged { ("*" | "/" | "%") ranged } ;
 ranged     = factor [ ".." factor ] ;
 factor     = [ "-" ] primary ;
-primary    = literal | selector | list | tuple | loop | ( call | "(" pipeline ")" ) outputs ;
+primary    = literal | selector | list | tuple | loop | choice | ( call | "(" condition ")" ) outputs ;
 outputs    = { "." ident } ;
 
 list       = "[" [ pipeline { "," pipeline } [ "," ] ] "]" ;
 tuple      = "(" pipeline "," pipeline { "," pipeline } ")" ;
 loop       = "for" ( ident | "(" ident { "," ident } ")" ) "in" pipeline
              "{" { statement } [ result ] "}" ;
+choice     = "if" condition "{" { statement } [ result ] "}"
+             [ "else" ( choice | "{" { statement } [ result ] "}" ) ] ;
+condition  = both { "or" both } ;
+both       = negated { "and" negated } ;
+negated    = "not" negated | pipeline [ ( "==" | "!=" | "<" | "<=" | ">" | ">=" ) pipeline ] ;
 
 call       = name "(" [ arg { "," arg } ] ")" [ block ] ;
 arg        = [ ident ":" ] ( expr | "_" ) | "..." pipeline ;

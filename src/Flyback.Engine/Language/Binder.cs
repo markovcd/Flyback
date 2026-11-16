@@ -173,7 +173,7 @@ public sealed class Binder
         "t" => "the clock",
         "out" => "the Output",
         "_" => "what a pipe brings in",
-        "let" or "def" or "group" or "for" => "a word of the language",
+        "let" or "def" or "group" or "for" or "if" or "else" or "and" or "or" or "not" => "a word of the language",
         _ => Coordinate(name) >= 0 ? "one of the picture's coordinates" : null,
     };
 
@@ -675,6 +675,9 @@ public sealed class Binder
         ListExpr list => Items(list.Items, scope) is { } items ? items with { Listed = true } : null,
         TupleExpr tuple => Items(tuple.Items, scope),
         ForExpr loop => Loop(loop, scope),
+        IfExpr choice => Choose(choice, scope),
+        CompareExpr or LogicExpr or NotExpr => Refuse(IssueCode.ComparisonOutsideIf, expr.Line, expr.Column,
+            "a comparison only means something as an if's condition: if k > 2 { ... }."),
         _ => null,
     };
 
@@ -1379,8 +1382,9 @@ public sealed class Binder
         return true;
     }
 
-    /// <summary>The statements a loop's body may repeat, each of the rest refused once.</summary>
-    private List<Statement> Loopable(IReadOnlyList<Statement> body)
+    /// <summary>The statements a loop's body or an if's branch may hold, each of the rest refused once.</summary>
+    /// <param name="word">What holds them, as a refusal says it: "loop" or "if".</param>
+    private List<Statement> Loopable(IReadOnlyList<Statement> body, string code = IssueCode.NotInLoop, string word = "loop")
     {
         var kept = new List<Statement>(body.Count);
 
@@ -1388,17 +1392,132 @@ public sealed class Binder
         {
             var refusal = statement switch
             {
-                PanelStatement => "a panel knob belongs to the whole patch, so it is declared outside the loop and read inside it.",
+                PanelStatement => $"a panel knob belongs to the whole patch, so it is declared outside the {word} and read inside it.",
                 RequiresStatement or KeyboardStatement or LengthStatement or DescriptionStatement or AuthorStatement or TagsStatement
-                    => "this is said once about the whole patch, so it is written outside the loop.",
+                    => $"this is said once about the whole patch, so it is written outside the {word}.",
                 _ => null,
             };
 
             if (refusal is null) kept.Add(statement);
-            else issues.Complain(IssueCode.NotInLoop, statement.Line, statement.Column, refusal);
+            else issues.Complain(code, statement.Line, statement.Column, refusal);
         }
 
         return kept;
+    }
+
+    // --- if -------------------------------------------------------------------
+
+    /// <summary>
+    /// The branch an <c>if</c> takes, built as a loop's pass is in a scope of its own,
+    /// and worth what it ends with; an empty list where no branch is taken (ADR-0234).
+    /// </summary>
+    private Value? Choose(IfExpr choice, Scope scope)
+    {
+        if (Decide(choice.Condition, scope) is not { } taken) return null;
+
+        var outer = identity.Enter(identity.Stamping("if") + (taken ? "/then" : "/else"));
+
+        try
+        {
+            if ((taken ? choice.Then : choice.Otherwise) is not { } branch) return new Several([]) { Listed = true };
+
+            var inner = new Scope(scope);
+
+            foreach (var statement in Loopable(branch.Body, IssueCode.NotInIf, "if")) Run(statement, inner);
+
+            if (branch.Results is { } several) return Items(several, inner);
+
+            return branch.Result is { } result ? Bind(result, inner) : new Several([]) { Listed = true };
+        }
+        finally
+        {
+            identity.Leave(outer);
+        }
+    }
+
+    /// <summary>Whether a condition holds, or null where it cannot be known as the text is built.</summary>
+    private bool? Decide(Expr condition, Scope scope)
+    {
+        switch (condition)
+        {
+            case NotExpr not:
+                return !Decide(not.Operand, scope);
+
+            case LogicExpr logic:
+                // Both sides, so a mistake on the right is said even where the left settles it.
+                var left = Decide(logic.Left, scope);
+                var right = Decide(logic.Right, scope);
+
+                if (left is not { } l || right is not { } r) return null;
+
+                return logic.And ? l && r : l || r;
+
+            case CompareExpr compare:
+                var a = Known(compare.Left, scope);
+                var b = Known(compare.Right, scope);
+
+                if (a is null || b is null) return null;
+
+                return Compare(compare, a, b);
+
+            default:
+                return Known(condition, scope) switch
+                {
+                    Figure figure => figure.Amount != 0,
+                    Named => Unknowable(condition, "a text is not true or false. Compare it: if file == \"kick.wav\" { ... }."),
+                    _ => null,
+                };
+        }
+    }
+
+    private bool? Compare(CompareExpr compare, Value a, Value b)
+    {
+        if (a is Figure x && b is Figure y)
+        {
+            return compare.Operator switch
+            {
+                TokenKind.Equal => x.Amount == y.Amount,
+                TokenKind.NotEqual => x.Amount != y.Amount,
+                TokenKind.Less => x.Amount < y.Amount,
+                TokenKind.LessOrEqual => x.Amount <= y.Amount,
+                TokenKind.Greater => x.Amount > y.Amount,
+                _ => x.Amount >= y.Amount,
+            };
+        }
+
+        if (a is Named p && b is Named q && compare.Operator is TokenKind.Equal or TokenKind.NotEqual)
+            return string.Equals(p.Path, q.Path, StringComparison.Ordinal) == (compare.Operator == TokenKind.Equal);
+
+        return Unknowable(compare, a is Named && b is Named
+            ? "texts are only compared with '==' and '!='."
+            : "this compares a text with a number, and the two are never equal.");
+    }
+
+    /// <summary>
+    /// A side of a condition, as long as it is a number, a note, a duration or a text:
+    /// a signal or a panel knob changes as the patch plays, after the text is built.
+    /// </summary>
+    private Value? Known(Expr expr, Scope scope) => Bind(expr, scope) switch
+    {
+        var value when value is Figure or Named => value,
+        Dial => Refused(expr, "a panel knob turns while the patch plays, and an if is decided as the text is built. "
+            + "To switch between signals as it plays, mix them: mix(a, b, step(0.5, knob))."),
+        Placed or Socket => Refused(expr, "a signal changes while the patch plays, and an if is decided as the text is built. "
+            + "To switch between signals as it plays, mix them: mix(a, b, step(0.5, signal))."),
+        Several => Refused(expr, "a list is not one value, so an if cannot decide on it."),
+        _ => null,
+    };
+
+    private Value? Refused(Expr expr, string message)
+    {
+        issues.Complain(IssueCode.ConditionNotAValue, expr.Leftmost.Line, expr.Leftmost.Column, message);
+        return null;
+    }
+
+    private bool? Unknowable(Expr expr, string message)
+    {
+        issues.Complain(IssueCode.ConditionNotAValue, expr.Leftmost.Line, expr.Leftmost.Column, message);
+        return null;
     }
 
     /// <summary>Places the module with its wires, and puts its fields and its place in the file on it.</summary>

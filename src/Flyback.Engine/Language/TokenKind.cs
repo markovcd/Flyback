@@ -35,6 +35,14 @@ public enum TokenKind
     Slash,
     Percent,
 
+    /// <summary><c>==</c>, and the comparisons after it, which only an <c>if</c>'s condition reads.</summary>
+    Equal,
+    NotEqual,
+    Less,
+    LessOrEqual,
+    Greater,
+    GreaterOrEqual,
+
     /// <summary><c>...</c>, which spreads a list into a call's sockets.</summary>
     Spread,
 

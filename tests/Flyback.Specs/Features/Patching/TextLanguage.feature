@@ -184,6 +184,20 @@ Feature: A patch can be written as text
     When the patch is written out as text and read back
     Then the speakers play 0.75
 
+  Scenario: An if builds the branch its condition picks as the text is read
+    Given the text:
+      """
+      let parts = for level in [0.25, 0.5] {
+        if level > 0.3 { value(1) * level } else { value(1) * 0 }
+      }
+      sum(parts) |> out.left
+      out.volume = 1
+      """
+    Then it reads without complaint
+    And the speakers play 0.5
+    When the patch is written out as text and read back
+    Then the speakers play 0.5
+
   Scenario: A loop whose passes hand back pairs comes apart into two lists
     Given the text:
       """

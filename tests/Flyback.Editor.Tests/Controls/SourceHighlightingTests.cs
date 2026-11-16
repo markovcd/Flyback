@@ -26,6 +26,11 @@ public class SourceHighlightingTests
     [InlineData("let v = for (k, g) in [1] { sine() }", "in", "Keyword")]
     [InlineData("for (k, g) in [1] { sine() }", "in", "Keyword")]
     [InlineData("let chord = for (pitch, gain) in [(A2, 0.5), (C#3, 0.3), (Bb3, 0.2)] {", "in", "Keyword")]
+    [InlineData("if k % 4 == 0 { kick() } else { hat() }", "if", "Keyword")]
+    [InlineData("if k % 4 == 0 { kick() } else { hat() }", "else", "Keyword")]
+    [InlineData("if k > 1 and not (k > 3 or k < 0) { kick() }", "and", "Keyword")]
+    [InlineData("if k > 1 and not (k > 3 or k < 0) { kick() }", "not", "Keyword")]
+    [InlineData("if k > 1 and not (k > 3 or k < 0) { kick() }", "or", "Keyword")]
     [InlineData("panel cutoff = 0.4, label: \"Cutoff\"", "panel", "Keyword")]
     [InlineData("panel hit = 0, button, note: 36", "button", "Keyword")]
     [InlineData("panel drop = 0, switch, latching", "latching", "Keyword")]
@@ -69,6 +74,7 @@ public class SourceHighlightingTests
     [InlineData("let author = 3 // \"x\"", "author")]
     [InlineData("t.length |> out.left", "length")]
     [InlineData("let A = 1", "A")]
+    [InlineData("let rest = coin.else", "else")]
     public void A_name_spelled_like_a_word_of_the_language_is_left_plain(string line, string part) =>
         ColorOf(line, part).ShouldBeNull();
 

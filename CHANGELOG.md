@@ -10,6 +10,8 @@
 
 ### Editor
 
+- The text language has `if`: `if k % 4 == 0 { kick() } else { hat() }` builds one branch as the text is read, deciding on the numbers, notes and texts it writes down.
+
 ### Viewer
 
 ### Command line

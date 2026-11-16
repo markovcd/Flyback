@@ -5,6 +5,7 @@ window.flybackHighlight = (function () {
   // Statement words are told from names of the same spelling by what follows them.
   var keywords = new RegExp([
     "\\b(?:let|def|group|for|off)\\b",
+    "(?<!\\.)\\b(?:if|else|and|or|not)\\b(?![ \\t]*[:=.])",
     "\\bin\\b(?=[ \\t]+[^\\s:,)=.])",
     "\\b(?:description|author|tags)\\b(?=[ \\t]*\")",
     "\\brequires\\b(?=[ \\t]+[\"\\w])",

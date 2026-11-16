@@ -166,6 +166,17 @@ public static class IssueCode
     /// <summary>A statement about the whole patch or its panel, written inside a loop's body.</summary>
     public const string NotInLoop = "not-in-loop";
 
+    // --- if ------------------------------------------------------------------
+
+    /// <summary>An <c>if</c> deciding on a signal, a panel knob, a list or a text, which the text cannot know as it is built.</summary>
+    public const string ConditionNotAValue = "condition-not-a-value";
+
+    /// <summary>A comparison, <c>and</c>, <c>or</c> or <c>not</c> anywhere but an <c>if</c>'s condition.</summary>
+    public const string ComparisonOutsideIf = "comparison-outside-if";
+
+    /// <summary>A statement about the whole patch or its panel, written inside an <c>if</c>.</summary>
+    public const string NotInIf = "not-in-if";
+
     // --- the panel -------------------------------------------------------------
 
     public const string PanelInDef = "panel-in-def";

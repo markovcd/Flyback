@@ -98,6 +98,12 @@ public sealed class Parser
         // and that complaint is the one worth reading.
         if (issues.Any(issue => issue.Line == Current.Line)) return;
 
+        if (ExpressionParser.Comparing(Current.Kind))
+        {
+            Complain(IssueCode.ComparisonOutsideIf, $"'{Current.Text}' compares, and only an if's condition compares: if k > 2 {{ ... }}.");
+            return;
+        }
+
         Complain(IssueCode.UnreadTail, $"the statement ended before {Found()}, and nothing reads the rest of the line.");
     }
 

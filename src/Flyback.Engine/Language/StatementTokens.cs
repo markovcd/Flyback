@@ -36,7 +36,8 @@ internal static class StatementTokens
         is TokenKind.Pipe or TokenKind.BackWire or TokenKind.Assign or TokenKind.Comma
         or TokenKind.Colon or TokenKind.Dot or TokenKind.Range or TokenKind.Spread or TokenKind.OpenParen
         or TokenKind.OpenBrace or TokenKind.Plus or TokenKind.Minus or TokenKind.Star
-        or TokenKind.Slash or TokenKind.Percent;
+        or TokenKind.Slash or TokenKind.Percent or TokenKind.Equal or TokenKind.NotEqual
+        or TokenKind.Less or TokenKind.LessOrEqual or TokenKind.Greater or TokenKind.GreaterOrEqual;
 
     /// <summary>
     /// A string may continue metadata such as a description; braces may start

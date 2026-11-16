@@ -86,6 +86,7 @@ internal static class Completions
 
             builtins.Add(Sum());
             builtins.Add(new Completion("for", CompletionKind.Keyword, "a loop: for name in list { ... }", "for "));
+            builtins.Add(new Completion("if", CompletionKind.Keyword, "one branch, chosen as the text is built: if k > 2 { ... } else { ... }", "if "));
 
             if (inCall) builtins.Add(new Completion("_", CompletionKind.Builtin, "what the pipe brings in", "_"));
 
