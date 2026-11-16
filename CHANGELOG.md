@@ -14,6 +14,7 @@
 
 - The text language has `if`: `if k % 4 == 0 { kick() } else { hat() }` builds one branch as the text is read, deciding on the numbers, notes and texts it writes down.
 - The text language reads a list by position, `chords[i]` counted from one, and counts it with `len(chords)`.
+- The text language has `fold`, a loop whose passes each take what the last ended with: `fold 1..4 from 1 with n { n * 2 }` is 16.
 - A sequencer's block reads names with `$`: `notes() [ $root C3 ]`, and a list writes in all its notes, so a loop can vary a pattern.
 - Play → Check the Mix (Ctrl+Shift+H) listens to a few seconds from the playhead and flags clipping, DC, a missing sub, muddy low mids, a wide low end, a loudness far off, a missing master chain and silent sound sources. Desktop only.
 

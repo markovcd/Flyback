@@ -1,4 +1,4 @@
-using Avalonia.Headless.XUnit;
+﻿using Avalonia.Headless.XUnit;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Highlighting;
 using Flyback.Editor.Hubs;
@@ -26,6 +26,11 @@ public class SourceHighlightingTests
     [InlineData("let v = for (k, g) in [1] { sine() }", "in", "Keyword")]
     [InlineData("for (k, g) in [1] { sine() }", "in", "Keyword")]
     [InlineData("let chord = for (pitch, gain) in [(A2, 0.5), (C#3, 0.3), (Bb3, 0.2)] {", "in", "Keyword")]
+    [InlineData("let v = fold 1..4 from 1 with n { n * 2 }", "fold", "Keyword")]
+    [InlineData("let v = fold 1..4 from 1 with n { n * 2 }", "from", "Keyword")]
+    [InlineData("let v = fold 1..4 from 1 with n { n * 2 }", "with", "Keyword")]
+    [InlineData("let v = fold (a, b) in [(1, 2)] from 0 with n { n + a }", "fold", "Keyword")]
+    [InlineData("saw() |> fold(drive: 2)", "fold", "Module")]
     [InlineData("if k % 4 == 0 { kick() } else { hat() }", "if", "Keyword")]
     [InlineData("if k % 4 == 0 { kick() } else { hat() }", "else", "Keyword")]
     [InlineData("if k > 1 and not (k > 3 or k < 0) { kick() }", "and", "Keyword")]

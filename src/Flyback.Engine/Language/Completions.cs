@@ -1,4 +1,4 @@
-using Flyback.Core.Graph;
+﻿using Flyback.Core.Graph;
 
 namespace Flyback.Engine.Language;
 
@@ -87,6 +87,7 @@ internal static class Completions
             builtins.Add(Sum());
             builtins.Add(Len());
             builtins.Add(new Completion("for", CompletionKind.Keyword, "a loop: for name in list { ... }", "for "));
+            builtins.Add(new Completion("fold", CompletionKind.Keyword, "a loop carrying a value from pass to pass: fold 1..4 from 1 with x { x * 2 }", "fold "));
             builtins.Add(new Completion("if", CompletionKind.Keyword, "one branch, chosen as the text is built: if k > 2 { ... } else { ... }", "if "));
 
             if (inCall) builtins.Add(new Completion("_", CompletionKind.Builtin, "what the pipe brings in", "_"));

@@ -1,4 +1,4 @@
-using System.Text.Json.Nodes;
+﻿using System.Text.Json.Nodes;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Language.Ast;
@@ -1251,18 +1251,32 @@ public sealed class Binder
 
     /// <summary>
     /// A loop's body stamped out once per item, each pass in a scope of its own off the
-    /// loop's, worth the list of what each pass ends with (ADR-0208).
+    /// loop's, worth the list of what each pass ends with (ADR-0208). A fold's passes each
+    /// also read what the pass before ended with, and it is worth what the last ended with.
     /// </summary>
     private Value? Loop(ForExpr loop, Scope scope)
     {
         if (Each(loop.Source, scope) is not { } items) return null;
 
-        for (var i = 0; i < loop.Names.Count; i++)
-        {
-            if (!Free(loop.Names[i], scope, loop.Line, loop.Column)) return null;
+        IReadOnlyList<string> carried = loop.Carry?.Names ?? [];
+        var all = loop.Names.Concat(carried).ToList();
 
-            if (loop.Names.Take(i).Contains(loop.Names[i], StringComparer.Ordinal))
-                return Refuse(IssueCode.BoundTwice, loop.Line, loop.Column, $"'{loop.Names[i]}' is written twice. A name is bound once.");
+        for (var i = 0; i < all.Count; i++)
+        {
+            if (!Free(all[i], scope, loop.Line, loop.Column)) return null;
+
+            if (all.Take(i).Contains(all[i], StringComparer.Ordinal))
+                return Refuse(IssueCode.BoundTwice, loop.Line, loop.Column, $"'{all[i]}' is written twice. A name is bound once.");
+        }
+
+        Value? carry = null;
+
+        if (loop.Carry is { } seeded)
+        {
+            if (loop.Result is null && loop.Results is null)
+                return Refuse(IssueCode.Syntax, loop.Line, loop.Column, "a fold's passes each end with what the next one takes, and this one ends with nothing.");
+
+            if ((carry = Bind(seeded.Seed, scope)) is null) return null;
         }
 
         if (passes + items.Count > MostPasses)
@@ -1273,12 +1287,12 @@ public sealed class Binder
 
         passes += items.Count;
 
+        var word = loop.Carry is null ? "for" : "fold";
         var body = Loopable(loop.Body);
-        var outer = identity.Enter(identity.Stamping("for"));
+        var outer = identity.Enter(identity.Stamping(word));
         var results = new List<Value>(items.Count);
-        var names = loop.Tupled ? "(" + string.Join(", ", loop.Names) + ")" : loop.Names[0];
-        var looped = levels.Enter(LevelKind.Loop, "for " + names, loop.Line, loop.Column, passes: items.Count);
-        Several? done = null;
+        var looped = levels.Enter(LevelKind.Loop, Heading(loop, word), loop.Line, loop.Column, passes: items.Count);
+        Value? done = null;
 
         try
         {
@@ -1293,17 +1307,20 @@ public sealed class Binder
                 {
                     var inner = new Scope(scope);
 
-                    if (!Take(loop, items[i], inner)) return null;
+                    if (!Take(loop.Names, loop.Tupled, items[i], inner, loop, "an item of this list")) return null;
+                    if (loop.Carry is { } fold && !Take(fold.Names, fold.Tupled, carry!, inner, loop, i == 0 ? "what the fold starts from" : "what a pass ends with")) return null;
 
                     foreach (var statement in body) Run(statement, inner);
 
-                    if (loop.Results is { } several)
+                    Value? ended = null;
+
+                    if (loop.Results is { } several) ended = Items(several, inner);
+                    else if (loop.Result is { } result) ended = Bind(result, inner);
+
+                    if (ended is not null)
                     {
-                        if (Items(several, inner) is { } tuple) results.Add(tuple);
-                    }
-                    else if (loop.Result is { } result && Bind(result, inner) is { } value)
-                    {
-                        results.Add(value);
+                        if (loop.Carry is null) results.Add(ended);
+                        else carry = ended;
                     }
                 }
                 finally
@@ -1317,13 +1334,27 @@ public sealed class Binder
                 if (issues.Count > said) return null;
             }
 
-            return done = new Several(results) { Listed = true };
+            return done = loop.Carry is null ? new Several(results) { Listed = true } : carry;
         }
         finally
         {
             identity.Leave(outer);
             levels.Leave(looped, done);
         }
+    }
+
+    /// <summary>How a loop's level is headed: <c>for k</c>, <c>fold (a, b)</c>, or a bare <c>fold</c>.</summary>
+    private static string Heading(ForExpr loop, string word)
+    {
+        var names = loop.Names.Count switch
+        {
+            0 => loop.Carry is { } fold ? Joined(fold.Names, fold.Tupled) : "",
+            _ => Joined(loop.Names, loop.Tupled),
+        };
+
+        return names.Length == 0 ? word : word + " " + names;
+
+        static string Joined(IReadOnlyList<string> names, bool tupled) => tupled ? "(" + string.Join(", ", names) + ")" : names[0];
     }
 
     /// <summary>What a loop goes over: a list, or a count written as a range.</summary>
@@ -1365,25 +1396,28 @@ public sealed class Binder
         return [.. Enumerable.Range(0, count).Select(i => (Value)new Figure(low.Amount + i, low.Style))];
     }
 
-    /// <summary>Binds a pass's names to its item, taking a tuple apart where the names are bracketed.</summary>
-    private bool Take(ForExpr loop, Value item, Scope inner)
+    /// <summary>Binds a pass's names to a value, taking a tuple apart where the names are bracketed.</summary>
+    /// <param name="what">What the value is, as a refusal says it.</param>
+    private bool Take(IReadOnlyList<string> names, bool tupled, Value value, Scope inner, ForExpr loop, string what)
     {
-        if (!loop.Tupled)
+        if (names.Count == 0) return true;
+
+        if (!tupled)
         {
-            inner.Set(loop.Names[0], item, loop.Line);
+            inner.Set(names[0], value, loop.Line);
             return true;
         }
 
-        if (item is not Several tuple || tuple.Items.Count != loop.Names.Count)
+        if (value is not Several tuple || tuple.Items.Count != names.Count)
         {
-            var held = item is Several several ? $"{several.Items.Count} things" : "one thing";
+            var held = value is Several several ? $"{several.Items.Count} things" : "one thing";
 
             issues.Complain(IssueCode.TupleMismatch, loop.Line, loop.Column,
-                $"an item of this list is {held}, and {loop.Names.Count} names are waiting for it.");
+                $"{what} is {held}, and {names.Count} names are waiting for it.");
             return false;
         }
 
-        for (var i = 0; i < loop.Names.Count; i++) inner.Set(loop.Names[i], tuple.Items[i], loop.Line);
+        for (var i = 0; i < names.Count; i++) inner.Set(names[i], tuple.Items[i], loop.Line);
 
         return true;
     }

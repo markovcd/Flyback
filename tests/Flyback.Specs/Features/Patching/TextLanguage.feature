@@ -184,6 +184,20 @@ Feature: A patch can be written as text
     When the patch is written out as text and read back
     Then the speakers play 0.75
 
+  Scenario: A fold hands each pass what the pass before ended with
+    Given the text:
+      """
+      let level = fold 1..3 from value(0.1) with level {
+        level * 2
+      }
+      level |> out.left
+      out.volume = 1
+      """
+    Then it reads without complaint
+    And the speakers play 0.8
+    When the patch is written out as text and read back
+    Then the speakers play 0.8
+
   Scenario: An if builds the branch its condition picks as the text is read
     Given the text:
       """

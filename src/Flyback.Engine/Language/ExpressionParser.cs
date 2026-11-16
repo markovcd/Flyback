@@ -1,4 +1,4 @@
-using Flyback.Engine.Language.Ast;
+﻿using Flyback.Engine.Language.Ast;
 using Flyback.Engine.Language.Ast.Expressions;
 
 namespace Flyback.Engine.Language;
@@ -223,6 +223,9 @@ internal sealed class ExpressionParser
             case TokenKind.Identifier when AtLoop():
                 return Loop(line, column);
 
+            case TokenKind.Identifier when AtFold():
+                return Fold(line, column);
+
             case TokenKind.Identifier when AtIf():
                 return If(line, column);
 
@@ -355,6 +358,105 @@ internal sealed class ExpressionParser
         if (!parser.Braced(out var body, out var result, out var results)) return null;
 
         return Built(new ForExpr(names, tupled, source, body, result, results, line, column), source);
+    }
+
+    /// <summary>
+    /// Whether a fold starts here: <c>fold</c> followed by what it goes over, or by the names
+    /// each item takes. <c>fold</c> followed by anything else is a name, such as the Fold module's.
+    /// </summary>
+    private bool AtFold()
+    {
+        if (Current.Text != "fold") return false;
+
+        if (Ahead().Kind is TokenKind.Number or TokenKind.Identifier or TokenKind.Block) return true;
+        if (Ahead().Kind != TokenKind.OpenParen) return false;
+
+        for (var by = 2; ; by += 2)
+        {
+            if (Ahead(by).Kind != TokenKind.Identifier) return false;
+            if (Ahead(by + 1).Kind == TokenKind.CloseParen) return Ahead(by + 2) is { Kind: TokenKind.Identifier, Text: "in" };
+            if (Ahead(by + 1).Kind != TokenKind.Comma) return false;
+        }
+    }
+
+    /// <summary>
+    /// <c>fold [names in] list from seed with names { body }</c>, which <see cref="AtFold"/> has
+    /// already seen the start of: a loop whose passes each take what the one before ended with.
+    /// </summary>
+    private Expr? Fold(int line, int column)
+    {
+        parser.Advance();
+
+        var names = new List<string>();
+        var tupled = false;
+
+        if (Current.Kind == TokenKind.OpenParen || (Current.Kind == TokenKind.Identifier && Ahead() is { Kind: TokenKind.Identifier, Text: "in" }))
+        {
+            tupled = Current.Kind == TokenKind.OpenParen;
+
+            if (!Names(names, "each item")) return null;
+            parser.Advance();
+        }
+
+        if (Pipeline() is not { } source) return null;
+
+        if (Current is not { Kind: TokenKind.Identifier, Text: "from" })
+        {
+            parser.Complain(IssueCode.Syntax, $"expected 'from' and what the first pass starts with, but found {parser.Found()}.");
+            return null;
+        }
+
+        parser.Advance();
+
+        if (Pipeline() is not { } seed) return null;
+
+        if (Current is not { Kind: TokenKind.Identifier, Text: "with" })
+        {
+            parser.Complain(IssueCode.Syntax, $"expected 'with' and the name each pass reads what the last ended with by, but found {parser.Found()}.");
+            return null;
+        }
+
+        parser.Advance();
+
+        var carried = new List<string>();
+        var carriedTupled = Current.Kind == TokenKind.OpenParen;
+
+        if (!Names(carried, "what is carried")) return null;
+
+        if (!parser.Take(TokenKind.OpenBrace))
+        {
+            parser.Complain(IssueCode.Syntax, $"expected '{{' to open what each pass does, but found {parser.Found()}.");
+            return null;
+        }
+
+        if (!parser.Braced(out var body, out var result, out var results)) return null;
+
+        var carry = new Carry(carried, carriedTupled, seed);
+
+        return Built(new ForExpr(names, tupled, source, body, result, results, line, column) { Carry = carry }, source, seed);
+    }
+
+    /// <summary>A name, or bracketed names separated by commas, added to <paramref name="names"/>.</summary>
+    private bool Names(List<string> names, string what)
+    {
+        var bracketed = parser.Take(TokenKind.OpenParen);
+
+        do
+        {
+            if (Current.Kind != TokenKind.Identifier)
+            {
+                parser.Complain(IssueCode.Syntax, $"expected a name for {what}, but found {parser.Found()}.");
+                return false;
+            }
+
+            names.Add(Current.Text);
+            parser.Advance();
+        }
+        while (bracketed && parser.Take(TokenKind.Comma));
+
+        if (bracketed && !parser.Expect(TokenKind.CloseParen, $"')' to close the names for {what}")) return false;
+
+        return true;
     }
 
     /// <summary>Whether an <c>if</c> starts here, rather than a binding or a socket somebody called that.</summary>

@@ -1,4 +1,4 @@
-namespace Flyback.Engine.Language;
+﻿namespace Flyback.Engine.Language;
 
 /// <summary>
 /// The names the text has bound that are in sight where its tokens stop, read
@@ -20,6 +20,7 @@ internal static class VisibleNames
         List<VisibleName>? waiting = null;
         List<VisibleName>? lineParameters = null;
         var lineDepth = -1;
+        var folding = false;
 
         for (var i = 0; i < tokens.Count; i++)
         {
@@ -66,7 +67,26 @@ internal static class VisibleNames
                         waiting = Listed(tokens, i + 1, CompletionKind.Parameter);
                     break;
 
+                case TokenKind.Identifier when token.Text == "fold" && Folds(tokens, i):
+                    folding = true;
+                    waiting = null;
+
+                    if (At(tokens, i + 1, TokenKind.Identifier) is { } each && At(tokens, i + 2, TokenKind.Identifier) is { Text: "in" })
+                        waiting = [new VisibleName(each.Text, CompletionKind.Parameter, each.Line, null, [])];
+                    else if (At(tokens, i + 1, TokenKind.OpenParen) is not null)
+                        waiting = Listed(tokens, i + 1, CompletionKind.Parameter);
+                    break;
+
+                case TokenKind.Identifier when folding && token.Text == "with":
+                    List<VisibleName> carried = At(tokens, i + 1, TokenKind.Identifier) is { } one
+                        ? [new VisibleName(one.Text, CompletionKind.Parameter, one.Line, null, [])]
+                        : At(tokens, i + 1, TokenKind.OpenParen) is not null ? Listed(tokens, i + 1, CompletionKind.Parameter) : [];
+
+                    waiting = [.. waiting ?? [], .. carried];
+                    break;
+
                 case TokenKind.OpenBrace:
+                    folding = false;
                     var group = (i >= 1 && tokens[i - 1] is { Kind: TokenKind.Identifier, Text: "group" })
                         || (i >= 2 && tokens[i - 1].Kind == TokenKind.Text && tokens[i - 2] is { Kind: TokenKind.Identifier, Text: "group" });
 
@@ -88,6 +108,18 @@ internal static class VisibleNames
         }
 
         return [.. frames.SelectMany(f => f.Names), .. lineParameters ?? []];
+    }
+
+    /// <summary>Whether the <c>fold</c> at <paramref name="at"/> starts a fold rather than naming the Fold module.</summary>
+    private static bool Folds(IReadOnlyList<Token> tokens, int at)
+    {
+        if (at + 1 >= tokens.Count) return false;
+        if (tokens[at + 1].Kind is TokenKind.Number or TokenKind.Identifier or TokenKind.Block) return true;
+        if (tokens[at + 1].Kind != TokenKind.OpenParen) return false;
+
+        var close = Closing(tokens, at + 1);
+
+        return At(tokens, close + 1, TokenKind.Identifier) is { Text: "in" };
     }
 
     private static Token? At(IReadOnlyList<Token> tokens, int index, TokenKind kind) =>

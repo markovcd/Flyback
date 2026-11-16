@@ -6,6 +6,8 @@ window.flybackHighlight = (function () {
   var keywords = new RegExp([
     "\\b(?:let|def|group|for|off)\\b",
     "(?<!\\.)\\b(?:if|else|and|or|not)\\b(?![ \\t]*[:=.])",
+    "\\bfold\\b(?=[ \\t]+(?:[\\w\\[]|\\([\\w, \\t]*\\)[ \\t]+in\\b))",
+    "\\b(?:from|with)\\b(?=[ \\t]+[^\\s:,)=.])",
     "\\bin\\b(?=[ \\t]+[^\\s:,)=.])",
     "\\b(?:description|author|tags)\\b(?=[ \\t]*\")",
     "\\brequires\\b(?=[ \\t]+[\"\\w])",

@@ -1,4 +1,4 @@
-# Handoff
+﻿# Handoff
 
 Write-ups too long for a line in [TODO.md](../../TODO.md): a plan, an audit, or a problem found while working on something else. Each file is one piece of work, with what is wrong or wanted, the evidence, and the fix. Its TODO.md item links to it; take the item off, and delete the file, in the commit that lands the last of it.
 
@@ -13,6 +13,7 @@ Write-ups too long for a line in [TODO.md](../../TODO.md): a plan, an audit, or 
 | [ios-editor.md](ios-editor.md) | An iPhone and iPad editor: what differs from Android | Plan | Open, parked |
 | [frame-sequences.md](frame-sequences.md) | A Path that plays a numbered sequence of drawings, a frame at a time, so the animation is the music | Plan | Open |
 | [tempo-following.md](tempo-following.md) | A patch keeps time to taps, or to the beat the Line In hears, with no MIDI clock | Plan | Open |
+| [module-packs.md](module-packs.md) | Module plugins written in the text, so they install where a DLL cannot load | Plan | Open: `fold` landed |
 | [youtube-videos.md](youtube-videos.md) | Videos for the YouTube channel: how one is made, what was made, what is proposed | Backlog | Open, grows |
 | [tests-audit.md](tests-audit.md) | Where the tests are weakest, and what would fix each point | Audit | Open: what is left needs a seam, a workload or a fixture |
 | [pipeline-audit.md](pipeline-audit.md) | Where the pipeline is weakest, and what would fix each point | Audit | Open |

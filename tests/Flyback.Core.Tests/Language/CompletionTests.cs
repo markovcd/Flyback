@@ -168,6 +168,20 @@ public class CompletionTests
     }
 
     [Fact]
+    public void A_folds_item_and_carried_names_are_in_sight_only_in_its_body()
+    {
+        var inside = Labels("let s = fold k in 1..3 from sine(freq: 1) with sound {\n  sound * k + sine(freq: ¦");
+
+        inside.ShouldContain("k");
+        inside.ShouldContain("sound");
+
+        var after = Labels("let s = fold k in 1..3 from sine(freq: 1) with sound { sound * k }\nsine(freq: ¦");
+
+        after.ShouldNotContain("k");
+        after.ShouldNotContain("sound");
+    }
+
+    [Fact]
     public void A_def_written_in_a_block_stays_in_it()
     {
         const string source =

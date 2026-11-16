@@ -853,6 +853,35 @@ sum(voices) |> out.left
 - A number read by position twice is a knob's to turn as little as a number read
   through a name twice.
 
+### Fold
+
+`fold` is a loop whose passes each take what the pass before ended with, and it
+is worth only what the last pass ends with
+([0236](adr/0236-the-text-has-fold-which-carries-a-value-from-pass-to-pass.md)).
+It unrolls as the text is built, like `for`: the patch is the chain of copies,
+each wired into the next.
+
+```fbks {play="A fold"}
+// Each pass halves what it was handed and adds the next harmonic.
+let tone = fold k in 1..4 from sine(freq: 110, amp: 0.2) with sound {
+  sound * 0.5 + sine(freq: 110 * k, amp: 0.2)
+}
+
+tone |> out.left
+```
+
+- **`fold list from seed with name { ... }`.** The first pass reads `seed` by
+  `name`; every later pass reads by `name` what the pass before ended with.
+  `fold 1..4 from 1 with n { n * 2 }` is 16.
+- **The items may be named** as a loop's are, `fold k in 1..4` or
+  `fold (a, b) in pairs`, or left unnamed where only the count matters.
+- **A tuple is carried in brackets**: `fold 1..8 from (0, 1) with (a, b) { (b, a + b) }`,
+  and `let (a, b) = fold ...` takes the last apart. Every pass ends with as many
+  things as the names wait for.
+- **The passes count towards the 4096** a patch's loops stamp out between them.
+- **`fold` is a word only where a list follows it.** `fold(drive: 2)` is still
+  the Fold module, and `from` and `with` are words only inside a fold.
+
 ### If
 
 `if` builds one branch and leaves the other out, chosen as the text is built

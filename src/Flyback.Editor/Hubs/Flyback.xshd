@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 
 <!--
   The Flyback language, colored. Written by hand rather than taken from a
@@ -67,6 +67,10 @@
 
     <Rule color="Keyword">\b(?:let|def|group|for|off)\b</Rule>
     <Rule color="Keyword">(?&lt;!\.)\b(?:if|else|and|or|not)\b(?![ \t]*[:=.])</Rule>
+
+    <!-- A fold's words; "fold" before a bracket is the Fold module. -->
+    <Rule color="Keyword">\bfold\b(?=[ \t]+(?:[\w\[]|\([\w, \t]*\)[ \t]+in\b))</Rule>
+    <Rule color="Keyword">\b(?:from|with)\b(?=[ \t]+[^\s:,)=.])</Rule>
 
     <!-- A loop's "in", which is never the socket of that name nor a def's parameter. -->
     <Rule color="Keyword">\bin\b(?=\s+(?:[^\s:,)=.]|$))</Rule>
