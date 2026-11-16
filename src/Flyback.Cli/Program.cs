@@ -105,6 +105,7 @@ internal static class Program
             ProbeCommand.Build(plugins, json),
             DecideCommand.Build(plugins, json),
             MeasureCommand.Build(plugins, json),
+            MixCommand.Build(plugins, json),
             AskCommand.Build(plugins, json),
             ToolCommand.Build(plugins, json),
             McpCommand.Build(plugins),

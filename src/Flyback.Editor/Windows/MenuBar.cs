@@ -111,6 +111,7 @@ internal sealed class MenuBar
             new NativeMenuItemSeparator(),
             Pressing("Record", Key.R),
             Pressing("Measure", Key.M, KeyModifiers.Shift),
+            Pressing("Check the Mix", Key.H, KeyModifiers.Shift),
             new NativeMenuItemSeparator(),
             Pressing("Randomize the Panel's Knobs", Key.K, KeyModifiers.Shift),
             Pressing("Randomize the Selected Modules' Knobs", Key.D, KeyModifiers.Shift)));

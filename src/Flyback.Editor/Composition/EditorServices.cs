@@ -180,6 +180,7 @@ internal static class EditorServices
         services.AddPart<SiteAccess>();
         services.AddPart<Playback>();
         services.AddPart<Measuring>();
+        services.AddPart<MixChecking>();
         services.AddPart<RecordingState>();
         services.AddPart<PatchFiles>();
         services.AddPart<PatchViewing>();

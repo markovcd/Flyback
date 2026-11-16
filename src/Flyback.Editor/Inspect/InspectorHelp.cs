@@ -45,7 +45,11 @@ internal static class InspectorHelp
             Row("Full-screen picture", "Also a double-click on the picture. Esc gives the window back.", "F11"),
             Row("Live patching", "The patch over the full-screen picture: modules that fade while untouched, or text with F2. Tab over a full-screen picture puts the modules on or off.", "Shift+F11"),
             .. host.Measures
-                ? new[] { Row("Measure", "Runs the patch for a few seconds and pins what each output carries beside it. Again hides them.", "Ctrl+Shift+M") }
+                ? new[]
+                {
+                    Row("Measure", "Runs the patch for a few seconds and pins what each output carries beside it. Again hides them.", "Ctrl+Shift+M"),
+                    Row("Check the mix", "Listens to a few seconds from the playhead and flags clipping, DC, the low end, the loudness and a missing master chain.", "Ctrl+Shift+H"),
+                }
                 : [],
             .. host.Records
                 ? new[] { Row("Record", "Writes what the patch is doing to a file, knobs and all, as it happens. Starts and stops.", "Ctrl+R") }

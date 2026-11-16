@@ -15,10 +15,13 @@
 - The text language has `if`: `if k % 4 == 0 { kick() } else { hat() }` builds one branch as the text is read, deciding on the numbers, notes and texts it writes down.
 - The text language reads a list by position, `chords[i]` counted from one, and counts it with `len(chords)`.
 - A sequencer's block reads names with `$`: `notes() [ $root C3 ]`, and a list writes in all its notes, so a loop can vary a pattern.
+- Play → Check the Mix (Ctrl+Shift+H) listens to a few seconds from the playhead and flags clipping, DC, a missing sub, muddy low mids, a wide low end, a loudness far off, a missing master chain and silent sound sources. Desktop only.
 
 ### Viewer
 
 ### Command line
+
+- `flyback-cli mix` checks a patch's mix the same way, exiting 1 on a warning, and assistants get it as the `check_mix` tool.
 
 ### Installing
 

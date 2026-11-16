@@ -289,6 +289,12 @@ internal sealed class EditorView : Border
                 e.Handled = true;
                 break;
 
+            // H for hearing the mix. With Shift, leaving Command+H to the Mac's Hide.
+            case Key.H when again:
+                if (editorHost.Measures) reactions.Raise(new MixCheckAsked());
+                e.Handled = true;
+                break;
+
             // The panel has no room while the picture has the window; randomizing needs none.
             case Key.K:
                 if (again) randomizer.Roll();

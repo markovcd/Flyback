@@ -176,6 +176,20 @@ internal sealed class ToolTable(
                         + "Anything that remembers earlier moments starts empty there."),
                 ]),
 
+            Does("check_mix", measurements.CheckMixAsync,
+                "Listens to the patch for a few seconds with nothing played in and flags the usual mix "
+                + "problems: no master chain, clipping, DC offset, no sub, muddy low mids, a wide low end, a "
+                + "loudness far off, and sound sources that stay silent. Gives the integrated loudness, true "
+                + "peak and low-end figures it judged by. Run it once a song is wired, again after fixing "
+                + "what it flagged, and before proposing; start it past a quiet intro.",
+                [
+                    Seconds.Described(
+                        $"How long to listen, from 0.5 to {Number(PatchMeasurements.LongestMix)}. Defaults to {Number(Engine.Mix.MixOptions.DefaultSeconds)}."),
+                    From.Described(
+                        $"Where on the patch's timeline to start, up to {Number(limits.LatestStart)}. Defaults to 0. "
+                        + "The sound is warmed for a second before it."),
+                ]),
+
             Does("describe_module", catalog.DescribeModule,
                 "Everything about one module: what it is for, and each port's default, range and "
                 + "what it is for.",

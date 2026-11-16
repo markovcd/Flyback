@@ -85,6 +85,20 @@ public sealed class McpServerTests : IDisposable
     }
 
     [Fact]
+    public async Task Check_mix_is_listed_and_flags_a_constant_in_the_sound()
+    {
+        var tools = (await Ask("tools/list"))["result"]!["tools"]!.AsArray();
+        tools.ShouldContain(tool => tool!["name"]!.GetValue<string>() == "check_mix");
+
+        await Call("write_patch", new JsonObject { ["source"] = "let wet = sine(freq: 110, amp: 0.5, bias: 0.2)\nwet |> out.left\nout.volume = 1" });
+
+        var result = await Call("check_mix", new JsonObject { ["seconds"] = 1 });
+
+        result["isError"]!.GetValue<bool>().ShouldBeFalse(result.ToJsonString());
+        result["content"]![0]!["text"]!.GetValue<string>().ShouldContain("warning dc-offset");
+    }
+
+    [Fact]
     public async Task Say_is_listed_and_writes_what_it_is_handed_where_the_person_reads_it()
     {
         var tools = (await Ask("tools/list"))["result"]!["tools"]!.AsArray();

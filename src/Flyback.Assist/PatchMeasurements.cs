@@ -3,6 +3,7 @@ using System.Text.Json;
 using Flyback.Core.Graph;
 using Flyback.Engine.Language;
 using Flyback.Engine.Measure;
+using Flyback.Engine.Mix;
 
 namespace Flyback.Assist;
 
@@ -13,6 +14,9 @@ internal sealed class PatchMeasurements(WorkingPatch bench, WorkbenchLimits limi
 {
     /// <summary>The longest window a measurement runs, long enough to count a slow LFO's turns.</summary>
     public const double LongestMeasure = 60d;
+
+    /// <summary>The longest window a mix check listens to: half a minute is a long render for a big song.</summary>
+    public const double LongestMix = 30d;
 
     /// <summary>
     /// Runs the patch offline and says what each output of the named modules carried,
@@ -82,6 +86,34 @@ internal sealed class PatchMeasurements(WorkingPatch bench, WorkbenchLimits limi
                 }
 
                 return ToolOutcome.Fine(text.ToString());
+            },
+            cancel);
+    }
+
+    /// <summary>
+    /// Listens to the patch for a few seconds and flags the usual mix problems, with
+    /// the loudness, peak and low-end figures they were judged by.
+    /// </summary>
+    /// <remarks>On a pool thread, for the reason <see cref="PatchSenses.RenderAsync"/> gives.</remarks>
+    public Task<ToolOutcome> CheckMixAsync(JsonElement arguments, CancellationToken cancel)
+    {
+        var seconds = ToolFields.Seconds.Number(arguments, out var length) ? Math.Clamp(length, 0.5d, LongestMix) : MixOptions.DefaultSeconds;
+        var from = ToolFields.From.Number(arguments, out var start) ? Math.Clamp(start, 0d, limits.LatestStart) : 0d;
+        var patch = bench.Patch;
+
+        return Task.Run(
+            () =>
+            {
+                var report = MixCheck.Take(
+                    patch,
+                    new MixOptions(seconds, from),
+                    bench.Modules,
+                    bench.Samples,
+                    bench.Pictures,
+                    id => bench.Handle(patch.Find(id)),
+                    cancel: cancel);
+
+                return ToolOutcome.Fine(string.Join('\n', MixWords.Lines(report)));
             },
             cancel);
     }

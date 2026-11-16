@@ -27,6 +27,7 @@ flyback-cli tool <name> <patch> --args '<json object>'
 - `edit_patch` changes one: each `{find, replace}` swaps a piece of the text `describe_patch` showed, found exactly once. A knob is a number, a wire a pipe, a module a line. It keeps the rest of the text, comments included, so never rewrite a patch whole to change it.
 - `render` draws the picture to a PNG and prints where it is (`--picture <file>` says where). Open it and look before saying a picture is right.
 - `measure` says what an output carries: levels, pitch, how it moves. Use it on the sound, which you cannot hear.
+- `check_mix` listens for a few seconds and flags the usual mix problems: no master chain, clipping, DC, no sub, muddy low mids, a wide low end, a loudness far off, silent sources. Run it on a song before saying it is finished, past any quiet intro (`from`).
 - `propose` checks the patch compiles cleanly and something reaches the Output. It applies nothing, since every edit is already written. Run it before saying a patch is finished; it is refused while the last edit failed.
 - `reset` goes back to the patch as last proposed, or as the file stood before these tools touched it, never further.
 
@@ -48,6 +49,7 @@ Your own checkpoints do not cover these files: undo through these commands. A pa
 ## Checking the patch from outside
 
 - `flyback-cli check <patch>` compiles it and names the line of anything wrong.
+- `flyback-cli mix <patch> --from 30` is `check_mix` from the shell; it exits 1 when anything is a warning.
 - `flyback-cli render <patch> -o clip.mp4 --seconds 4` records it, picture and sound.
 
 ## Over MCP instead

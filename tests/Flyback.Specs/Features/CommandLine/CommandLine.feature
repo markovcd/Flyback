@@ -2,7 +2,8 @@ Feature: The command line says whether a patch works, and whether two are the sa
   Somebody with no window, a script or an agent, asks flyback-cli about a patch
   file. The exit code is the answer, and what is wrong is said by its line.
   flyback-cli check compiles it, flyback-cli info says what it is,
-  flyback-cli measure what its outputs carry, flyback-cli levels which groups,
+  flyback-cli measure what its outputs carry, flyback-cli mix what is wrong with
+  its sound as a mix, flyback-cli levels which groups,
   def calls and loop passes its text opens, and flyback-cli compare whether two
   are the same instrument; flyback-cli print, flyback-cli pack and
   flyback-cli save write it out, flyback-cli shot draws the editor around it,
@@ -30,6 +31,18 @@ Feature: The command line says whether a patch works, and whether two are the sa
     When flyback-cli measures "lfo.fbks"
     Then the command succeeds
     And it says "lfo.out" swings from -1 to 1, 2 times a second
+
+  Scenario: A mix check flags a song that clips and has no master chain
+    Given the text saved as "hot.fbks":
+      """
+      length 30
+      sine(freq: 110) * 3 |> out.left
+      out.volume = 1
+      """
+    When flyback-cli checks the mix of "hot.fbks"
+    Then the command says the patch has problems
+    And it names "warning clipping"
+    And it names "warning no-master-chain"
 
   Scenario: The levels a module sits in are listed from the outermost down
     Given the text saved as "pads.fbks":

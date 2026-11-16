@@ -254,10 +254,11 @@ internal static class Handbook
     /// whoever asked it, and one's own ear agrees with whoever built the patch.
     /// </remarks>
     private static readonly string Deaf = """
-        You cannot hear the sound, and no tool of yours measures it. If the
-        patch makes noise, reason about it from the modules and say plainly
-        that you have not heard it. Asked to listen, or to reach a loudness,
-        say you cannot rather than give a level you never measured.
+        You cannot hear the sound. `check_mix` measures it instead: its
+        loudness, true peak and low end, and the usual mix faults, as numbers.
+        Beyond those, reason about the sound from the modules and say plainly
+        that you have not heard it. Never give a level `check_mix` did not
+        report.
 
         """.ReplaceLineEndings(Newline);
 

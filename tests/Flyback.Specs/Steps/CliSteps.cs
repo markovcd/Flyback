@@ -395,6 +395,9 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
         ((double)sound["hz"]!).ShouldBe(hz, 0.01);
     }
 
+    [When("flyback-cli checks the mix of {string}")]
+    public void WhenMixChecked(string name) => Run("mix", Path(name), "--seconds", "2");
+
     [When("flyback-cli lists the levels of {string} around {string}")]
     public void WhenLevelsListed(string name, string module) => Run("levels", Path(name), "--of", module);
 
