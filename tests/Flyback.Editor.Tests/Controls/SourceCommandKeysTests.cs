@@ -11,15 +11,19 @@ using Shouldly;
 namespace Flyback.Editor.Tests.Controls;
 
 /// <summary>
-/// The text takes Cmd for the clipboard and undo where the platform's command key is Cmd,
-/// as in a browser on a Mac, though the editor's own commands listen for Ctrl there.
+/// The text takes the platform's command key for the clipboard and undo where it is not
+/// the one the editor's own commands listen for, as Cmd in a browser on a Mac.
 /// </summary>
 public class SourceCommandKeysTests : UiTest
 {
+    /// <summary>The command key the editor does not listen for on this machine: Cmd off a Mac, Ctrl on one.</summary>
+    private static readonly KeyModifiers Other =
+        ApplicationCommands.Copy.Gesture.KeyModifiers == KeyModifiers.Meta ? KeyModifiers.Control : KeyModifiers.Meta;
+
     private (Window Window, TextEditor Text) Open(string text)
     {
         var editor = new TextEditor { Text = text };
-        SourceCommandKeys.Attach(editor, () => KeyModifiers.Meta);
+        SourceCommandKeys.Attach(editor, () => Other);
 
         var window = Owned(new Window { Content = editor, Width = 400, Height = 300 });
         window.Show();
@@ -31,7 +35,8 @@ public class SourceCommandKeysTests : UiTest
 
     private static void Command(Window window, PhysicalKey key, RawInputModifiers also = RawInputModifiers.None)
     {
-        window.KeyPressQwerty(key, RawInputModifiers.Meta | also);
+        var held = Other == KeyModifiers.Meta ? RawInputModifiers.Meta : RawInputModifiers.Control;
+        window.KeyPressQwerty(key, held | also);
         Settle(window);
     }
 
@@ -39,7 +44,7 @@ public class SourceCommandKeysTests : UiTest
         TopLevel.GetTopLevel(window)!.Clipboard!.TryGetTextAsync().GetAwaiter().GetResult();
 
     [AvaloniaFact]
-    public void Cmd_A_and_Cmd_C_copy_the_whole_text()
+    public void Command_A_and_command_C_copy_the_whole_text()
     {
         var (window, _) = Open("let hum = t |> sine(freq: 220)");
 
@@ -51,7 +56,7 @@ public class SourceCommandKeysTests : UiTest
     }
 
     [AvaloniaFact]
-    public void Cmd_X_cuts_and_Cmd_V_puts_it_back()
+    public void Command_X_cuts_and_command_V_puts_it_back()
     {
         var (window, text) = Open("hum |> out.left");
         text.Select(0, 4);
@@ -68,7 +73,7 @@ public class SourceCommandKeysTests : UiTest
     }
 
     [AvaloniaFact]
-    public void Cmd_Z_undoes_and_Cmd_Shift_Z_redoes()
+    public void Command_Z_undoes_and_command_Shift_Z_redoes()
     {
         var (window, text) = Open("hum");
         text.Document.Insert(3, "!");
@@ -78,17 +83,5 @@ public class SourceCommandKeysTests : UiTest
 
         Command(window, PhysicalKey.Z, RawInputModifiers.Shift);
         text.Text.ShouldBe("hum!");
-    }
-
-    [AvaloniaFact]
-    public void Cmd_Z_with_nothing_to_undo_is_left_to_the_window()
-    {
-        var (window, _) = Open("hum");
-        var reached = false;
-        window.KeyDown += (_, e) => reached |= e.Key == Key.Z;
-
-        Command(window, PhysicalKey.Z);
-
-        reached.ShouldBeTrue();
     }
 }

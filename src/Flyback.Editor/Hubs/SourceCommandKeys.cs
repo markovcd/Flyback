@@ -12,6 +12,8 @@ namespace Flyback.Editor.Hubs;
 /// The text editor binds those commands to Ctrl everywhere but a macOS process, so in a
 /// browser on a Mac it ignores Cmd+C. The platform's hotkey configuration knows the
 /// browser is on a Mac, and where its command key is not the editor's, the keys are run here.
+/// Caught on the text area, so a key the editor around it takes on the way down, such as
+/// a paste the text view translates, never reaches this.
 /// </remarks>
 internal static class SourceCommandKeys
 {
@@ -21,13 +23,10 @@ internal static class SourceCommandKeys
 
     /// <summary>Catches the command keys on <paramref name="editor"/>, with <paramref name="command"/> as the command key.</summary>
     public static void Attach(TextEditor editor, Func<KeyModifiers?> command) =>
-        editor.AddHandler(InputElement.KeyDownEvent, (_, e) =>
+        editor.TextArea.AddHandler(InputElement.KeyDownEvent, (_, e) =>
         {
             if (command() is not { } held || held == ApplicationCommands.Copy.Gesture.KeyModifiers) return;
             if (Meant(e, held) is not { } meant) return;
-
-            // As the editor's own binding does: a command with nothing to act on leaves the key to the window.
-            if (!meant.CanExecute(null, editor.TextArea)) return;
 
             e.Handled = true;
             meant.Execute(null, editor.TextArea);
