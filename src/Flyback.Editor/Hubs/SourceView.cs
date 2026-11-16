@@ -181,6 +181,7 @@ internal sealed partial class SourceView : UserControl
         text.AddHandler(KeyDownEvent, Resized, RoutingStrategies.Tunnel);
         _ = new SourcePinch(text, () => EditorFontSize, size => EditorFontSize = size);
         text.AddHandler(KeyDownEvent, Pasted, RoutingStrategies.Tunnel);
+        SourceCommandKeys.Attach(text);
         SourceDuplicate.Attach(text);
 
         // A run of typing is one thing to take back. The stack takes an operation

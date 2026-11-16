@@ -22,6 +22,8 @@
 
 ### Fixes
 
+- In the web editor on a Mac, Cmd+C, Cmd+X, Cmd+V, Cmd+A and Cmd+Z work in the text view.
+
 ## 0.14.0 — 2026-11-12
 
 91 commits since 0.13.0.
