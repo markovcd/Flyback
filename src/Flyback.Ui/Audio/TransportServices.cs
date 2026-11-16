@@ -1,4 +1,5 @@
 using Flyback.Engine.Compile;
+using Flyback.Host.Ableton;
 using Flyback.Ui.Midi;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -20,6 +21,8 @@ internal static class TransportServices
         services.AddSingleton<IAudioEngine>(sp => sp.GetRequiredService<AudioEngine>());
 
         // Nothing is opened by this: the backend is asked for a device only once a compiled program is reading one.
+        // The network is joined only while a running program follows the Link session.
+        services.AddSingleton<AbletonHub>();
         services.AddSingleton<MidiHub>();
         services.AddSingleton<ControlHub>();
 

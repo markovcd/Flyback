@@ -9,6 +9,7 @@ using Flyback.Editor.Settings;
 using Flyback.Editor.Shell;
 using Flyback.Editor.Statistics;
 using Flyback.Editor.Windows;
+using Flyback.Host.Ableton;
 using Flyback.Plugins.Hosting;
 using Flyback.Ui.Midi;
 
@@ -40,6 +41,7 @@ internal sealed class EditorStart(
         layout.Load();
         if (host is Window window) layout.Apply(window);
         MidiSources.Install(() => [.. midi.Sources.Select(source => source with { Conducts = instruments.For(source)?.Conducts == true })]);
+        MidiSources.OfferAbleton(AbletonHub.Possible);
         usage.Started(plugins.Plugins.Select(plugin => plugin.Info.Id), playback.Sound.Output?.Id, ScreenHeights(host));
         presets.StartOn(outputSettings.Current.DefaultPreset);
 

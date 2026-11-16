@@ -3,6 +3,7 @@ using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
+using Flyback.Host.Ableton;
 
 namespace Flyback.Specs.Support;
 
@@ -53,6 +54,9 @@ public sealed class PatchContext
 
     /// <summary>The drum machine's clock, as the shell would keep it.</summary>
     internal MidiClock Clock { get; } = new();
+
+    /// <summary>The Ableton Link session's clock, as the shell would keep it.</summary>
+    internal AbletonClock Ableton { get; } = new();
 
     /// <summary>Seconds the speakers run behind the program, as the shell would write them for a Clock In.</summary>
     public double Lead { get; set; }
@@ -232,10 +236,11 @@ public sealed class PatchContext
     /// <summary>Seconds of sound heard so far.</summary>
     public double Now => (double)heard.Count / SampleRate;
 
-    /// <summary>Puts the drum machine's clock where the program will read it.</summary>
+    /// <summary>Puts the drum machine's clock and the Link session's where the program will read them.</summary>
     public void Push()
     {
         Clock.WriteTo(Live, Machine);
+        Ableton.WriteTo(Live);
         Live.Set(MidiSignal.LeadKey, (float)Lead);
     }
 
@@ -270,6 +275,7 @@ public sealed class PatchContext
                 field = new LiveValues(program.LiveInputs);
                 liveFor = program;
                 Clock.WriteTo(field, Machine);
+                Ableton.WriteTo(field);
                 field.Set(MidiSignal.LeadKey, (float)Lead);
             }
 

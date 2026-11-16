@@ -4,6 +4,8 @@
 
 ### Modules
 
+- A Clock In can follow the Ableton Link session on the network, keeping a patch to the tempo and bars of Live, Bitwig or a phone app on the same Wi-Fi, on the desktop and on Android.
+
 ### Presets
 
 ### Assistant
@@ -23,6 +25,7 @@
 ### Command line
 
 - `flyback-cli mix` checks a patch's mix the same way, exiting 1 on a warning, and assistants get it as the `check_mix` tool.
+- `flyback-cli ableton` joins the Ableton Link session for a while and prints its tempo, its beat and how many other apps are in it.
 
 ### Installing
 

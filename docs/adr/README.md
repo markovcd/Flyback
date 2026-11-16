@@ -91,7 +91,8 @@ context, decision, consequences.
 | [0170](0170-the-knob-panel-randomizes-and-a-held-knob-sits-it-out.md) | The knob panel randomizes, and a held knob sits it out *(user-directed)* |
 | [0209](0209-a-module-rolls-its-own-knobs-as-an-undo-step.md) | A module rolls its own knobs, as an undo step *(user-directed)* |
 | [0205](0205-a-panel-knob-can-be-played-as-a-switch-or-a-button.md) | A panel knob can be played as a switch or a button *(user-directed)* |
-| [0139](0139-a-patch-keeps-to-an-instruments-clock.md) | A patch keeps to an instrument's clock *(user-directed)* |
+| [0139](0139-a-patch-keeps-to-an-instruments-clock.md) | A patch keeps to an instrument's clock *(user-directed; the Ableton Link session added by [0237](0237-flyback-speaks-ableton-link-itself.md))* |
+| [0237](0237-flyback-speaks-ableton-link-itself.md) | Flyback speaks Ableton Link itself *(user-directed)* |
 | [0179](0179-a-midi-file-plays-as-tables-read-by-the-clock.md) | A MIDI file plays as tables read by the clock *(user-directed)* |
 | [0140](0140-an-instrument-is-known-by-a-profile-file.md) | An instrument is known by a profile file *(user-directed)* |
 | [0057](0057-a-shape-is-a-distance-and-one-module-inks-it.md) | A shape is a distance, and one module inks it *(user-directed)* |

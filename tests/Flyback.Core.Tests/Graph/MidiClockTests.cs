@@ -353,6 +353,24 @@ public class MidiClockTests
         Followed(Box).Issues.ShouldContain(issue => issue.Message.Contains(Box));
     }
 
+    /// <summary>Following the Link session joins the network, so a fresh clock never picks it on its own.</summary>
+    [Fact]
+    public void A_fresh_clock_follows_an_instrument_before_the_link_session_and_the_keyboard_before_it_too()
+    {
+        MidiSource keyboard = new(MidiSources.Keyboard, "Computer keyboard");
+        MidiSource session = new(MidiSources.Ableton, "Ableton Link session");
+        MidiSource box = new(Box, "Box");
+
+        Fresh([keyboard, session]).ShouldBe(MidiSources.Keyboard);
+        Fresh([keyboard, session, box]).ShouldBe(Box);
+    }
+
+    [Fact]
+    public void A_clock_following_the_link_session_where_none_can_be_joined_says_so()
+    {
+        Followed(MidiSources.Ableton).Issues.ShouldContain(issue => issue.Message.Contains(MidiSources.Ableton));
+    }
+
     // ---- helpers --------------------------------------------------------------
 
     /// <summary>A patch of one Clock In following the box, wired to the ear through the given output.</summary>
@@ -385,6 +403,9 @@ public class MidiClockTests
 
         return builder.Patch.CompileForAudio(NodeCatalog.BuiltIn);
     }
+
+    private static string Fresh(IReadOnlyList<MidiSource> sources) =>
+        ((ExtraField.Choice)MidiClockExtra.FieldsFor(sources)[0]).Value(null);
 
     private static DelayState Memory(CompiledPatch program) =>
         new(program.DelayLengths, 48_000, program.PhaseCount, program.UnitCount, program.TraceCount);

@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
+using Flyback.Host.Ableton;
 using Flyback.Plugins.Midi;
 
 namespace Flyback.Ui.Midi;
@@ -13,7 +14,8 @@ namespace Flyback.Ui.Midi;
 /// <remarks>
 /// The inbound mirror of <c>AudioEngine</c>, in the shell (ADR-0025). Values are
 /// pushed into the running programs' blocks, and the computer keyboard and
-/// <see cref="IMidiInput"/> hardware share one dictionary.
+/// <see cref="IMidiInput"/> hardware share one dictionary. The Ableton Link
+/// session, where there is one, is followed alongside.
 /// <para>
 /// Writers hold <see cref="gate"/>; the playing thread reads
 /// <see cref="LiveValues"/> floats without a lock. Never open or close a device
@@ -21,8 +23,12 @@ namespace Flyback.Ui.Midi;
 /// waiting on it.
 /// </para>
 /// </remarks>
-internal sealed class MidiHub(IMidiInput hardware) : IDisposable
+internal sealed class MidiHub : IDisposable
 {
+    private readonly IMidiInput hardware;
+
+    private readonly AbletonHub? ableton;
+
     /// <summary>
     /// Guards everything below. Held briefly and never across a call into a
     /// device — see the note above about which way that deadlock runs.
@@ -107,6 +113,15 @@ internal sealed class MidiHub(IMidiInput hardware) : IDisposable
     /// </summary>
     public event Action? Heard;
 
+    /// <param name="ableton">The Link session, or null where nothing joins one.</param>
+    public MidiHub(IMidiInput hardware, AbletonHub? ableton = null)
+    {
+        this.hardware = hardware;
+        this.ableton = ableton;
+
+        if (ableton is not null) ableton.Trouble += message => Trouble?.Invoke(message);
+    }
+
     /// <summary>
     /// Seconds on a steady clock, read as each tick arrives so a clock can measure
     /// its tempo. Only its rate matters, so the machine's stopwatch is the
@@ -142,6 +157,7 @@ internal sealed class MidiHub(IMidiInput hardware) : IDisposable
         // Outside the lock, and it has to be: closing a device waits for the
         // driver's thread, which may at that moment be waiting to deliver a note.
         Listen(blocks);
+        ableton?.Follow(blocks);
 
         Publish();
     }
@@ -161,6 +177,8 @@ internal sealed class MidiHub(IMidiInput hardware) : IDisposable
 
             foreach (var (source, clock) in clocks) clock.WriteTo(block, source);
         }
+
+        ableton?.Fill(block);
     }
 
     /// <summary>

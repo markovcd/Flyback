@@ -22,14 +22,23 @@ internal static class MidiSources
     /// </summary>
     public const string Keyboard = "keyboard";
 
+    /// <summary>The Ableton Link session on the network, which only a Clock In follows.</summary>
+    public const string Ableton = "ableton-link";
+
     /// <summary>What the shell offers, and the keyboard alone until it has said.</summary>
     private static Func<IReadOnlyList<MidiSource>> ask = Alone;
+
+    /// <summary>Whether this platform can join a Link session.</summary>
+    private static bool networked;
 
     /// <summary>
     /// Points the module at whatever is actually plugged in. Called once during
     /// startup; what it hands back may differ on every call after.
     /// </summary>
     internal static void Install(Func<IReadOnlyList<MidiSource>> sources) => ask = sources;
+
+    /// <summary>Offers the Link session to a Clock In, where the shell can join one.</summary>
+    internal static void OfferAbleton(bool offered) => networked = offered;
 
     /// <summary>
     /// Everything that could play a patch right now. Total, whatever the shell does:
@@ -55,6 +64,9 @@ internal static class MidiSources
             return offered.Any(s => s.Id == Keyboard) ? offered : [.. Alone(), .. offered];
         }
     }
+
+    /// <summary>Whatever a Clock In can follow: every instrument, and the Link session where this platform joins one.</summary>
+    public static IReadOnlyList<MidiSource> Clocks => networked ? [.. All, new MidiSource(Ableton, "Ableton Link session")] : All;
 
     private static IReadOnlyList<MidiSource> Alone() =>
         [new MidiSource(Keyboard, "Computer keyboard")];

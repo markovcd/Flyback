@@ -11,7 +11,7 @@ namespace Flyback.Core.Graph.Extras;
 /// A fresh one follows the instrument known to conduct, or else the first one
 /// plugged in, because the computer's keyboard has no clock and a module that
 /// defaulted to it would be a module that did nothing until somebody found the
-/// field.
+/// field. Never the Link session, since following it joins the network.
 /// </remarks>
 public sealed record MidiClockExtra : NodeExtra
 {
@@ -25,7 +25,7 @@ public sealed record MidiClockExtra : NodeExtra
     public override string Key => StateKey;
 
     /// <inheritdoc/>
-    public override IReadOnlyList<ExtraField> Fields => FieldsFor(MidiSources.All);
+    public override IReadOnlyList<ExtraField> Fields => FieldsFor(MidiSources.Clocks);
 
     internal static IReadOnlyList<ExtraField> FieldsFor(IReadOnlyList<MidiSource> sources) =>
     [
@@ -33,7 +33,7 @@ public sealed record MidiClockExtra : NodeExtra
             DeviceField,
             "follows",
             [.. sources.Select(source => new ChoiceOption(source.Id, source.Name))],
-            Conductor(sources)) { Help = "The instrument whose clock it keeps time to." },
+            Conductor(sources)) { Help = "The instrument whose clock it keeps time to, or the Ableton Link session on the network." },
     ];
 
     private static string Conductor(IReadOnlyList<MidiSource> sources)
@@ -42,7 +42,7 @@ public sealed record MidiClockExtra : NodeExtra
             if (source.Conducts) return source.Id;
 
         foreach (var source in sources)
-            if (source.Id != MidiSources.Keyboard) return source.Id;
+            if (source.Id is not (MidiSources.Keyboard or MidiSources.Ableton)) return source.Id;
 
         return MidiSources.Keyboard;
     }
@@ -68,7 +68,7 @@ public sealed record MidiClockExtra : NodeExtra
                 + "Its beats stay at nought until an instrument is picked in the panel.",
                 IssueSeverity.Warning));
         }
-        else if (!MidiSources.All.Any(source => source.Id == chosen))
+        else if (!MidiSources.Clocks.Any(source => source.Id == chosen))
         {
             env.Report(new CompileIssue(
                 node.Id,
@@ -83,7 +83,7 @@ public sealed record MidiClockExtra : NodeExtra
     /// <inheritdoc/>
     public override string Announce()
     {
-        var offered = string.Join(", ", MidiSources.All.Where(source => source.Id != MidiSources.Keyboard).Select(source => source.Id));
+        var offered = string.Join(", ", MidiSources.Clocks.Where(source => source.Id != MidiSources.Keyboard).Select(source => source.Id));
 
         return $"  midi   device, which instrument's clock it follows — one of {offered}, as a string; not a knob";
     }

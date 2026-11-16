@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Composition;
+using Flyback.Host.Ableton;
 
 namespace Flyback.Editor.Android;
 
@@ -12,6 +13,8 @@ public sealed class DeviceApp : Avalonia.Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        MulticastPermit.Install(DeviceMulticast.Take);
+
         if (ApplicationLifetime is not ISingleViewApplicationLifetime device)
             throw new NotSupportedException("The Android editor runs in an activity.");
 
