@@ -387,11 +387,13 @@ public sealed class PluginHubTests : EditorTest
         window.MouseUp(at, MouseButton.Left);
     }
 
-    private MainWindow OpenPlugins(FakePluginSite? site = null)
+    /// <param name="siteWait">How long the site is given, where a test holds its answer back on purpose.</param>
+    private MainWindow OpenPlugins(FakePluginSite? site = null, TimeSpan? siteWait = null)
     {
+        var host = new EditorHost { PresetSite = FakePluginSite.Root, SiteWait = siteWait ?? new EditorHost().SiteWait };
         var window = site is null
             ? NewMainWindow(new EditorSetup { Folders = new() { PluginFolder = Plugins } })
-            : NewMainWindow(new EditorSetup { Folders = new() { PluginFolder = Plugins }, Host = new() { PresetSite = FakePluginSite.Root } }, Site(site));
+            : NewMainWindow(new EditorSetup { Folders = new() { PluginFolder = Plugins }, Host = host }, Site(site));
 
         window.Show();
         Settle(window);
@@ -471,7 +473,9 @@ public sealed class PluginHubTests : EditorTest
         {
             Searching = answer.Task,
         };
-        var window = OpenPlugins(site);
+
+        // Longer than a slow machine takes to open the dialog, so the answer is held back and not given up on.
+        var window = OpenPlugins(site, siteWait: TimeSpan.FromMinutes(2));
 
         Click(window, InstalledRow(window));
         Pump(() => All<DialogBody>(window).Any(p => p.Name == "pluginInstalled"), window);

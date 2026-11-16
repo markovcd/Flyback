@@ -40,6 +40,9 @@ public sealed record EditorHost
     /// <summary>The site the gallery lists shared presets from and the plugins window shared plugins.</summary>
     public Uri? PresetSite { get; init; }
 
+    /// <summary>How long the site is given before what waits on its answer goes ahead without it.</summary>
+    public TimeSpan SiteWait { get; init; } = TimeSpan.FromSeconds(3);
+
     /// <summary>What the Files section tells the operating system.</summary>
     public FileTypes? FileTypes { get; init; }
 

@@ -31,9 +31,6 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>, IReactTo<PluginsM
     private readonly Reactions reactions;
     private readonly Usage usage;
 
-    /// <summary>How long the site is given before a missing plugin's offer is dropped and the refusal stands alone.</summary>
-    private static readonly TimeSpan Looking = TimeSpan.FromSeconds(3);
-
     /// <summary>
     /// The patch the plugins window was opened for, which a restart from inside it opens
     /// again, by then with the plugin it was refused for. Null at every other moment,
@@ -98,7 +95,7 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>, IReactTo<PluginsM
     {
         if (loaded.MissingProviders.Count == 0 || PluginSite.For(site, host) is not { } shared) return;
 
-        using var cancel = new CancellationTokenSource(Looking);
+        using var cancel = new CancellationTokenSource(host.SiteWait);
 
         var found = await MissingPlugins.FoundAsync(shared, loaded, cancel.Token);
 
@@ -299,7 +296,7 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>, IReactTo<PluginsM
         });
 
         // Not waited for: a site that is down takes seconds to say so.
-        var newer = NewerAsync(pluginSite, plugin);
+        var newer = NewerAsync(pluginSite, plugin, host.SiteWait);
         var (folder, fromPackage, described) = await reading;
 
         var removal = plugin.Removing ? "It is removed at the next start already."
@@ -344,11 +341,11 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>, IReactTo<PluginsM
     /// The newest build the plugin site has of <paramref name="plugin"/>, where it is newer
     /// than the one installed. Asked briefly, and null where the site does not answer.
     /// </summary>
-    private static async Task<SitePlugin?> NewerAsync(PluginSite? site, HubInstalled plugin)
+    private static async Task<SitePlugin?> NewerAsync(PluginSite? site, HubInstalled plugin, TimeSpan wait)
     {
         if (site is null) return null;
 
-        using var cancel = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+        using var cancel = new CancellationTokenSource(wait);
 
         try
         {
