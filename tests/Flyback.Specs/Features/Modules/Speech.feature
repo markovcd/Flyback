@@ -3,8 +3,9 @@ Feature: Speech: words said or sung in a synthesized voice, and a mouth that say
   says the words typed into it, made from nothing but a pulse, a noise and
   filters. It says them from the start of the patch and again every few seconds,
   or each time its trigger rises, and is silent in between; in Sing it gives each
-  syllable a note, in time with its tempo. No knob makes it louder than full
-  scale. Mouth draws lips that open and round as a Speak says, on black.
+  syllable a note, in time with its tempo, and sings the tune the same way. No
+  knob makes it louder than full scale. Mouth draws lips that open and round as a
+  Speak says, on black.
 
   Scenario: With nothing wired it says its greeting
     Given a Speak with nothing wired
@@ -38,6 +39,12 @@ Feature: Speech: words said or sung in a synthesized voice, and a mouth that say
     Given a Speak singing "la la" to "A3 ~ E4" at 120 beats a minute
     Then it is silent from 0.6 second to 0.95
     And its pitch at 1.2 seconds is 330 Hz
+
+  # A second of tune at 120 a minute.
+  Scenario: Sung once, it is silent after the tune until its trigger rises
+    Given a Speak singing "la la" to "A3 E4" at 120 beats a minute once, triggered at 1.5 seconds
+    Then it is silent from 1.1 second to 1.5
+    And its pitch at 1.7 seconds is 220 Hz
 
   Scenario: A note it cannot read is skipped with a warning
     Given a Speak singing "la la" to "A3 Q9" at 120 beats a minute

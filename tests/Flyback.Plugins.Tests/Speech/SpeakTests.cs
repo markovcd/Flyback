@@ -69,34 +69,33 @@ public class SpeakTests
     }
 
     [Fact]
-    public void Sung_the_tune_comes_round_again()
+    public void Sung_the_tune_comes_round_again_every_so_many_seconds()
     {
         // A beat each at 120 a minute, so the tune is a second long.
-        var sung = Sung("la la", "A3 E4", 120f);
+        var sung = Sung("la la", "A3 E4", 120f, knobs: ("every", 1f));
 
         Pitch(sung, 0.75f).ShouldBe(329.6d, 329.6d * 0.03);
         Pitch(sung, 1.25f).ShouldBe(220d, 220d * 0.03);
     }
 
     [Fact]
-    public void Sung_a_rest_is_silent_and_takes_no_syllable()
+    public void Sung_once_it_is_silent_after_the_tune()
     {
-        // Half a second each at 120 a minute: A3, a rest, then E4 on the second syllable.
-        var sung = Sung("la la", "A3 ~ E4", 120f);
+        // A second of tune at 120 a minute, sung once.
+        var sung = Sung("la la", "A3 E4", 120f, knobs: ("every", 0f));
 
-        Pitch(sung, 0.2f).ShouldBe(220d, 220d * 0.03);
-        Rms(sung, 0.6f, 0.95f).ShouldBeLessThan(1e-4);
-        Pitch(sung, 1.2f).ShouldBe(329.6d, 329.6d * 0.03);
+        Rms(sung, 0.6f, 0.95f).ShouldBeGreaterThan(0.02);
+        Rms(sung, 1.1f, 2f).ShouldBeLessThan(1e-4);
     }
 
     [Fact]
-    public void Sung_rests_after_the_last_note_lengthen_the_tune()
+    public void Sung_it_waits_for_every_however_short_the_tune()
     {
-        // A beat of A3 and three of rest at 120 a minute: two seconds round.
-        var sung = Sung("la", "A3 ~@3", 120f, seconds: 3);
+        // A second of tune, sung again only after 1.5.
+        var sung = Sung("la la", "A3 E4", 120f, seconds: 3, knobs: ("every", 1.5f));
 
-        Rms(sung, 0.7f, 1.95f).ShouldBeLessThan(1e-4);
-        Rms(sung, 2.05f, 2.4f).ShouldBeGreaterThan(0.02);
+        Rms(sung, 1.1f, 1.45f).ShouldBeLessThan(1e-4);
+        Pitch(sung, 1.75f).ShouldBe(220d, 220d * 0.03);
     }
 
     [Fact]
@@ -147,8 +146,8 @@ public class SpeakTests
     private static double[] Said(string words, int output, params (string Port, float Value)[] knobs) =>
         Played(new JsonObject { ["words"] = words }, output, 3, knobs);
 
-    private static double[] Sung(string words, string notes, float bpm, int seconds = 2) =>
-        Played(new JsonObject { ["words"] = words, ["mode"] = "sing", ["notes"] = notes }, 0, seconds, ("bpm", bpm));
+    private static double[] Sung(string words, string notes, float bpm, int seconds = 2, params (string Port, float Value)[] knobs) =>
+        Played(new JsonObject { ["words"] = words, ["mode"] = "sing", ["notes"] = notes }, 0, seconds, [("bpm", bpm), .. knobs]);
 
     private static double[] Played(JsonObject state, int output, int seconds, params (string Port, float Value)[] knobs)
     {

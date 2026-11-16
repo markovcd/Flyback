@@ -49,6 +49,15 @@ public sealed class SpeechSteps
         Play(speak);
     }
 
+    [Given("a Speak singing {string} to {string} at {float} beats a minute once, triggered at {float} seconds")]
+    public void GivenASpeakSingingTriggered(string words, string notes, float bpm, float at)
+    {
+        var speak = Create(words, ("bpm", bpm), ("every", 0f));
+        speak.SetState("speak", new JsonObject { ["words"] = words, ["mode"] = "sing", ["notes"] = notes });
+
+        Play(speak, at);
+    }
+
     [Given("a Mouth open {float}")]
     public void GivenAMouth(float open)
     {

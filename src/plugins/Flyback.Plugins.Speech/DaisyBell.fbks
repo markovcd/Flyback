@@ -4,6 +4,8 @@
 // The Speak and the Tempo share one tempo, so the voice and the band count the
 // same beats without a wire between them. A note is written for each syllable,
 // its length in beats after the '@', and the words' lines are the caption's.
+// The chorus is 48 beats, 19.2 seconds at 150, so 'every' brings it round again
+// with the waltz.
 
 description "A voice made of a buzz, a breath and filters sings Daisy Bell over a waltz,"
   "with a mouth on screen singing along and the words typed out as they are sung."
@@ -16,6 +18,7 @@ let beat = tempo(150)
 
 let singer = speak(
     bpm: 150,
+    every: 19.2,
     size: 0.95,
     mode: "sing",
     words: "Daisy, Daisy,|give me your answer, do.|I'm half crazy,|all for the love of you.",

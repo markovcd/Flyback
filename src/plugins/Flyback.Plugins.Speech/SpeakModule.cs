@@ -59,7 +59,7 @@ internal static class SpeakModule
             },
             new PortSpec("every", PortKind.Scalar, 4f, 0f, 30f)
             {
-                Help = "Says the words again this many seconds after it started them; 0 says them once a trigger.",
+                Help = "Says or sings the words again this many seconds after it started them; 0 says them once a trigger.",
             },
             new PortSpec("size", PortKind.Scalar, 1f, 0.6f, 1.6f)
             {
@@ -152,9 +152,8 @@ internal static class SpeakModule
             em.Table(at, said.Reveal),
         ];
 
-        // Seconds since the last trigger, wrapped at 'every', with the sentence's
-        // own rise and fall on the pitch.
-        (Slot At, Slot Hz, Slot Level) Spoken()
+        // Seconds since the trigger last rose, wrapped at 'every' unless it is nought.
+        Slot Since()
         {
             var startCell = em.AllocateUnitSlot();
             var triggerCell = em.AllocateUnitSlot();
@@ -166,8 +165,13 @@ internal static class SpeakModule
 
             var since = em.Sub(now, start);
             var repeats = em.Binary(OpCode.Step, em.Constant(1e-3f), node[5]);
-            var wrapped = em.Ternary(OpCode.Mix, since, em.Binary(OpCode.Mod, since, node[5]), repeats);
-            var spokenAt = em.Mul(wrapped, node[2]);
+            return em.Ternary(OpCode.Mix, since, em.Binary(OpCode.Mod, since, node[5]), repeats);
+        }
+
+        // The words at 'speed', with the sentence's own rise and fall on the pitch.
+        (Slot At, Slot Hz, Slot Level) Spoken()
+        {
+            var spokenAt = em.Mul(Since(), node[2]);
 
             var vibrato = em.Add(em.Mul(em.Unary(OpCode.Sin, em.Mul(now, Tau * 5.2f)), 0.006f), 1f);
             return (spokenAt, em.Mul(em.Mul(node[1], em.Table(spokenAt, said.Pitch)), vibrato), one);
@@ -175,11 +179,11 @@ internal static class SpeakModule
 
         // The slot the beat is in, a syllable or a rest, and how far into its note:
         // the consonants before its vowel are said from the note's start, and the
-        // vowel is held.
+        // vowel is held. The tune is sung once each time Since starts again.
         (Slot At, Slot Hz, Slot Level) Sung(Tune phrase)
         {
             var bpm = em.Binary(OpCode.Max, node[7], em.Constant(1f));
-            var beat = em.Binary(OpCode.Mod, em.Mul(now, em.Mul(bpm, 1f / 60f)), em.Constant(phrase.Beats));
+            var beat = em.Mul(Since(), em.Mul(bpm, 1f / 60f));
 
             var slot = zero;
             for (var n = 1; n < phrase.Count; n++)
@@ -203,9 +207,13 @@ internal static class SpeakModule
             var depth = em.Add(em.Mul(em.Ternary(OpCode.Clamp, em.Mul(em.Add(into, -0.25f), 3f), zero, one), 0.012f), 0.003f);
             var vibrato = em.Add(em.Mul(em.Unary(OpCode.Sin, em.Mul(now, Tau * 5.5f)), depth), 1f);
 
-            // A rest fades the voice out, and the note after it fades it back in.
-            var mixed = em.Ternary(OpCode.Mix, em.Table(last, phrase.Heard), em.Table(slot, phrase.Heard),
+            // A rest fades the voice out, and the note after it fades it back in; the
+            // first note fades in from silence and the end of the tune fades out.
+            var wasHeard = em.Mul(em.Table(last, phrase.Heard), em.Binary(OpCode.Step, em.Constant(0.5f), slot));
+            var mixed = em.Ternary(OpCode.Mix, wasHeard, em.Table(slot, phrase.Heard),
                 em.Ternary(OpCode.Clamp, em.Mul(into, 1f / Fade), zero, one));
+            var over = em.Binary(OpCode.Div, em.Mul(em.Sub(beat, em.Constant(phrase.Beats)), 60f), bpm);
+            mixed = em.Mul(mixed, em.Sub(one, em.Ternary(OpCode.Clamp, em.Mul(over, 1f / Fade), zero, one)));
 
             return (sungAt, em.Mul(hz, vibrato), mixed);
         }
