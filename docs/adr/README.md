@@ -15,7 +15,7 @@ context, decision, consequences.
 | [0002](0002-split-engine-from-shell.md) | Split the engine from the UI shell |
 | [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md) | Render on the CPU, leave a GPU backend possible *(user-directed)* |
 | [0004](0004-visual-patch-editor-as-the-authoring-model.md) | Author patches in a visual node editor *(user-directed)* |
-| [0065](0065-a-text-language-that-parses-to-a-patch.md) | A text language, which parses to a patch *(user-directed; the pipe rule amended by [0144](0144-a-pipe-lands-where-the-text-says.md), the panel added by [0145](0145-the-panel-is-written-in-the-text.md), loops by [0208](0208-the-text-has-loops-that-unroll-as-it-is-built.md), `if` by [0234](0234-the-text-has-if-decided-as-it-is-built.md), its comment sign by [0224](0224-a-comment-starts-with-two-slashes.md))* |
+| [0065](0065-a-text-language-that-parses-to-a-patch.md) | A text language, which parses to a patch *(user-directed; the pipe rule amended by [0144](0144-a-pipe-lands-where-the-text-says.md), the panel added by [0145](0145-the-panel-is-written-in-the-text.md), loops by [0208](0208-the-text-has-loops-that-unroll-as-it-is-built.md), `if` by [0234](0234-the-text-has-if-decided-as-it-is-built.md), positions and names in a block by [0235](0235-a-list-is-read-by-position-and-a-block-reads-names.md), its comment sign by [0224](0224-a-comment-starts-with-two-slashes.md))* |
 | [0067](0067-a-module-keeps-its-name-and-its-memory-across-a-rebuild.md) | A module keeps its name, and its memory, across a rebuild *(user-directed)* |
 | [0068](0068-the-file-that-was-opened-decides-who-owns-the-patch.md) | The file that was opened decides who owns the patch *(user-directed)* |
 | [0119](0119-the-website-shows-a-module-by-photographing-one.md) | The website shows a module by photographing one *(user-directed)* |
@@ -24,6 +24,7 @@ context, decision, consequences.
 | [0145](0145-the-panel-is-written-in-the-text.md) | The panel is written in the text *(user-directed)* |
 | [0208](0208-the-text-has-loops-that-unroll-as-it-is-built.md) | The text has loops, unrolled as it is built *(user-directed)* |
 | [0234](0234-the-text-has-if-decided-as-it-is-built.md) | The text has `if`, decided as it is built *(user-directed)* |
+| [0235](0235-a-list-is-read-by-position-and-a-block-reads-names.md) | A list is read by position, and a block reads names *(user-directed)* |
 | [0218](0218-the-levels-the-text-opens-are-bands-inside-their-box.md) | The levels the text opens are bands inside their box *(user-directed)* |
 | [0224](0224-a-comment-starts-with-two-slashes.md) | A comment starts with two slashes *(user-directed)* |
 | [0221](0221-a-group-may-hold-one-module.md) | A group may hold one module *(user-directed)* |

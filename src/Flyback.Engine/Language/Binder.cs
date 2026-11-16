@@ -61,6 +61,9 @@ public sealed class Binder
     /// <summary>The word that adds a list up, where nothing else is called it.</summary>
     private const string SumWord = "sum";
 
+    /// <summary>The word that counts a list's items, where nothing else is called it.</summary>
+    private const string LengthWord = "len";
+
     public Binder(ModuleCatalog modules, List<LanguageIssue> issues)
     {
         this.modules = modules;
@@ -676,6 +679,7 @@ public sealed class Binder
         TupleExpr tuple => Items(tuple.Items, scope),
         ForExpr loop => Loop(loop, scope),
         IfExpr choice => Choose(choice, scope),
+        IndexExpr index => Item(index, scope),
         CompareExpr or LogicExpr or NotExpr => Refuse(IssueCode.ComparisonOutsideIf, expr.Line, expr.Column,
             "a comparison only means something as an if's condition: if k > 2 { ... }."),
         _ => null,
@@ -959,6 +963,7 @@ public sealed class Binder
         if (scope.Find(expr.Target) is Dial dial) return Ranged(dial, expr, scope, piped);
         if (scope.Def(expr.Target) is var (macro, declared)) return Expand(macro, declared, expr, scope, piped);
         if (expr.Target == SumWord && scope.Find(SumWord) is null && !moduleNames.Knows(SumWord)) return Summed(expr, scope, piped);
+        if (expr.Target == LengthWord && scope.Find(LengthWord) is null && !moduleNames.Knows(LengthWord)) return Counted(expr, scope, piped);
 
         if (Module(expr.Target, expr.Line, expr.Column) is not { } def) return null;
 
@@ -983,7 +988,8 @@ public sealed class Binder
         var node = Place(expr, def, arguments);
 
         foreach (var (path, line, column) in arguments.Paths) carrying.File(node, def, path, line, column);
-        if (expr.Block is { } block) carrying.Block(node, def, block, expr.Line, expr.Column, (expr.BlockLine, expr.BlockColumn));
+        if (expr.Block is { } block && Spliced(block, scope, expr, node) is { } read)
+            carrying.Block(node, def, read, expr.Line, expr.Column, (expr.BlockLine, expr.BlockColumn));
 
         return node;
     }
@@ -1403,6 +1409,128 @@ public sealed class Binder
         }
 
         return kept;
+    }
+
+    // --- names in a block ---------------------------------------------------------
+
+    /// <summary>
+    /// A block with each <c>$name</c> written out as what the name stands for: a number or a
+    /// note as itself, a list as its items one after another. Null where a name stands for
+    /// something a block cannot hold, said as an issue.
+    /// </summary>
+    private string? Spliced(string block, Scope scope, CallExpr call, Value placed)
+    {
+        if (!block.Contains('$')) return block;
+
+        var sound = true;
+
+        var read = System.Text.RegularExpressions.Regex.Replace(block, @"\$([A-Za-z_][A-Za-z0-9_]*)?", match =>
+        {
+            var name = match.Groups[1].Value;
+            var (line, column) = Within(block, match.Index, call.BlockLine, call.BlockColumn + 1);
+
+            if (name.Length == 0)
+            {
+                sound = false;
+                issues.Complain(IssueCode.BadSplice, line, column, "'$' reads a name into the block: notes() [ $root C4 ].");
+                return match.Value;
+            }
+
+            var bound = scope.Find(name);
+            var items = bound is Several several ? several.Items : bound is null ? [] : [bound];
+
+            if (bound is null)
+            {
+                sound = false;
+                issues.Complain(IssueCode.UnknownName, line, column, $"'{name}' is not a name in sight here.");
+            }
+            else if (bound is Failed)
+            {
+                sound = false;
+            }
+            else if (items.Count == 0 || items.Any(item => item is not Figure { Style: not NumberStyle.Duration }))
+            {
+                sound = false;
+                issues.Complain(IssueCode.BadSplice, line, column,
+                    $"'{name}' is not a number, a note or a list of them, so a block cannot hold it.");
+            }
+
+            return sound
+                ? string.Join(' ', items.Select(item => ((Figure)item).Amount.ToString("R", System.Globalization.CultureInfo.InvariantCulture)))
+                : match.Value;
+        });
+
+        if (!sound) return null;
+
+        if (placed is Placed made) sourceSites.Splice(made.Id);
+
+        return read;
+    }
+
+    /// <summary>The line and column of <paramref name="offset"/> in a block that starts at <paramref name="line"/>, <paramref name="column"/>.</summary>
+    private static (int Line, int Column) Within(string block, int offset, int line, int column)
+    {
+        var lastBreak = block.LastIndexOf('\n', Math.Max(0, offset - 1));
+
+        if (lastBreak < 0 || lastBreak >= offset) return (line, column + offset);
+
+        return (line + block.AsSpan(0, offset).Count('\n'), offset - lastBreak);
+    }
+
+    // --- positions ------------------------------------------------------------
+
+    /// <summary><c>xs[i]</c>: the item at a position counted from one, as a loop's passes are.</summary>
+    private Value? Item(IndexExpr index, Scope scope)
+    {
+        if (Bind(index.Source, scope) is not { } source) return null;
+
+        if (source is not Several list)
+        {
+            return Refuse(IssueCode.NotAList, index.Source.Leftmost.Line, index.Source.Leftmost.Column,
+                "only a list or a tuple has items to read by position, and this is one thing.");
+        }
+
+        if (Bind(index.Position, scope) is not { } bound) return null;
+
+        if (bound is not Figure { Style: NumberStyle.Plain } position || position.Amount != Math.Floor(position.Amount))
+        {
+            return Refuse(IssueCode.BadPosition, index.Position.Leftmost.Line, index.Position.Leftmost.Column,
+                "a position is a whole number the text writes down, counted from one: voices[1].");
+        }
+
+        if (position.Amount < 1 || position.Amount > list.Items.Count)
+        {
+            return Refuse(IssueCode.BadPosition, index.Position.Leftmost.Line, index.Position.Leftmost.Column,
+                string.Create(System.Globalization.CultureInfo.InvariantCulture,
+                    $"this list has {list.Items.Count} items, counted from 1, and this reads item {position.Amount}."));
+        }
+
+        var item = list.Items[(int)position.Amount - 1];
+
+        // Read through a position as through a name, so a knob reading it twice writes back to neither.
+        if (item is Figure { Where: { } where }) sourceSites.ReadThrough(where);
+
+        return item;
+    }
+
+    /// <summary><c>len(xs)</c>: how many items a list has, as a number.</summary>
+    private Value? Counted(CallExpr expr, Scope scope, Value? piped)
+    {
+        const string shape = "'len' counts one list: 'len(voices)', or 'voices |> len()'.";
+
+        if (expr.Block is not null) return Refuse(IssueCode.NoBlock, expr.BlockLine, expr.BlockColumn, "'len' carries no block. " + shape);
+
+        Value? list;
+
+        if (piped is not null && expr.Arguments.Count == 0) list = piped;
+        else if (piped is null && expr.Arguments is [{ Name: null, Spread: false } only]) list = Piped(only) ? null : Bind(only.Value, scope);
+        else return Refuse(IssueCode.NotAList, expr.Line, expr.Column, shape);
+
+        if (list is null) return null;
+
+        return list is Several several
+            ? new Figure(several.Items.Count, NumberStyle.Plain)
+            : Refuse(IssueCode.NotAList, expr.Line, expr.Column, "this is one thing, not a list. " + shape);
     }
 
     // --- if -------------------------------------------------------------------

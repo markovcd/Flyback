@@ -50,6 +50,9 @@
     <Span color="Text" begin="&quot;" end="&quot;" />
     <Span ruleSet="Block" multiline="true" begin="\[" end="\]" />
 
+    <!-- A name read into the block. -->
+    <Rule color="Pipe">\$\w*</Rule>
+
     <Rule color="Number">\b[A-G][#b]?(?:-?\d+)?(?![\w#])</Rule>
 
     <Rule color="Comment">~</Rule>

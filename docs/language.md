@@ -565,6 +565,23 @@ step's value reads.
 Whatever gets through is clamped by `Step.Sane()`, so the parser can be
 permissive and let the engine's own tolerance do the work.
 
+**A name goes into a block with `$`.** `notes() [ $root C3 ~ ]` writes what
+`root` stands for into the block before it is read: a number or a note as
+itself, and a list as its items one step after another, so `[ $riff ~ ]` is the
+riff and a rest. What follows a name applies to what it wrote last: `$root!3`
+repeats the root, and `$riff!2` repeats only the riff's last note. It is how a
+loop or a def varies a pattern:
+
+```
+for root in [A2, F2, C3] {
+  notes(rate: 4) [ $root ~ $root C4 ] |> note(note: _) |> saw(freq: _)
+}
+```
+
+A signal, a text or a duration is refused. A block that reads a name is not
+rewritten when its steps are edited on the canvas, since that would replace the
+name with what it stood for.
+
 **`~` and `%0` are not the same step.** A `~` is a rest: no note and no volume.
 `E5%0` is that note, silenced. They sound alike and compile differently — the
 second keeps the pitch in the program, which is what a phrase does when it holds
@@ -805,6 +822,36 @@ written in a loop's body is that body's. A group in it draws a box a pass, and a
 named one is numbered for its pass: `group "Voice"` is "Voice 1", "Voice 2" and
 on, and "Voice 2.3" in a loop inside a loop. One patch's loops stamp out at most 4096 passes between them. A printing
 writes a loop out unrolled.
+
+### Positions
+
+`xs[i]` reads one item of a list, or one part of a tuple, counted from one as a
+loop's passes are; `len(xs)` counts the items. Both are worked out as the text
+is built, so together they let a loop walk a table:
+
+```fbks {play="Chords by position"}
+let chords = [(A2, C3, E3), (F2, A2, C3), (C3, E3, G3)]
+
+let voices = for i in 1..len(chords) {
+  let (root, third, fifth) = chords[i]
+  let level = 0.3 / i
+  sine(freq: note(root), amp: level) + sine(freq: note(third), amp: level)
+    + sine(freq: note(fifth), amp: level)
+}
+
+sum(voices) |> out.left
+```
+
+- **The bracket touches what it reads**: `chords[i]`, `[110, 220][2]`, and
+  `rows[1][2]` for a list of lists. A bracket after a space is a module's block,
+  as it always was.
+- **The position is a whole number the text writes down**, or arithmetic on one.
+  A signal, a fraction, or a position past either end is refused with the
+  list's length.
+- **`len(xs)`**, or `xs |> len()`, is a number, and is a word of the language
+  only where nothing else in the patch is called `len`.
+- A number read by position twice is a knob's to turn as little as a number read
+  through a name twice.
 
 ### If
 
@@ -1053,7 +1100,9 @@ expr       = term { ("+" | "-") term } ;
 term       = ranged { ("*" | "/" | "%") ranged } ;
 ranged     = factor [ ".." factor ] ;
 factor     = [ "-" ] primary ;
-primary    = literal | selector | list | tuple | loop | choice | ( call | "(" condition ")" ) outputs ;
+primary    = literal | ( selector | list ) { position } | tuple | loop | choice
+           | ( call | "(" condition ")" ) outputs ;
+position   = "[" expr "]" ;   (* touching what it follows *)
 outputs    = { "." ident } ;
 
 list       = "[" [ pipeline { "," pipeline } [ "," ] ] "]" ;
@@ -1080,7 +1129,7 @@ note       = ("A".."G") [ "#" | "b" ] [ "-" ] digit ;
 duration   = number ( "us" | "ms" | "s" ) ;
 ```
 
-`step` is the mini-notation of section 8, and `pitch` a note with no octave,
+`step` is the mini-notation of section 8, where `$name` writes in what a name stands for, and `pitch` a note with no octave,
 `D` or `F#`, or its number from 0 to 11. A `name` with dots is a type id
 written in full; a `selector` with a dot is a binding and one of its ports.
 `outputs` is the same choice made on a module with no name. The grammar lets

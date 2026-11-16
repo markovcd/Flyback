@@ -67,13 +67,14 @@ public sealed class SourceMap
         IReadOnlyDictionary<Guid, string> named,
         IReadOnlySet<Guid> bound,
         IReadOnlyList<(Site Where, Guid Group)>? boxes = null,
-        IReadOnlyDictionary<string, (Guid Node, int Port)>? outputs = null)
+        IReadOnlyDictionary<string, (Guid Node, int Port)>? outputs = null,
+        IReadOnlySet<Guid>? spliced = null)
     {
         text = new SourceMapText(source);
         Outputs = new Dictionary<string, (Guid Node, int Port)>(outputs ?? new Dictionary<string, (Guid Node, int Port)>(), StringComparer.Ordinal);
         this.calls = new Dictionary<Guid, Site>(calls);
         Named = new Dictionary<Guid, string>(named);
-        edits = new SourceMapEdits(text, this.calls, written, named, shared);
+        edits = new SourceMapEdits(text, this.calls, written, named, shared, spliced ?? new HashSet<Guid>());
 
         var counted = new Dictionary<Site, Guid>();
 

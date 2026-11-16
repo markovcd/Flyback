@@ -56,6 +56,7 @@ public class SourceHighlightingTests
     [InlineData("tune(in: _) [ C D# E ]", "D#", "Number")]
     [InlineData("tune(in: _) [ C D# E ]", "E", "Number")]
     [InlineData("notes() [ A3 ~ C4%0.6 ]", "~", "Comment")]
+    [InlineData("notes() [ $root C4 ]", "$root", "Pipe")]
     [InlineData("notes() [ A3 ~ C4%0.6 ]", "%", "Pipe")]
     [InlineData("notes() [ A3(3,8) ]", "A3", "Number")]
     [InlineData("notes() [ <A3 C4> ]", "<", "Pipe")]

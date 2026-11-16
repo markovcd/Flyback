@@ -8,13 +8,18 @@ internal sealed class SourceMapEdits
     private readonly Dictionary<Guid, string> named;
     private readonly IReadOnlySet<Guid> shared;
 
+    /// <summary>Modules whose block reads a name, so rewriting the block would drop the name.</summary>
+    private readonly IReadOnlySet<Guid> spliced;
+
     internal SourceMapEdits(
         SourceMapText text,
         IReadOnlyDictionary<Guid, Site> calls,
         IReadOnlyDictionary<(Guid Node, string Name), Site?> written,
         IReadOnlyDictionary<Guid, string> named,
-        IReadOnlySet<Guid> shared)
+        IReadOnlySet<Guid> shared,
+        IReadOnlySet<Guid> spliced)
     {
+        this.spliced = spliced;
         this.text = text;
         this.calls = new Dictionary<Guid, Site>(calls);
         this.named = new Dictionary<Guid, string>(named);
@@ -47,7 +52,7 @@ internal sealed class SourceMapEdits
 
     internal Change? Carried(Guid node, string block)
     {
-        if (shared.Contains(node)) return null;
+        if (shared.Contains(node) || spliced.Contains(node)) return null;
         if (!calls.TryGetValue(node, out var call) || text.Parentheses(call) is not { } brackets) return null;
 
         return text.Block(brackets.Close) is { } span

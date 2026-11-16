@@ -31,6 +31,7 @@ window.flybackHighlight = (function () {
   // Inside brackets a note may leave out its octave, and the step and
   // arrangement notation has operators of its own.
   var block = [
+    ["t-pipe", /\$\w*/y],
     ["t-num", /\b[A-G][#b]?(?:-?\d+)?(?![\w#])/y],
     ["t-com", /~/y],
     ["t-pipe", /\|>|<-|\.\.\.?|\b_\b|[|<>!@%]/y],

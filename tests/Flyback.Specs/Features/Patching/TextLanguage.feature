@@ -198,6 +198,31 @@ Feature: A patch can be written as text
     When the patch is written out as text and read back
     Then the speakers play 0.5
 
+  Scenario: A loop reads a list by position
+    Given the text:
+      """
+      let levels = [0.25, 0.5]
+      let parts = for i in 1..len(levels) {
+        value(1) * levels[i]
+      }
+      sum(parts) |> out.left
+      out.volume = 1
+      """
+    Then it reads without complaint
+    And the speakers play 0.75
+
+  Scenario: A loop varies a sequencer's notes through a name in its block
+    Given the text:
+      """
+      let parts = for level in [0.25, 0.5] {
+        values() [ $level ]
+      }
+      sum(parts) |> out.left
+      out.volume = 1
+      """
+    Then it reads without complaint
+    And the speakers play 0.75
+
   Scenario: A loop whose passes hand back pairs comes apart into two lists
     Given the text:
       """

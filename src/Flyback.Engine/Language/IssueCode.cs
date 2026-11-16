@@ -166,6 +166,12 @@ public static class IssueCode
     /// <summary>A statement about the whole patch or its panel, written inside a loop's body.</summary>
     public const string NotInLoop = "not-in-loop";
 
+    /// <summary>A <c>$</c> in a block with no name after it, or before a name a block cannot hold.</summary>
+    public const string BadSplice = "bad-splice";
+
+    /// <summary>A list read at a position that is not a whole number the text writes down, or past either end.</summary>
+    public const string BadPosition = "bad-position";
+
     // --- if ------------------------------------------------------------------
 
     /// <summary>An <c>if</c> deciding on a signal, a panel knob, a list or a text, which the text cannot know as it is built.</summary>

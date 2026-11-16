@@ -11,6 +11,8 @@
 ### Editor
 
 - The text language has `if`: `if k % 4 == 0 { kick() } else { hat() }` builds one branch as the text is read, deciding on the numbers, notes and texts it writes down.
+- The text language reads a list by position, `chords[i]` counted from one, and counts it with `len(chords)`.
+- A sequencer's block reads names with `$`: `notes() [ $root C3 ]`, and a list writes in all its notes, so a loop can vary a pattern.
 
 ### Viewer
 

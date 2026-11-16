@@ -24,6 +24,9 @@ internal sealed class SourceSites
     /// <summary>Modules a statement is about, rather than mentions inside one.</summary>
     private readonly HashSet<Guid> bound = [];
 
+    /// <summary>Modules whose block reads a name, which an edit on the canvas cannot write back without losing it.</summary>
+    private readonly HashSet<Guid> spliced = [];
+
     /// <summary>What the text calls each module it has a word for.</summary>
     private readonly Dictionary<Guid, string> named = [];
 
@@ -44,6 +47,9 @@ internal sealed class SourceSites
 
     /// <summary>The text sets <paramref name="name"/> on <paramref name="node"/> at <paramref name="where"/>, or at no one figure.</summary>
     public void Write(Guid node, string name, Site? where) => written[(node, name)] = where;
+
+    /// <summary><paramref name="node"/>'s block reads a name with <c>$</c>.</summary>
+    public void Splice(Guid node) => spliced.Add(node);
 
     /// <summary>A statement is about <paramref name="node"/>.</summary>
     public void Own(Guid node) => bound.Add(node);
@@ -83,7 +89,7 @@ internal sealed class SourceSites
             if (bound.Remove(id)) bound.Add(root);
     }
 
-    public SourceMap Map(string source) => new(source, mentions, calls, Writable(), named, bound, blocks, outputs);
+    public SourceMap Map(string source) => new(source, mentions, calls, Writable(), named, bound, blocks, outputs, spliced);
 
     /// <summary>
     /// <see cref="written"/>, less the numbers read through a name more than once:

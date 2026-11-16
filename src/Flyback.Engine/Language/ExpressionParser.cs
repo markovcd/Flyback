@@ -273,7 +273,40 @@ internal sealed class ExpressionParser
 
         if (inner.Items() is not { } items) return null;
 
-        return Built(new ListExpr(items, block.Line, block.Column), [.. items]);
+        return Built(new ListExpr(items, block.Line, block.Column), [.. items]) is { } list ? Indexed(list, After(block)) : null;
+    }
+
+    /// <summary>Where a token ends on its line, for telling a bracket that touches it from one after a space.</summary>
+    private static (int Line, int Column) After(Token token) => token.Kind == TokenKind.Block
+        ? (token.Line, token.Column + token.Text.Length + 2)
+        : (token.Line, token.Column + token.Text.Length);
+
+    /// <summary>
+    /// <c>xs[i]</c> and <c>xs[i][j]</c>: brackets that touch what is before them read an item of it.
+    /// A bracket after a space is not an index, so a module's block is never mistaken for one.
+    /// </summary>
+    private Expr? Indexed(Expr source, (int Line, int Column) end)
+    {
+        while (Current.Kind == TokenKind.Block && (Current.Line, Current.Column) == end)
+        {
+            var block = Current;
+            parser.Advance();
+
+            var scanned = Lexer.Scan(block.Text, issues, block.Line, block.Column + 1);
+            var inner = new Parser([.. scanned.Where(token => token.Kind != TokenKind.NewLine)], issues);
+
+            if (inner.Items() is not { } items) return null;
+
+            if (items.Count != 1)
+                return Refuse(IssueCode.Syntax, "an item is read by one position: voices[2].");
+
+            if (Built(new IndexExpr(source, items[0], block.Line, block.Column), source, items[0]) is not { } indexed) return null;
+
+            source = indexed;
+            end = After(block);
+        }
+
+        return source;
     }
 
     /// <summary>Whether a loop starts here: <c>for name in</c> or <c>for (a, b) in</c>.</summary>
@@ -483,7 +516,7 @@ internal sealed class ExpressionParser
 
         if (Current.Kind != TokenKind.OpenParen)
         {
-            return parts.Count switch
+            var named = parts.Count switch
             {
                 1 => new NameExpr(parts[0], null, line, column),
                 2 => new NameExpr(parts[0], parts[1], line, column),
@@ -491,6 +524,8 @@ internal sealed class ExpressionParser
                 // output off one.
                 _ => Refuse(IssueCode.Syntax, $"'{string.Join('.', parts)}' is not a name this can read."),
             };
+
+            return named is null ? null : Indexed(named, After(Ahead(-1)));
         }
 
         var open = Current;

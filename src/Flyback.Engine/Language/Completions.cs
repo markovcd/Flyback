@@ -85,6 +85,7 @@ internal static class Completions
                     new Completion(SocketNames.Written(o), CompletionKind.Builtin, Caret.FirstSentence(o.Help, "one of the picture's coordinates"), SocketNames.Written(o))));
 
             builtins.Add(Sum());
+            builtins.Add(Len());
             builtins.Add(new Completion("for", CompletionKind.Keyword, "a loop: for name in list { ... }", "for "));
             builtins.Add(new Completion("if", CompletionKind.Keyword, "one branch, chosen as the text is built: if k > 2 { ... } else { ... }", "if "));
 
@@ -94,6 +95,8 @@ internal static class Completions
         }
 
         private static Completion Sum() => new("sum", CompletionKind.Builtin, "adds up a list: sum(voices)", "sum");
+
+        private static Completion Len() => new("len", CompletionKind.Builtin, "counts a list: len(voices)", "len");
 
         private IEnumerable<Completion> Names() =>
             caret.Names
