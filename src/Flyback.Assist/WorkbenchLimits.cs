@@ -8,6 +8,12 @@ namespace Flyback.Assist;
 /// rather than retry.
 /// </remarks>
 /// <param name="MaxToolCalls">The cost fuse against a turn that never ends.</param>
+/// <param name="FrameWidth">How wide a <c>render</c>'s frames are when no width is asked for; every frame is 16:9.</param>
+/// <param name="FrameHeight">The height that goes with <paramref name="FrameWidth"/>, which also sets the aspect the sound is rendered at.</param>
+/// <param name="SmallestFrameWidth">The narrowest frame a <c>render</c> may ask for.</param>
+/// <param name="LargestFrameWidth">The widest frame a <c>render</c> may ask for.</param>
+/// <param name="MaxFrames">The most frames one <c>render</c> draws.</param>
+/// <param name="SheetPixels">The most pixels one <c>render</c>'s frames add up to; wider frames than fit are narrowed.</param>
 /// <param name="LatestTime">How far past its start a <c>render</c> may look and how much sound <c>propose</c> checks for silence, in seconds.</param>
 /// <param name="LatestStart">The furthest into a patch a <c>render</c>, <c>listen</c> or <c>measure</c> may start its window, in seconds.</param>
 /// <param name="WarmUpLead">How far before a window's start a <c>render</c> begins stepping frames, so feedback has a history; nothing earlier is drawn.</param>
@@ -23,7 +29,10 @@ internal sealed record WorkbenchLimits(
     int MaxToolCalls = 200,
     int FrameWidth = 320,
     int FrameHeight = 180,
-    int MaxFrames = 4,
+    int SmallestFrameWidth = 160,
+    int LargestFrameWidth = 1280,
+    int MaxFrames = 8,
+    int SheetPixels = 1280 * 720,
     double LatestTime = 8d,
     double LatestStart = 3600d,
     double WarmUpLead = 1d,

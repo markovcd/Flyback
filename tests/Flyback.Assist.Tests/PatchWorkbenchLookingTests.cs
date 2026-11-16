@@ -75,6 +75,50 @@ public class PatchWorkbenchLookingTests
     }
 
     [Fact]
+    public async Task A_render_draws_frames_as_wide_as_asked_at_16_by_9()
+    {
+        var looked = await Call(await Lit(0.5f), "render", """{"times":[0.5],"width":1280}""");
+
+        looked.Ok.ShouldBeTrue(looked.Text);
+        Width(looked.Png!).ShouldBe(1280);
+        Height(looked.Png!).ShouldBe(720);
+        looked.Text.ShouldContain("1280 by 720 each");
+        looked.Text.ShouldNotContain("Narrowed");
+    }
+
+    [Fact]
+    public async Task A_width_past_its_bounds_is_held_to_them()
+    {
+        var bench = await Lit(0.5f);
+
+        var wide = await Call(bench, "render", """{"times":[0.5],"width":5000}""");
+        var narrow = await Call(bench, "render", """{"times":[0.5],"width":10}""");
+
+        Width(wide.Png!).ShouldBe(1280);
+        Width(narrow.Png!).ShouldBe(160);
+        Height(narrow.Png!).ShouldBe(90);
+    }
+
+    /// <summary>
+    /// The frames share one picture's worth of pixels, so asking for many wide ones
+    /// narrows them, and the answer says so rather than leaving the model to wonder
+    /// why its width was ignored.
+    /// </summary>
+    [Fact]
+    public async Task Many_wide_frames_are_narrowed_to_share_one_picture()
+    {
+        var looked = await Call(await Lit(0.5f), "render", """{"times":[0,1,2,3,4,5,6,7],"width":1280}""");
+
+        looked.Ok.ShouldBeTrue(looked.Text);
+        looked.Text.ShouldContain("8 frames left to right");
+        looked.Text.ShouldContain("Narrowed from 1280 wide");
+
+        var width = Width(looked.Png!) / 8;
+        (width * Height(looked.Png!) * 8).ShouldBeLessThanOrEqualTo(1280 * 720);
+        width.ShouldBeGreaterThan(320);
+    }
+
+    [Fact]
     public async Task A_render_can_start_anywhere_and_only_warms_up_just_before_it()
     {
         var bench = await Lit(0.5f);

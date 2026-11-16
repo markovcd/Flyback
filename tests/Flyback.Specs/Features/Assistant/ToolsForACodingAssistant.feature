@@ -41,3 +41,8 @@ Feature: A coding assistant somebody runs builds a patch with Flyback's own tool
   Scenario: What a client says over MCP reaches the person
     When a coding assistant says "Built a slow drone in A." over flyback-cli mcp
     Then the person reads "Built a slow drone in A."
+
+  Scenario: A client that speaks MCP looks at the picture as wide as it asks
+    Given a coding assistant has built rings moved across by a sine in "seen.fbks"
+    When it looks at one frame 1280 pixels wide over flyback-cli mcp
+    Then it is shown a picture 1280 by 720

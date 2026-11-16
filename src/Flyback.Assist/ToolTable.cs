@@ -121,7 +121,7 @@ internal sealed class ToolTable(
             Does("render", senses.RenderAsync,
                 "Draws the patch and shows you the result: several frames side by side, so you can "
                 + "see movement as well as color. Use it once the shape is right, and again after "
-                + "adjusting what you saw.",
+                + "adjusting what you saw. Ask for wider frames to check fine detail, such as thin lines or text.",
                 [
                     From.Described(
                         $"Where on the patch's timeline the frames start, up to {Number(limits.LatestStart)}. Defaults to 0. "
@@ -129,6 +129,10 @@ internal sealed class ToolTable(
                     Times.Described(
                         $"Seconds after 'from' to capture, at most {limits.MaxFrames} of them, up to {Number(limits.LatestTime)}. "
                         + "Defaults to 0.5, 1.5 and 3.5."),
+                    Width.Described(
+                        $"How wide each frame is in pixels, from {limits.SmallestFrameWidth} to {limits.LargestFrameWidth}, "
+                        + $"at 16:9. Defaults to {limits.FrameWidth}. All the frames together hold no more pixels than one "
+                        + $"{SheetWidth} by {SheetWidth * 9 / 16}; wider ones are narrowed to fit, and the answer says so."),
                     Note.Described("What you are looking for, for your own record."),
                 ],
                 offered: vision),
@@ -193,6 +197,9 @@ internal sealed class ToolTable(
 
         return tools;
     }
+
+    /// <summary>The width of one 16:9 frame as big as all of a render's frames together may be.</summary>
+    private int SheetWidth => (int)Math.Sqrt(limits.SheetPixels * 16d / 9d);
 
     /// <summary>
     /// What becomes of <c>listen</c>'s <c>note</c>, which depends on whether there

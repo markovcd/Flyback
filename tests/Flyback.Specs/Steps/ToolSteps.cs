@@ -103,6 +103,21 @@ public sealed class ToolSteps : IDisposable
         await Serve(lines);
     }
 
+    [When("it looks at one frame {int} pixels wide over flyback-cli mcp")]
+    public Task WhenLooks(int width) =>
+        Serve(["""{"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"render","arguments":{"times":[1],"width":""" + width + "}}}"]);
+
+    [Then("it is shown a picture {int} by {int}")]
+    public void ThenShown(int width, int height)
+    {
+        var image = answers.Last()["result"]!["content"]!.AsArray()
+            .Single(part => part!["type"]!.GetValue<string>() == "image")!;
+        var png = Convert.FromBase64String(image["data"]!.GetValue<string>());
+
+        System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(png.AsSpan(16)).ShouldBe(width);
+        System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(png.AsSpan(20)).ShouldBe(height);
+    }
+
     [When("it asks what the patch holds, giving the call no arguments")]
     public Task WhenDescribed() =>
         Serve(["""{"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"describe_patch"}}"""]);

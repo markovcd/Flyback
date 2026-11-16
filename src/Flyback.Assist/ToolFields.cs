@@ -46,6 +46,9 @@ internal static class ToolFields
 
     public static readonly ToolField Times = new("times", ListOf(Number));
 
+    /// <summary>How wide a render's frames are, in pixels.</summary>
+    public static readonly ToolField Width = new("width", Number);
+
     /// <summary>What a look or a listen is for, which the assistant writes for its own record.</summary>
     public static readonly ToolField Note = new("note", Text);
 

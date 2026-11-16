@@ -65,11 +65,11 @@ internal sealed class PatchSenses(WorkingPatch bench, WorkbenchLimits limits)
         }
 
         var warned = Warned(patch);
+        var (width, height, narrowed) = FrameSize(arguments, requested.Length);
 
         return Task.Run(
             () =>
             {
-                var (width, height) = (limits.FrameWidth, limits.FrameHeight);
                 var frameStride = width * 4;
                 var sheetStride = frameStride * requested.Length;
 
@@ -112,9 +112,30 @@ internal sealed class PatchSenses(WorkingPatch bench, WorkbenchLimits limits)
                 return ToolOutcome.Looked(
                     png.ToArray(),
                     $"{requested.Length} frames left to right at {when}, {width} by {height} each, "
-                    + $"warmed from {(begin > 0 ? Number(begin) + "s" : "zero")} at thirty frames a second.{warned}");
+                    + $"warmed from {(begin > 0 ? Number(begin) + "s" : "zero")} at thirty frames a second.{narrowed}{warned}");
             },
             cancel);
+    }
+
+    /// <summary>
+    /// The frames' size: the width asked for within its bounds, 16:9, and narrowed so the
+    /// frames together stay within <see cref="WorkbenchLimits.SheetPixels"/>, with a sentence saying so.
+    /// </summary>
+    private (int Width, int Height, string Narrowed) FrameSize(JsonElement arguments, int frames)
+    {
+        var asked = ToolFields.Width.Number(arguments, out var wide)
+            ? (int)Math.Clamp(Math.Round(wide), limits.SmallestFrameWidth, limits.LargestFrameWidth)
+            : limits.FrameWidth;
+
+        var fits = (int)Math.Sqrt(limits.SheetPixels * 16d / 9d / frames);
+        var width = Math.Max(limits.SmallestFrameWidth, Math.Min(asked, fits));
+        var height = (int)Math.Round(width * 9d / 16d);
+
+        var narrowed = width < asked
+            ? $" Narrowed from {asked} wide so {frames} frames fit in one picture; ask for fewer to see them wider."
+            : string.Empty;
+
+        return (width, height, narrowed);
     }
 
     private double From(JsonElement arguments) =>
