@@ -32,9 +32,6 @@ internal sealed class MixChecking(
 
     private CancellationTokenSource? running;
 
-    /// <summary>Whether a check is under way; tests read it back.</summary>
-    public bool Running => running is not null;
-
     public Task On(DocumentArrived notice)
     {
         files = (notice.Sounds, notice.Pictures);

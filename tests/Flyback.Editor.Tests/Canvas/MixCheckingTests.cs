@@ -65,6 +65,6 @@ public sealed class MixCheckingTests : EditorTest
         var window = Open(onDevice: true);
 
         (await Service<MixChecking>(window).CheckAsync()).ShouldBeNull();
-        Service<MixChecking>(window).Running.ShouldBeFalse();
+        All<ReportLine>(window).Single().History.ShouldNotContain(line => line.Contains("mix", StringComparison.OrdinalIgnoreCase));
     }
 }
