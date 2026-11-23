@@ -182,6 +182,9 @@ internal static class ModuleGlyphs
             "M3,20 L3,3 M5.5,12 C6.7,10.5 9.3,10.5 10.5,12 "
             + "C11.7,8 15.3,8 16.5,12 C17.2,5.5 20.8,5.5 22,12",
 
+        // Three drums hit at three heights, standing on one line.
+        [HitsModule.TypeId] = "M2,20 L22,20 M5,20 L5,4 M12,20 L12,10 M19,20 L19,14",
+
         // A wave with no pattern to it.
         [NoiseModule.TypeId] = "M2,12 L4,6 L6,16 L8,4 L10,14 L12,7 L14,18 L16,9 L18,15 L20,5 L22,12",
 

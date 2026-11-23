@@ -5,6 +5,7 @@ audio.delay | in, time, feedback, mix | out
 audio.drive | in, drive | out
 audio.duck | left, right, key, depth, full, attack, release | left, right, gain
 audio.filter | in, cutoff, resonance | low, band, high
+audio.hits | in, low, high, sensitivity, length, rest, memory | kick, snare, hats, kick level, snare level, hats level
 audio.in | gain | left, right
 audio.noise | in, rate, seed, amp, bias | white, pink, random, drift
 audio.note | note, octave, cents | hz, note

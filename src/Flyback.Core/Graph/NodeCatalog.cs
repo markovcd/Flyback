@@ -95,6 +95,7 @@ public static class NodeCatalog
             .Append(SongModule.Def)
             .Concat(EnvelopeModules.Defs())
             .Append(DuckModule.Def())
+            .Append(HitsModule.Def())
             .Append(FilterModule.Def())
             .Append(NoiseModule.Def())
             .Append(SlewModule.Def())

@@ -32,6 +32,7 @@
   <!-- Where the checkout is, for tests that read its files. -->
   <ItemGroup>
     <Compile Include="..\Shared\Repository.cs" Link="Shared\Repository.cs" />
+    <Compile Include="..\Shared\DrumLoop.cs" Link="Shared\DrumLoop.cs" />
   </ItemGroup>
 
 </Project>

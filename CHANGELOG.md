@@ -7,6 +7,7 @@
 - Added Counter: counts the rises on a trigger and comes round to 0 every `length`, with `phase` and a `wrap` that passes every `length`th trigger, so Counters chain into beats, bars and phrases.
 - A Bridge carries a value the sound works out, such as an envelope, a count or a phase, into the picture.
 - Beat Follow keeps a beat to the kicks a microphone hears, with the tempo, the phase and a trigger on every beat, and carries on through a break.
+- Hits hears the drums in a sound: patch a Line In into it and its `kick`, `snare` and `hats` gates open on each hit, at any volume, so music from outside can drive the picture.
 - A Clock In can follow the Ableton Link session on the network, keeping a patch to the tempo and bars of Live, Bitwig or a phone app on the same Wi-Fi, on the desktop and on Android.
 
 ### Presets

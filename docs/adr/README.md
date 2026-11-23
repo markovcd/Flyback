@@ -195,6 +195,7 @@ context, decision, consequences.
 | [0100](0100-mastering-is-a-plugin-of-stateful-primitives.md) | Mastering is a plugin of stateful primitives *(user-directed)* |
 | [0101](0101-a-one-knob-maximizer-is-a-module-of-its-own.md) | A one-knob maximizer is a module of its own *(user-directed)* |
 | [0125](0125-a-duck-is-a-sidechain-with-the-depth-on-a-knob.md) | A Duck is a sidechain with the depth on a knob *(user-directed)* |
+| [0239](0239-hits-hears-the-drums-as-three-gates.md) | Hits hears the drums as three gates *(user-directed)* |
 | [0128](0128-filter-random-slew-drive-delay-and-reverb-are-the-engines-own.md) | Filter, Random, Slew, Drive, Delay and Reverb are the engine's own *(user-directed)* |
 | [0142](0142-figures-is-three-modules-that-are-each-a-picture-and-a-sound.md) | Figures is three modules that are each a picture and a sound *(user-directed)* |
 | [0146](0146-fractals-is-three-modules-about-one-point-c.md) | Fractals is three modules about one point c *(user-directed)* |
