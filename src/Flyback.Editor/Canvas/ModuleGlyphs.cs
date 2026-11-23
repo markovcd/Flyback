@@ -154,6 +154,10 @@ internal static class ModuleGlyphs
             "M4,4 L20,4 L20,20 L4,20 Z M7,8 A1,1 0 1 1 9,8 A1,1 0 1 1 7,8 "
             + "M11,12 A1,1 0 1 1 13,12 A1,1 0 1 1 11,12 M15,16 A1,1 0 1 1 17,16 A1,1 0 1 1 15,16",
 
+        // Four tally marks struck through by a fifth.
+        [CounterModule.TypeId] =
+            "M5,5 L5,19 M9,5 L9,19 M13,5 L13,19 M17,5 L17,19 M3,16 L20,8",
+
         // Four lines meeting in one: what a mixer does to its inputs.
         [MathModules.MixerTypeId] =
             "M3,4 L12,12 M3,9.3 L12,12 M3,14.7 L12,12 M3,20 L12,12 M12,12 L21,12",

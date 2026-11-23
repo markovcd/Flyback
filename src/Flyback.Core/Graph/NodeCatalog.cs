@@ -89,6 +89,7 @@ public static class NodeCatalog
             .Concat(OscillatorModules.Defs())
             .Concat(StringModule.Defs())
             .Concat(SequencerModules.Defs())
+            .Append(CounterModule.Def())
             .Append(SongModule.Def)
             .Concat(EnvelopeModules.Defs())
             .Append(DuckModule.Def())

@@ -468,6 +468,23 @@ public sealed class PatchSteps(PatchContext context)
     [Given("the gate of a sequencer stepping {int} times a second, through a chance of {float}, with both of its gates added together")]
     public void GivenBothGatesOfChance(int rate, float chance) => Chanced(rate, chance, "c.gate + c.else");
 
+    [Given("a counter of {int} counting the gate of a sequencer stepping {int} times a second")]
+    public void GivenACounter(int length, int rate) =>
+        Written($"let s = values(rate: {rate}) [ 0.5 ]{(char)10}counter(trigger: s.gate, length: {length}).count |> out.left");
+
+    [Given("a counter of {int} counting the gate of a sequencer stepping {int} times a second, its rounds counted by a second counter")]
+    public void GivenChainedCounters(int length, int rate) =>
+        Written(
+            $"let s = values(rate: {rate}) [ 0.5 ]{(char)10}"
+            + $"let beats = counter(trigger: s.gate, length: {length}){(char)10}"
+            + "counter(trigger: beats.wrap, length: 0).count |> out.left");
+
+    [Given("a counter of {int} counting the gate of a sequencer stepping {int} times a second, reset while the time is between {float} and {float} seconds")]
+    public void GivenAResetCounter(int length, int rate, float from, float to) =>
+        Written(
+            $"let s = values(rate: {rate}) [ 0.5 ]{(char)10}"
+            + $"counter(trigger: s.gate, length: {length}, reset: window(in: t, from: {Number(from)}, to: {Number(to)})).count |> out.left");
+
     private void Chanced(int rate, float chance, string heard)
     {
         context.NotesPerSecond = rate;

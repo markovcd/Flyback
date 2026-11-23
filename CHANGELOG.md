@@ -4,6 +4,7 @@
 
 ### Modules
 
+- Added Counter: counts the rises on a trigger and comes round to 0 every `length`, with `phase` and a `wrap` that passes every `length`th trigger, so Counters chain into beats, bars and phrases.
 - A Clock In can follow the Ableton Link session on the network, keeping a patch to the tempo and bars of Live, Bitwig or a phone app on the same Wi-Fi, on the desktop and on Android.
 
 ### Presets

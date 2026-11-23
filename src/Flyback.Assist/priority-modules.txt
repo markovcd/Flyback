@@ -31,6 +31,7 @@ osc.string
 seq.tempo
 seq.hold
 seq.chance
+seq.counter
 seq.notes
 seq.values
 seq.arrangement
