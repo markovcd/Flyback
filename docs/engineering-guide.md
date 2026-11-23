@@ -381,6 +381,7 @@ void AddModules(ModuleProvider provider, IReadOnlyList<NodeDef> modules);
 void AddPresets(IReadOnlyList<PatchPreset> presets);
 void AddMidiInput(IMidiInput input);
 void AddAudioInput(IAudioInput input);
+void AddVideoOutput(IVideoOutput output);
 ```
 
 A new kind of extension is a new method. Existing plugins only call the

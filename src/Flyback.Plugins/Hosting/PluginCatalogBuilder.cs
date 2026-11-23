@@ -80,7 +80,8 @@ internal sealed class PluginCatalogBuilder
             problems,
             Unclashed(registry.MidiInputs, i => i.Id, "MIDI input"),
             providers,
-            Unclashed(registry.AudioInputs, i => i.Id, "audio input"));
+            Unclashed(registry.AudioInputs, i => i.Id, "audio input"),
+            Unclashed(registry.VideoOutputs, o => o.Id, "video output"));
     }
 
     /// <summary>

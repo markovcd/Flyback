@@ -28,7 +28,14 @@ public sealed class SampleModulesPlugin : IFlybackPlugin
         "Sample modules",
         "Example modules, used by the tests to load a real plugin off disk.");
 
-    public void Register(IPluginRegistry registry) => registry.AddModules(Provider,
+    public void Register(IPluginRegistry registry)
+    {
+        registry.AddVideoOutput(new TallyOutput());
+
+        registry.AddModules(Provider, Modules);
+    }
+
+    private static readonly NodeDef[] Modules =
     [
         new NodeDef(
             "flyback.sample.ripple", "Ripple", "Sample",
@@ -67,5 +74,5 @@ public sealed class SampleModulesPlugin : IFlybackPlugin
             // still tell each other apart.
             Skin = new ModuleSkin.Palette(new Swatch(0x4A, 0x7E, 0xC8)),
         },
-    ]);
+    ];
 }

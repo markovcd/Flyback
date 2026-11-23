@@ -100,6 +100,21 @@ public static class MovieRenderer
         return Render(clip, video, audio, settings, new SynthRenderer(), progress, null, cancellation);
     }
 
+    /// <summary>Renders into <paramref name="clip"/>, which need not be a file: how the picture is sent to another program.</summary>
+    /// <returns>Frames written — fewer than <see cref="MovieSettings.FrameCount"/> if stopped.</returns>
+    internal static int Render(
+        IClipWriter clip,
+        CompiledPatch video,
+        CompiledPatch? audio,
+        MovieSettings settings,
+        IFrameRenderer frames,
+        CancellationToken cancellation = default)
+    {
+        Check(settings);
+
+        return Render(clip, video, audio, settings, frames, null, null, cancellation);
+    }
+
     /// <summary>Everything that has to be true of a clip before a file is opened for it.</summary>
     private static void Check(MovieSettings settings)
     {

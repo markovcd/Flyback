@@ -1,6 +1,7 @@
 using Flyback.Core.Graph;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Midi;
+using Flyback.Plugins.Video;
 
 namespace Flyback.Plugins;
 
@@ -42,4 +43,7 @@ public interface IPluginRegistry
     /// device and must not enumerate one.
     /// </summary>
     void AddAudioInput(IAudioInput input);
+
+    /// <summary>Offers somewhere to send the picture. Registering it must not open anything.</summary>
+    void AddVideoOutput(IVideoOutput output);
 }

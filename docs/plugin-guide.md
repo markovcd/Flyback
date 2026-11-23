@@ -143,7 +143,7 @@ Nothing stops an assembly holding more than one plugin class, and each is instan
 
 ## 4. What you can contribute
 
-`IPluginRegistry` has five methods. New kinds of extension arrive as new methods, so a plugin compiled against an older contract keeps working.
+`IPluginRegistry` has six methods. New kinds of extension arrive as new methods, so a plugin compiled against an older contract keeps working.
 
 | Method | Contributes | Must not, when registering |
 |---|---|---|
@@ -152,6 +152,7 @@ Nothing stops an assembly holding more than one plugin class, and each is instan
 | `AddAudioOutput` | A sound backend | Open a device |
 | `AddMidiInput` | A MIDI backend | Open a device, or list the ones plugged in |
 | `AddAudioInput` | A sound input backend, which a Line In listens through | Open a device, or list the ones plugged in |
+| `AddVideoOutput` | Somewhere to send the picture, such as another program: each frame's BGRA pixels and the patch's time, while the feed is open | Open anything |
 
 A single plugin may call several. The Voice plugin adds eleven modules and four presets; a platform plugin such as WinIO adds a sound backend and a MIDI input and nothing else. Every kind is keyed by an id, and an id registered twice is refused to both, whichever plugins it comes from, so no folder can stand in for a plugin it shares an id with.
 

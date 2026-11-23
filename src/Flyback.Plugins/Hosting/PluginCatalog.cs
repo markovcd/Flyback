@@ -1,6 +1,7 @@
 using Flyback.Core.Graph;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Midi;
+using Flyback.Plugins.Video;
 
 namespace Flyback.Plugins.Hosting;
 
@@ -25,7 +26,8 @@ internal sealed class PluginCatalog
         IReadOnlyList<PluginProblem> problems,
         IReadOnlyList<IMidiInput>? midiInputs = null,
         IReadOnlyDictionary<object, PluginInfo>? providers = null,
-        IReadOnlyList<IAudioInput>? audioInputs = null)
+        IReadOnlyList<IAudioInput>? audioInputs = null,
+        IReadOnlyList<IVideoOutput>? videoOutputs = null)
     {
         // Copied under reference equality: two backends are the same one only if
         // they are the same object, whatever their ids or their Equals say.
@@ -40,6 +42,7 @@ internal sealed class PluginCatalog
         Problems = problems;
         MidiInputs = midiInputs ?? [];
         AudioInputs = audioInputs ?? [];
+        VideoOutputs = videoOutputs ?? [];
     }
 
     private readonly Dictionary<object, PluginInfo> providers;
@@ -64,6 +67,15 @@ internal sealed class PluginCatalog
 
     /// <summary>Every way installed of hearing a microphone or a line.</summary>
     public IReadOnlyList<IAudioInput> AudioInputs { get; }
+
+    /// <summary>Every place installed that the picture can be sent to.</summary>
+    public IReadOnlyList<IVideoOutput> VideoOutputs { get; }
+
+    /// <summary>Every place the picture can be sent to here, by id.</summary>
+    public IReadOnlyList<IVideoOutput> UsableVideoOutputs => VideoOutputs
+        .Where(Supported)
+        .OrderBy(o => o.Id, StringComparer.Ordinal)
+        .ToList();
 
     /// <summary>
     /// The engine's modules with every plugin's folded in. Install it before
@@ -145,6 +157,19 @@ internal sealed class PluginCatalog
         .OrderByDescending(i => i.Priority)
         .ThenBy(i => i.Id, StringComparer.Ordinal)
         .FirstOrDefault() ?? NoMidiInput.Instance;
+
+    /// <summary>An output that throws while answering whether it works here has answered no.</summary>
+    private static bool Supported(IVideoOutput output)
+    {
+        try
+        {
+            return output.IsSupported;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 
     /// <summary>A backend that throws while answering whether it works here has answered no.</summary>
     private static bool Supported(IAudioInput input)

@@ -397,7 +397,7 @@ internal static class RenderCommand
         }
 
         var refused = false;
-        using var gpu = video is null ? null : Gpu(video.Program, options, error, out refused);
+        using var gpu = video is null ? null : Gpu(video.Program, options.Interpreted ? PictureBackend.Processor : options.Backend, error, out refused);
 
         if (refused) return Exit.Failed;
 
@@ -478,11 +478,11 @@ internal static class RenderCommand
     /// draw on the processor. <paramref name="refused"/> when --gpu was asked for
     /// and there is none; said on <paramref name="error"/> either way.
     /// </summary>
-    private static IHeadlessRenderer? Gpu(CompiledPatch program, RenderOptions options, TextWriter error, out bool refused)
+    internal static IHeadlessRenderer? Gpu(CompiledPatch program, PictureBackend backend, TextWriter error, out bool refused)
     {
         refused = false;
 
-        if (options.Interpreted || options.Backend == PictureBackend.Processor) return null;
+        if (backend == PictureBackend.Processor) return null;
 
         var gpu = OpenGpu(out var why);
 
@@ -495,7 +495,7 @@ internal static class RenderCommand
 
         if (gpu is not null) return gpu;
 
-        if (options.Backend == PictureBackend.Gpu)
+        if (backend == PictureBackend.Gpu)
         {
             error.WriteLine($"{GlobalConstants.ApplicationName}: --gpu: {why}");
             refused = true;
@@ -531,7 +531,7 @@ internal static class RenderCommand
         (!still && (!hasPicture || reachesSound)) || (picture is not null && Listens(picture));
 
     // Whether the picture reads what the speakers played: a chart's buffer or a Meter's reading.
-    private static bool Listens(CompiledPatch program) =>
+    internal static bool Listens(CompiledPatch program) =>
         program.Taps.Count > 0 || program.LiveInputs.Any(MeterSignals.Is);
 
     private static void Still(

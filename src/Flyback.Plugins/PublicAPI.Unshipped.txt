@@ -1,1 +1,31 @@
 #nullable enable
+Flyback.Plugins.IPluginRegistry.AddVideoOutput(Flyback.Plugins.Video.IVideoOutput! output) -> void
+Flyback.Plugins.Video.IVideoFeed
+Flyback.Plugins.Video.IVideoFeed.Send(in Flyback.Plugins.Video.VideoFrame frame) -> void
+Flyback.Plugins.Video.IVideoOutput
+Flyback.Plugins.Video.IVideoOutput.Create(Flyback.Plugins.Video.VideoFormat format, Flyback.Plugins.Settings.SettingValues! settings) -> Flyback.Plugins.Video.IVideoFeed!
+Flyback.Plugins.Video.IVideoOutput.Form(Flyback.Plugins.Settings.SettingValues! values) -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Settings.SettingField!>!
+Flyback.Plugins.Video.IVideoOutput.Id.get -> string!
+Flyback.Plugins.Video.IVideoOutput.IsSupported.get -> bool
+Flyback.Plugins.Video.IVideoOutput.Name.get -> string!
+Flyback.Plugins.Video.VideoFormat
+Flyback.Plugins.Video.VideoFormat.Deconstruct(out int Width, out int Height, out double FramesPerSecond) -> void
+Flyback.Plugins.Video.VideoFormat.Equals(Flyback.Plugins.Video.VideoFormat other) -> bool
+Flyback.Plugins.Video.VideoFormat.FramesPerSecond.get -> double
+Flyback.Plugins.Video.VideoFormat.FramesPerSecond.init -> void
+Flyback.Plugins.Video.VideoFormat.Height.get -> int
+Flyback.Plugins.Video.VideoFormat.Height.init -> void
+Flyback.Plugins.Video.VideoFormat.VideoFormat() -> void
+Flyback.Plugins.Video.VideoFormat.VideoFormat(int Width, int Height, double FramesPerSecond) -> void
+Flyback.Plugins.Video.VideoFormat.Width.get -> int
+Flyback.Plugins.Video.VideoFormat.Width.init -> void
+Flyback.Plugins.Video.VideoFrame
+Flyback.Plugins.Video.VideoFrame.Bgra.get -> System.ReadOnlySpan<byte>
+Flyback.Plugins.Video.VideoFrame.Stride.get -> int
+Flyback.Plugins.Video.VideoFrame.Time.get -> System.TimeSpan
+Flyback.Plugins.Video.VideoFrame.VideoFrame() -> void
+override Flyback.Plugins.Video.VideoFormat.GetHashCode() -> int
+static Flyback.Plugins.Video.VideoFormat.operator !=(Flyback.Plugins.Video.VideoFormat left, Flyback.Plugins.Video.VideoFormat right) -> bool
+static Flyback.Plugins.Video.VideoFormat.operator ==(Flyback.Plugins.Video.VideoFormat left, Flyback.Plugins.Video.VideoFormat right) -> bool
+~override Flyback.Plugins.Video.VideoFormat.Equals(object obj) -> bool
+~override Flyback.Plugins.Video.VideoFormat.ToString() -> string

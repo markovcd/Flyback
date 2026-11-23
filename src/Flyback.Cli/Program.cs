@@ -115,6 +115,7 @@ internal static class Program
             StillsCommand.Build(plugins),
             TutorialCommand.Build(plugins, json),
             AbletonCommand.Build(json),
+            SendCommand.Build(plugins, settings, json),
         };
     }
 }

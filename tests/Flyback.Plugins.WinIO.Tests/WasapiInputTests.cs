@@ -85,5 +85,7 @@ public sealed class WasapiInputTests
 
         public void AddMidiInput(IMidiInput input) { }
 
+        public void AddVideoOutput(Flyback.Plugins.Video.IVideoOutput output) { }
+
     }
 }

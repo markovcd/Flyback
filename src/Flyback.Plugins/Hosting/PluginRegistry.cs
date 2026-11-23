@@ -1,6 +1,7 @@
 using Flyback.Core.Graph;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Midi;
+using Flyback.Plugins.Video;
 
 namespace Flyback.Plugins.Hosting;
 
@@ -13,6 +14,7 @@ internal sealed class PluginRegistry(List<PluginProblem> problems) : IPluginRegi
     private readonly List<IAudioOutput> audioOutputs = [];
     private readonly List<IMidiInput> midiInputs = [];
     private readonly List<IAudioInput> audioInputs = [];
+    private readonly List<IVideoOutput> videoOutputs = [];
 
     /// <summary>Who registered each thing kept above, keyed by the thing itself.</summary>
     private readonly Dictionary<object, PluginInfo> providers = new(ReferenceEqualityComparer.Instance);
@@ -28,16 +30,18 @@ internal sealed class PluginRegistry(List<PluginProblem> problems) : IPluginRegi
 
     public IReadOnlyList<IAudioInput> AudioInputs => audioInputs;
 
+    public IReadOnlyList<IVideoOutput> VideoOutputs => videoOutputs;
+
 
     /// <summary>Every module offered, accepted or not, in order.</summary>
     private readonly List<NodeDef> offeredModules = [];
 
     /// <summary>How far everything had got, to undo a plugin's registration back to.</summary>
     public readonly record struct Checkpoint(
-        ModuleCatalog Modules, int Offered, int Presets, int AudioOutputs, int MidiInputs, int AudioInputs, int Problems);
+        ModuleCatalog Modules, int Offered, int Presets, int AudioOutputs, int MidiInputs, int AudioInputs, int VideoOutputs, int Problems);
 
     public Checkpoint Mark() => new(
-        Modules, offeredModules.Count, presets.Count, audioOutputs.Count, midiInputs.Count, audioInputs.Count, problems.Count);
+        Modules, offeredModules.Count, presets.Count, audioOutputs.Count, midiInputs.Count, audioInputs.Count, videoOutputs.Count, problems.Count);
 
     public IEnumerable<NodeDef> OfferedSince(Checkpoint mark) => offeredModules.Skip(mark.Offered);
 
@@ -50,6 +54,7 @@ internal sealed class PluginRegistry(List<PluginProblem> problems) : IPluginRegi
         Trim(audioOutputs, mark.AudioOutputs);
         Trim(midiInputs, mark.MidiInputs);
         Trim(audioInputs, mark.AudioInputs);
+        Trim(videoOutputs, mark.VideoOutputs);
         problems.RemoveRange(mark.Problems, problems.Count - mark.Problems);
     }
 
@@ -119,5 +124,11 @@ internal sealed class PluginRegistry(List<PluginProblem> problems) : IPluginRegi
     {
         audioInputs.Add(input);
         providers[input] = Source;
+    }
+
+    public void AddVideoOutput(IVideoOutput output)
+    {
+        videoOutputs.Add(output);
+        providers[output] = Source;
     }
 }

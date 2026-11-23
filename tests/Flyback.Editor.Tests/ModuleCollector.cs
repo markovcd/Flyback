@@ -2,6 +2,7 @@ using Flyback.Core.Graph;
 using Flyback.Plugins;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Midi;
+using Flyback.Plugins.Video;
 
 namespace Flyback.Editor.Tests;
 
@@ -37,6 +38,8 @@ internal sealed class ModuleCollector : IPluginRegistry
 
 
     public void AddMidiInput(IMidiInput input) { }
+
+    public void AddVideoOutput(IVideoOutput output) { }
 
     public void AddAudioInput(IAudioInput input) { }
 

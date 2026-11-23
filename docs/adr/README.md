@@ -221,6 +221,7 @@ context, decision, consequences.
 | [0026](0026-modules-from-plugins-with-provenance-in-the-file.md) | Modules may come from plugins, and the file records which *(user-directed)* |
 | [0028](0028-publish-one-platform-at-a-time.md) | Publish one platform at a time, with only that platform's plugins |
 | [0063](0063-one-plugin-per-platform-for-sound-and-midi.md) | One plugin per platform, carrying its sound and its MIDI *(user-directed)* |
+| [0240](0240-a-plugin-can-send-the-picture-to-another-program.md) | A plugin can send the picture to another program *(user-directed)* |
 | [0102](0102-a-plugin-is-compiled-against-a-contract-with-a-version-of-its-own.md) | A plugin is compiled against a contract with a version of its own *(user-directed)* |
 | [0132](0132-a-plugin-package-says-what-it-is-and-installs-only-when-asked.md) | A plugin package says what it is, and installs only when asked *(user-directed)* |
 | [0134](0134-a-plugin-declares-its-modules-and-is-refused-for-one-it-did-not.md) | A plugin declares its modules, and is refused for one it did not *(user-directed)* |

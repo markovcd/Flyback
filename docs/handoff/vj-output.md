@@ -3,7 +3,7 @@
 Written on 2026-11-23, against `main` at `7f48fe5`. It is on TODO.md; take it off there, and delete this file, in the commit that lands it. Nothing here has been built or measured; the effort figures are estimates, and the licenses should be re-read before anything ships.
 
 - **Kind:** Plan
-- **Status:** Open
+- **Status:** In progress: the picture output with pixels and time, and a hidden `flyback-cli send`, have landed (ADR-0240); the texture, the editor's switch and the three plugins are left
 
 ## What is wanted
 
@@ -36,9 +36,11 @@ The picture output, an addition to the plugin contract (a minor version):
 
 ## Effort
 
-About a day for the picture output and a `flyback-cli` command that sends frames to an output with no window, so an agent can check it. Then NDI 1 to 2 days (plain C API, pixel readback), Spout 1 to 2 days (C wrapper; the GL/DX interop is where AMD and Intel drivers misbehave), Syphon 2 to 3 days (Objective-C, a small native piece built, signed and notarized on a Mac). Each needs a real check against Resolume's free demo on the Mac and the Windows machine, which CI cannot do.
+The picture output's pixel half and `flyback-cli send --to <id> [--fast] [--json]` have landed; `send` is hidden from the help until a shipped plugin offers an output, and its frames come from the same loop a clip is rendered by. The texture half comes with Syphon or Spout. Then NDI 1 to 2 days (plain C API, pixel readback), Spout 1 to 2 days (C wrapper; the GL/DX interop is where AMD and Intel drivers misbehave), Syphon 2 to 3 days (Objective-C, a small native piece built, signed and notarized on a Mac). Each needs a real check against Resolume's free demo on the Mac and the Windows machine, which CI cannot do.
 
 ## Open questions
 
 - Which plugin first: the one for the platform the asking VJ uses.
+- The editor's switch for an output (Settings, beside the sound backend), and a changelog bullet, land with the first plugin.
+- A Line In for `send`: the VJ's patch hears the room, and `send` has no microphone yet.
 - A JACK sound backend (Linux, macOS) for app-to-app sound routing, as a separate item.

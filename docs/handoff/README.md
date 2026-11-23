@@ -18,7 +18,7 @@ Write-ups too long for a line in [TODO.md](../../TODO.md): a plan, an audit, or 
 | [tests-audit.md](tests-audit.md) | Where the tests are weakest, and what would fix each point | Audit | Open: what is left needs a seam, a workload or a fixture |
 | [pipeline-audit.md](pipeline-audit.md) | Where the pipeline is weakest, and what would fix each point | Audit | Open |
 | [asio-amd-crash.md](asio-amd-crash.md) | Rain on a Window on ASIO4ALL crashes inside AMD's OpenGL driver | Issue | Open: needs a session on the Windows machine |
-| [vj-output.md](vj-output.md) | The picture into Resolume and other VJ software over Syphon, Spout and NDI, as plugins on one picture-output contract | Plan | Open |
+| [vj-output.md](vj-output.md) | The picture into Resolume and other VJ software over Syphon, Spout and NDI, as plugins on one picture-output contract | Plan | Open: the contract's pixel half landed |
 | [microsoft-store.md](microsoft-store.md) | Flyback Modular on the Microsoft Store: the submission steps left to the user | Plan | Open: waits on the user |
 
 Severity, for an issue: **Critical**, act now; **High**, a security or data problem in a release; **Medium**, wrong behavior or real risk; **Low**, friction or latent risk.
