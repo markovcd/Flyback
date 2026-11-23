@@ -21,22 +21,19 @@ internal static class BeatFollowModule
     /// <summary>How far a gap may stray from a whole number of beats, as a share of it, and still count as on the beat.</summary>
     private const float Tolerance = 0.12f;
 
-    /// <summary>The longest gap, in beats, still read as part of the beat rather than a break in it.</summary>
-    private const float LongestGap = 4.5f;
-
-    /// <summary>How many hits in a row off the tempo held make it start over from the latest gap.</summary>
-    private const float MissesToRestart = 4f;
+    /// <summary>The longest gap, in beats, between two hits on the beat that still measures the tempo.</summary>
+    private const float LongestGap = 8.5f;
 
     /// <summary>How near a beat, as a share of one, a hit has to land to pull the beat toward it.</summary>
-    private const float Near = 0.2f;
+    private const float Near = 0.1f;
 
     /// <summary>The share of a hit's distance from the beat that the beat moves to meet it.</summary>
-    private const float Pull = 0.5f;
+    private const float Pull = 0.25f;
 
     /// <summary>The seconds over which a pull is let out, so 'beats' never runs backward.</summary>
     private const float Ease = 0.15f;
 
-    /// <summary>How many beats without a hit on the beat it still says it is locked.</summary>
+    /// <summary>How many beats without a hit on the beat it still says it is locked; after that two even gaps start it over.</summary>
     private const float LockedFor = 4f;
 
     internal static NodeDef Def() => new(
@@ -71,15 +68,16 @@ internal static class BeatFollowModule
                     + "Patch it into a sequencer's 'in' for one step a beat.",
             },
             Num("phase", 0f, 0f, 1f) with { Help = "How far through the beat it is, from 0 on the beat to just short of 1." },
-            Num("bpm", 120f, 20f, 300f) with { Help = "The tempo it hears, in BPM. Nought until it has heard two hits." },
+            Num("bpm", 120f, 20f, 300f) with { Help = "The tempo it hears, in BPM. Nought until it has heard two even gaps." },
             Num("locked", 0f, 0f, 1f) with { Help = "High while hits keep landing on the beat, low once they have stopped for four beats." },
             Num("beat", 0f, 0f, 1f) with { Help = "Fires on every beat, through a break too." },
             Num("reset", 0f, 0f, 1f) with { Help = "Fires when it first locks and whenever it starts over at a new tempo." },
         ],
         Emit,
         "Hears the tempo in a gate of hits and keeps a beat to it: patch a Hits' 'kick' into 'in' to play "
-        + "along with the music the Line In hears. Each gap between hits is read as a whole number of beats, "
-        + "a hit near the beat pulls the beat onto it, and in a break it carries on at the last tempo. "
+        + "along with the music the Line In hears. Two even gaps between hits set the tempo; after that a "
+        + "hit near the beat pulls the beat onto it and fine-tunes the tempo, hits off the beat are let be, "
+        + "and in a break it carries on at the last tempo. "
         + "Sound only: carry what it gives to the picture through a Bridge.")
     {
         Words = "tempo from a kick, beat tracking, tap tempo",
@@ -87,18 +85,18 @@ internal static class BeatFollowModule
     };
 
     /// <summary>
-    /// A tempo measured from the gaps between hits, and a beat run at it that hits pull into line.
+    /// A beat run at a tempo, kept in line by the hits that land near it.
     /// </summary>
     /// <remarks>
-    /// Once a tempo is held, a gap is read against it as a quarter, a half or a whole number of beats up
-    /// to four; one that fits moves the tempo by a share of 'settle', and one that does not is a hit off
-    /// the beat and leaves it be. Four misses in a row are a new tempo, taken from the latest gap folded
-    /// into 'slowest' to 'fastest', which is also how the first gap is read. A hit near a beat moves the
-    /// beat half the way toward it, let out over <see cref="Ease"/> so the count only ever goes forward.
+    /// Only a hit within <see cref="Near"/> of a beat counts: it pulls the beat a quarter of the way onto it,
+    /// let out over <see cref="Ease"/> so the count only ever goes forward, and the time since the last
+    /// such hit, read as a whole number of beats, moves the tempo by a share of 'settle'. Hits off the
+    /// beat (a snare in the kick's band, a fill) change nothing. Once no hit has landed on the beat for
+    /// <see cref="LockedFor"/> beats, two gaps in a row that agree, each folded into 'slowest' to
+    /// 'fastest', are a new tempo with this hit on the beat; the first lock is found the same way.
     /// </remarks>
     private static Slot[] Emit(Emitter em, EmitContext node)
     {
-        var zero = em.Constant(0f);
         var one = em.Constant(1f);
         var dt = em.Interval();
         var memory = em.HasMemory();
@@ -111,81 +109,73 @@ internal static class BeatFollowModule
 
         var upCell = em.AllocateUnitSlot();
         var sinceCell = em.AllocateUnitSlot();
-        var heardCell = em.AllocateUnitSlot();
+        var sinceBeatCell = em.AllocateUnitSlot();
+        var lastFoldCell = em.AllocateUnitSlot();
         var periodCell = em.AllocateUnitSlot();
-        var missesCell = em.AllocateUnitSlot();
-        var sinceGoodCell = em.AllocateUnitSlot();
         var oweCell = em.AllocateUnitSlot();
         var posCell = em.AllocateUnitSlot();
         var countCell = em.AllocateUnitSlot();
 
         var wasUp = em.UnitRead(upCell);
         var since = em.Add(em.UnitRead(sinceCell), dt);
-        var heard = em.UnitRead(heardCell);
+        var sinceBeat = em.Add(em.UnitRead(sinceBeatCell), dt);
+        var lastFold = em.UnitRead(lastFoldCell);
         var period = em.UnitRead(periodCell);
-        var misses = em.UnitRead(missesCell);
-        var sinceGood = em.Add(em.UnitRead(sinceGoodCell), dt);
         var owe = em.UnitRead(oweCell);
         var pos = em.UnitRead(posCell);
         var count = em.UnitRead(countCell);
 
         var up = em.Binary(OpCode.Step, em.Constant(EnvelopeModules.GateOpen), node[InPort]);
         var hit = em.Mul(em.Mul(up, em.Sub(one, wasUp)), em.Binary(OpCode.Step, em.Constant(Refractory), since));
-        var gapped = em.Mul(hit, heard);
         var held = em.Binary(OpCode.Step, em.Constant(1e-6f), period);
 
-        // The gap as beats of the tempo held, and the nearest of a quarter, a half or a whole number.
-        var ratio = em.Binary(OpCode.Div, since, period);
-        var whole = em.Binary(OpCode.Max, one, em.Unary(OpCode.Floor, em.Add(ratio, 0.5f)));
-        var part = em.Ternary(OpCode.Mix, em.Constant(0.25f), em.Constant(0.5f), em.Binary(OpCode.Step, em.Constant(0.375f), ratio));
-        var beatsApart = em.Ternary(OpCode.Mix, part, whole, em.Binary(OpCode.Step, em.Constant(0.75f), ratio));
-        var stray = em.Unary(OpCode.Abs, em.Sub(em.Binary(OpCode.Div, ratio, beatsApart), one));
+        // The beat carried forward at the tempo held, with what is still owed of the last pull let out.
+        var paid = em.Mul(owe, em.Binary(OpCode.Min, one, em.Mul(dt, 1f / Ease)));
+        var carried = em.Add(em.Add(pos, em.Mul(dt, em.Binary(OpCode.Div, one, period))), paid);
+        var nearest = em.Unary(OpCode.Floor, em.Add(carried, 0.5f));
+        var off = em.Sub(carried, nearest);
+        var onBeat = em.Mul(em.Mul(hit, held), em.Binary(OpCode.Step, em.Unary(OpCode.Abs, off), em.Constant(Near)));
+        var locked = em.Mul(held, em.Binary(OpCode.Step, sinceBeat, em.Mul(period, LockedFor)));
 
-        var judged = em.Mul(em.Mul(gapped, held), em.Binary(OpCode.Step, ratio, em.Constant(LongestGap)));
-        var fits = em.Binary(OpCode.Step, stray, em.Constant(Tolerance));
-        var good = em.Mul(judged, fits);
-        var missed = em.Mul(judged, em.Sub(one, fits));
-        var missesNow = em.Mul(em.Add(misses, missed), em.Sub(one, good));
-
-        var plausible = em.Mul(
-            em.Binary(OpCode.Step, em.Mul(shortest, 0.5f), since),
-            em.Binary(OpCode.Step, since, em.Mul(longest, 2.2f)));
-        var lost = em.Binary(OpCode.Max, em.Sub(one, held), em.Binary(OpCode.Step, em.Constant(MissesToRestart), missesNow));
-        var restart = em.Mul(em.Mul(gapped, plausible), lost);
-
-        // The gap doubled or halved until it lies between the fastest beat and twice that, then held to the range.
+        // The gap since the last hit, doubled or halved until it lies between the fastest beat and twice that.
         var octaves = em.Unary(OpCode.Floor, em.Binary(OpCode.Div,
             em.Unary(OpCode.Log, em.Binary(OpCode.Div, since, shortest)), em.Constant(MathF.Log(2f))));
         var folded = em.Ternary(OpCode.Clamp,
             em.Mul(since, em.Binary(OpCode.Pow, em.Constant(2f), em.Unary(OpCode.Neg, octaves))), shortest, longest);
+        var plausible = em.Mul(
+            em.Binary(OpCode.Step, em.Mul(shortest, 0.5f), since),
+            em.Binary(OpCode.Step, since, em.Mul(longest, 2.2f)));
+        var agree = em.Mul(
+            em.Binary(OpCode.Step, em.Constant(1e-6f), lastFold),
+            em.Binary(OpCode.Step,
+                em.Unary(OpCode.Abs, em.Sub(em.Binary(OpCode.Div, folded, lastFold), one)), em.Constant(Tolerance)));
+        var restart = em.Mul(em.Mul(em.Mul(hit, plausible), agree), em.Sub(one, locked));
 
-        var share = em.Mul(
-            em.Binary(OpCode.Div, one, em.Binary(OpCode.Max, node[SettlePort], one)),
-            em.Binary(OpCode.Min, beatsApart, one));
-        var heardPeriod = em.Binary(OpCode.Div, since, beatsApart);
-        var followed = em.Ternary(OpCode.Clamp, em.Ternary(OpCode.Mix, period, heardPeriod, share), shortest, longest);
-        var periodNow = em.Ternary(OpCode.Mix, em.Ternary(OpCode.Mix, period, followed, good), folded, restart);
+        // The time since the last hit on the beat, as a whole number of beats.
+        var ratio = em.Binary(OpCode.Div, sinceBeat, period);
+        var beatsApart = em.Binary(OpCode.Max, one, em.Unary(OpCode.Floor, em.Add(ratio, 0.5f)));
+        var stray = em.Unary(OpCode.Abs, em.Sub(em.Binary(OpCode.Div, ratio, beatsApart), one));
+        var fits = em.Mul(
+            em.Binary(OpCode.Step, stray, em.Constant(Tolerance)),
+            em.Binary(OpCode.Step, ratio, em.Constant(LongestGap)));
+        var measured = em.Mul(onBeat, fits);
+
+        var share = em.Binary(OpCode.Div, one, em.Binary(OpCode.Max, node[SettlePort], one));
+        var followed = em.Ternary(OpCode.Clamp,
+            em.Ternary(OpCode.Mix, period, em.Binary(OpCode.Div, sinceBeat, beatsApart), share), shortest, longest);
+        var periodNow = em.Ternary(OpCode.Mix, em.Ternary(OpCode.Mix, period, followed, measured), folded, restart);
         var rate = em.Binary(OpCode.Div, one, periodNow);
 
-        // The beat carried forward, with what is still owed of the last pull let out.
-        var paid = em.Mul(owe, em.Binary(OpCode.Min, one, em.Mul(dt, 1f / Ease)));
-        var carried = em.Add(em.Add(pos, em.Mul(dt, rate)), paid);
-        var nearest = em.Unary(OpCode.Floor, em.Add(carried, 0.5f));
-        var off = em.Sub(carried, nearest);
-        var pulls = em.Mul(
-            em.Mul(em.Mul(hit, held), em.Sub(one, restart)),
-            em.Binary(OpCode.Step, em.Unary(OpCode.Abs, off), em.Constant(Near)));
-        var owed = em.Mul(em.Sub(em.Sub(owe, paid), em.Mul(pulls, em.Mul(off, Pull))), em.Sub(one, restart));
+        var pulled = em.Mul(onBeat, em.Sub(one, restart));
+        var owed = em.Mul(em.Sub(em.Sub(owe, paid), em.Mul(pulled, em.Mul(off, Pull))), em.Sub(one, restart));
         var posNow = em.Ternary(OpCode.Mix, carried, nearest, restart);
-
-        var goodNow = em.Binary(OpCode.Max, good, restart);
+        var anchored = em.Binary(OpCode.Max, onBeat, restart);
 
         em.UnitWrite(upCell, up);
         em.UnitWrite(sinceCell, em.Mul(since, em.Sub(one, hit)));
-        em.UnitWrite(heardCell, em.Binary(OpCode.Max, heard, hit));
+        em.UnitWrite(sinceBeatCell, em.Mul(sinceBeat, em.Sub(one, anchored)));
+        em.UnitWrite(lastFoldCell, em.Ternary(OpCode.Mix, lastFold, em.Mul(folded, plausible), hit));
         em.UnitWrite(periodCell, periodNow);
-        em.UnitWrite(missesCell, em.Mul(missesNow, em.Sub(one, restart)));
-        em.UnitWrite(sinceGoodCell, em.Mul(sinceGood, em.Sub(one, goodNow)));
         em.UnitWrite(oweCell, owed);
         em.ClockWrite(posCell, posNow);
 
@@ -196,14 +186,14 @@ internal static class BeatFollowModule
         var heldNow = em.Binary(OpCode.Step, em.Constant(1e-6f), periodNow);
         var ticked = em.Binary(OpCode.Step, em.Constant(0.5f), em.Sub(counted, count));
         var beat = em.Mul(em.Binary(OpCode.Max, em.Mul(ticked, heldNow), restart), memory);
-        var locked = em.Mul(heldNow, em.Binary(OpCode.Step, sinceGood, em.Mul(periodNow, LockedFor)));
+        var lockedNow = em.Binary(OpCode.Max, em.Mul(locked, em.Sub(one, restart)), restart);
 
         return
         [
             em.Mul(beats, memory),
             em.Mul(em.Unary(OpCode.Fract, beats), memory),
             em.Mul(em.Mul(rate, 60f), memory),
-            em.Mul(locked, memory),
+            em.Mul(lockedNow, memory),
             beat,
             em.Mul(restart, memory),
         ];

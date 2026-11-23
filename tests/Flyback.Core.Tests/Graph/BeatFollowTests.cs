@@ -59,6 +59,19 @@ public class BeatFollowTests
     }
 
     [Fact]
+    public void Stray_hits_between_the_kicks_leave_the_beat_alone()
+    {
+        // What a kick detector hears of a busy mix: the kicks, and a hit somewhere off the beat in most of them.
+        var random = new Random(7);
+        var kicks = Every(0.5, from: 0.2, until: 16);
+        var strays = kicks.Where(_ => random.NextDouble() < 0.7).Select(k => k + 0.5 * (0.25 + 0.5 * random.NextDouble()));
+        var run = Follow(Gate(kicks.Concat(strays).Order(), 16));
+
+        run.Bpm[^1].ShouldBe(120f, 0.5f);
+        BeatsNear(run.Beat, kicks.Where(k => k > 6)).ShouldAllBe(error => error < 0.01);
+    }
+
+    [Fact]
     public void In_a_break_it_carries_on_at_the_last_tempo_and_says_it_has_lost_the_beat()
     {
         var kicks = Every(0.5, from: 0.2, until: 8);
