@@ -43,7 +43,7 @@ internal static class CounterModule
         Emit,
         "Counts the rises on 'trigger' and comes round to 0 every 'length' of them: beats in a "
         + "bar, kicks in a phrase, phrases in a song. 'wrap' passes every 'length'th trigger, so "
-        + "Counters chain. Audio only: on the picture it reads 0, so take 'count' there through a Meter.")
+        + "Counters chain. Audio only: on the picture it reads 0, so carry 'count' there through a Bridge.")
     {
         Words = "count triggers, clock divider, beat counter",
         Sinks = ModuleSinks.Audio,
