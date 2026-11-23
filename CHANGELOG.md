@@ -35,6 +35,7 @@
 
 - Speak in Sing sings its tune from where its trigger rises and again only as `every` asks, once when `every` is 0, rather than round and round from the start of the patch.
 - In the web editor on a Mac, Cmd+C, Cmd+X, Cmd+V, Cmd+A and Cmd+Z work in the text view.
+- Turning a value on the canvas no longer puts the split between the picture and the inspector back where it started.
 
 ## 0.14.0 — 2026-11-12
 

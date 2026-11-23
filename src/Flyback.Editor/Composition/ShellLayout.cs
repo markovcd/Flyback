@@ -407,7 +407,10 @@ internal sealed class ShellLayout(
         ToolTip.SetTip(toolbar.Swap, shown ? Toolbar.SwapTip : Toolbar.NoPictureToSwapTip);
         if (fullScreen.IsFullScreen || previewBox is null || previewRow is null || previewSplitter is null) return;
         if (!shown) toolbar.Swap.IsChecked = false;
-        if (!showing && previewBox.IsVisible) previewShare = previewRow.Height;
+
+        // Every compile asks again; a row already shown keeps the height it was dragged to.
+        if (showing == previewBox.IsVisible) return;
+        if (!showing) previewShare = previewRow.Height;
         previewBox.IsVisible = showing;
         previewSplitter.IsVisible = showing;
         previewRow.MinHeight = showing ? 140d : 0d;
