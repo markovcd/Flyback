@@ -200,6 +200,20 @@ public sealed class SpeakerSteps(PatchContext context)
     [Then("the sound says the patch plays for {float} seconds")]
     public void ThenTheSoundSaysTheLength(float seconds) => context.SampleAt(0).ShouldBe(seconds / 1000, Tolerance);
 
+    /// <summary>Every trigger heard after <paramref name="from"/> lands a whole number of gaps after the first, to the sample either side, and none is missed.</summary>
+    [Then("it fires every {float} seconds from {float} seconds on")]
+    public void ThenItFiresEvery(float gap, float from)
+    {
+        var fired = context.Heard
+            .Select((sample, i) => (sample, i))
+            .Where(p => p.sample > 0.5 && p.i / (double)PatchContext.SampleRate >= from)
+            .Select(p => p.i / (double)PatchContext.SampleRate)
+            .ToList();
+
+        fired.Count.ShouldBe((int)Math.Floor((context.Now - fired[0]) / gap) + 1);
+        fired.ShouldAllBe(t => Math.Abs((t - fired[0]) / gap - Math.Round((t - fired[0]) / gap)) * gap <= 1.5 / PatchContext.SampleRate);
+    }
+
     [Then("that sample is about {float}")]
     public void ThenThatSample(float expected) => context.Heard[^1].ShouldBe(expected, Tolerance);
 

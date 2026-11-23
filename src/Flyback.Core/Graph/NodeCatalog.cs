@@ -91,6 +91,7 @@ public static class NodeCatalog
             .Concat(StringModule.Defs())
             .Concat(SequencerModules.Defs())
             .Append(CounterModule.Def())
+            .Append(BeatFollowModule.Def())
             .Append(SongModule.Def)
             .Concat(EnvelopeModules.Defs())
             .Append(DuckModule.Def())

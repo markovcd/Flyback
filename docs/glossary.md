@@ -146,6 +146,7 @@ Engineering words. They appear in docs, ADRs and comments, not in the UI.
 | **rewind** | Take the patch back to zero seconds, in the picture and the sound. | — | reset, restart |
 | **sound input** | The microphone or line input the machine hears, which a Line In plays. Opened only while the sound that is playing holds a Line In. | `IAudioInput`, `IAudioCapture`, `LineIn` | audio in, mic input; capture (a take is a recording) |
 | **Ableton Link session** | The apps on one network keeping one tempo and one beat over Ableton's Link protocol. A Clock In can follow it; Flyback joins only while a playing patch does. | `MidiSources.Ableton`, `AbletonSession`, `AbletonHub` | link (a socket following a knob), sync, network clock |
+| **Beat Follow** | The module that hears a tempo and a beat in a gate of hits, such as a kick the sound input hears, and keeps the beat through a break. | `BeatFollowModule`, type id `seq.follow` | beat tracker, tempo detector, tap tempo (a tap is only one gate it can follow) |
 | **record**, **take** | Recording the patch live from the editor (Ctrl+R), and the file one recording makes. | `Takes`, `LiveRecorder` | capture, clip |
 | **render** | Writing a patch to a file from the command line, exactly and at any speed. | `RenderCommand` | export (except as the menu's word for it), record |
 | **still**, **clip** | What a render writes: one picture, or picture and sound over a length of time. | — | screenshot, video |

@@ -3,7 +3,13 @@
 Written on 2026-11-16, against `main` at `882fff5`. It is on TODO.md; take it off there, and delete this file, in the commit that lands the last of it.
 
 - **Kind:** Plan
-- **Status:** Open
+- **Status:** Partly landed: Beat Follow (below)
+
+## What has landed
+
+**Beat Follow** (`seq.follow`, `BeatFollowModule`, Timing, sound only) is the Tap module of step 1 grown to follow a kick: any gate goes into `in` (a Hits' `kick`, a panel Button, a drum pad), each gap is read against the tempo held as a quarter, a half or a whole number of beats, a hit near the beat pulls the beat onto it, and in a break it carries on. It gives `beats`, `phase`, `bpm`, `locked`, `beat` and `reset`. It is built from unit cells, so it runs the same in `render`, on the page and on every backend.
+
+What is left is the tracker on the sound itself (steps 2 to 5): following music with no clear kick, by autocorrelating onset strength, as a Clock In source.
 
 ## What is wanted
 

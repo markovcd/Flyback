@@ -491,6 +491,16 @@ public sealed class PatchSteps(PatchContext context)
         Written($"let s = values(rate: {rate}) [ 0.5 ]{(char)10}let c = s.gate |> chance(gate: _, chance: {Number(chance)}){(char)10}{heard} |> out.left");
     }
 
+    [Given("a kick every {float} seconds, followed for its {word}")]
+    public void GivenAFollowedKick(float gap, string output) => Followed($"pulse(freq: {Number(1f / gap)}, width: 0.9)", output);
+
+    [Given("a kick every {float} seconds that stops after {float} seconds, followed for its {word}")]
+    public void GivenAFollowedKickThatStops(float gap, float stops, string output) =>
+        Followed($"pulse(freq: {Number(1f / gap)}, width: 0.9) * (1 - step({Number(stops)}, t))", output);
+
+    private void Followed(string kick, string output) =>
+        Written($"let kick = {kick}{(char)10}follow(in: kick).{output} |> out.left");
+
     [Given(@"^a sequencer of ([\d., ]+) stepping once a beat of a drum machine$")]
     public void GivenASequencerOnAClock(string values) =>
         Written(
