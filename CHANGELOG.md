@@ -19,6 +19,7 @@
 - The text language has `fold`, a loop whose passes each take what the last ended with: `fold 1..4 from 1 with n { n * 2 }` is 16.
 - A sequencer's block reads names with `$`: `notes() [ $root C3 ]`, and a list writes in all its notes, so a loop can vary a pattern.
 - Play → Check the Mix (Ctrl+Shift+H) listens to a few seconds from the playhead and flags clipping, DC, a missing sub, muddy low mids, a wide low end, a loudness far off, a missing master chain and silent sound sources. Desktop only.
+- The knob panel holds up to 128 knobs, switches and buttons, and the canvas's list of knobs scrolls when it is taller than the view.
 
 ### Viewer
 

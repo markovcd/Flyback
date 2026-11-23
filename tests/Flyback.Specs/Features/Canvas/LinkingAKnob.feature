@@ -3,7 +3,7 @@ Feature: Linking a value to a panel knob
   last. Picking one hands the value to that knob: the socket becomes a filled diamond
   and a chip naming the knob stands in the well. A click on the chip drops the list
   again, where Unlink lets the value go at the number the knob gave it. A panel
-  holds at most 32 knobs, so a full one offers only the knobs it has.
+  holds at most 128 knobs, so a full one offers only the knobs it has.
 
   Background:
     Given a sine on its own

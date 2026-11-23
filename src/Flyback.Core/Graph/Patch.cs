@@ -188,8 +188,8 @@ public sealed class Patch
     /// <summary>The knob called <paramref name="id"/>, or null where the panel has none.</summary>
     internal PatchControl? Control(Guid id) => Controls?.FirstOrDefault(c => c.Id == id);
 
-    /// <summary>The most knobs, switches and buttons a panel holds: two pages of an 8x2 controller.</summary>
-    internal const int MostControls = 32;
+    /// <summary>The most knobs, switches and buttons a panel holds: as many as MIDI has controller numbers.</summary>
+    internal const int MostControls = 128;
 
     /// <summary>Whether the panel holds as many controls as it may, so another cannot be added.</summary>
     internal bool ControlsFull => (Controls?.Count ?? 0) >= MostControls;

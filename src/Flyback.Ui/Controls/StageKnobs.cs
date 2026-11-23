@@ -40,7 +40,12 @@ public sealed class StageKnobs : TuckedAway
     }
 
     private StageKnobs(KnobArrangement row)
-        : base(row, HorizontalAlignment.Center)
+        : base(new ScrollViewer
+        {
+            Content = row,
+            HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
+            VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto,
+        }, HorizontalAlignment.Center)
     {
         this.row = row;
         Margin = new Thickness(12);

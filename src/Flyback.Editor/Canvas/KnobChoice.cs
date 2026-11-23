@@ -29,6 +29,14 @@ internal sealed class KnobChoice(CanvasHistory history, CanvasSelection selectio
     /// <summary>The line Enter would pick.</summary>
     public int Index { get; private set; }
 
+    /// <summary>The first line showing, where more lines are listed than the view has room for.</summary>
+    public int First => Math.Clamp(first, 0, Math.Max(0, Rows.Count - Shown));
+
+    private int first;
+
+    /// <summary>How many lines show at once: as many as the view's height holds, at least one.</summary>
+    public int Shown => Math.Clamp((int)((view.Size.Height - 2 * Margin - 2 * Padding) / RowHeight), 1, Math.Max(1, Rows.Count));
+
     /// <summary>The lines of the list: each knob on the panel, New knob while the panel has room, and Unlink where the socket follows one.</summary>
     public IReadOnlyList<Row> Rows
     {
@@ -69,6 +77,8 @@ internal sealed class KnobChoice(CanvasHistory history, CanvasSelection selectio
 
         var linked = Rows.ToList().FindIndex(row => row.Current);
         Index = Math.Max(linked, 0);
+        first = 0;
+        KeepInView();
         repaint.Request();
     }
 
@@ -110,8 +120,30 @@ internal sealed class KnobChoice(CanvasHistory history, CanvasSelection selectio
                 return false;
         }
 
+        KeepInView();
         repaint.Request();
         return true;
+    }
+
+    /// <summary>Scrolls the list by a turn of the wheel, and says whether it was the list's.</summary>
+    public bool Wheel(double delta)
+    {
+        if (For is null) return false;
+
+        var was = First;
+        first = Math.Clamp(was - Math.Sign(delta) * Math.Max(1, (int)Math.Round(Math.Abs(delta) * 3)), 0, Math.Max(0, Rows.Count - Shown));
+        if (first != was) repaint.Request();
+
+        return true;
+    }
+
+    /// <summary>Scrolls so the picked line shows.</summary>
+    private void KeepInView()
+    {
+        var shown = Shown;
+
+        if (Index < First) first = Index;
+        else if (Index >= First + shown) first = Index - shown + 1;
     }
 
     /// <summary>Picks a line of the list and shuts it.</summary>
@@ -134,7 +166,7 @@ internal sealed class KnobChoice(CanvasHistory history, CanvasSelection selectio
 
             var well = view.OnScreen(geometry.Compact ? new Rect(socket, socket) : ValueWell.At(bounds, socket));
             var (_, above) = TurnReadout.Place(view.OnScreen(bounds), well, view.Size);
-            var height = Rows.Count * RowHeight + 2 * Padding;
+            var height = Shown * RowHeight + 2 * Padding;
             var x = Math.Clamp(well.Left - Padding, Margin, Math.Max(Margin, view.Size.Width - Width - Margin));
             var y = above ? well.Bottom + Gap : well.Top - Gap - height;
 
@@ -147,9 +179,10 @@ internal sealed class KnobChoice(CanvasHistory history, CanvasSelection selectio
     {
         if (Box is not { } box || !box.Contains(screen)) return null;
 
-        var index = (int)((screen.Y - box.Top - Padding) / RowHeight);
+        var line = (int)Math.Floor((screen.Y - box.Top - Padding) / RowHeight);
+        var index = First + line;
 
-        return index >= 0 && index < Rows.Count ? index : null;
+        return line >= 0 && line < Shown && index < Rows.Count ? index : null;
     }
 
     public void Draw(DrawingContext context)
@@ -159,10 +192,12 @@ internal sealed class KnobChoice(CanvasHistory history, CanvasSelection selectio
         context.DrawRectangle(Ground, Edge, box, 10, 10);
 
         var rows = Rows;
+        var top = First;
+        var last = Math.Min(rows.Count, top + Shown);
 
-        for (var i = 0; i < rows.Count; i++)
+        for (var i = top; i < last; i++)
         {
-            var row = new Rect(box.Left + Padding, box.Top + Padding + i * RowHeight, box.Width - 2 * Padding, RowHeight);
+            var row = new Rect(box.Left + Padding, box.Top + Padding + (i - top) * RowHeight, box.Width - 2 * Padding, RowHeight);
 
             if (i == Index) context.DrawRectangle(Picked, PickedEdge, row.Deflate(0.75), 6, 6);
 

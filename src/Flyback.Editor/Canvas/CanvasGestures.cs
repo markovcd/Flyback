@@ -763,6 +763,9 @@ internal sealed class CanvasGestures
     {
         e.Handled = true;
 
+        // An open list of knobs takes the wheel, to scroll a list taller than the view.
+        if (choice.Wheel(e.Delta.Y)) return;
+
         // A scroll that is moving the view goes on moving it until it rests: a well that slides
         // under the pointer is not nudged by it, nor is a turn begun under its momentum switched.
         if (viewScrolledAt is { } last && e.Timestamp >= last && e.Timestamp - last <= ScrollRest)

@@ -191,4 +191,46 @@ public class KnobChoiceTests : EditorTest
         Choice(window).Rows.Count.ShouldBe(Patch.MostControls);
         Choice(window).Rows.ShouldNotContain(row => row.Text == "New knob");
     }
+
+    [AvaloniaFact]
+    public void A_list_taller_than_the_view_shows_what_fits_and_follows_the_arrows()
+    {
+        var (patch, value) = Board();
+        for (var i = 0; i < Patch.MostControls; i++) patch.AddControl();
+        var window = Open(patch);
+
+        AltL(window, value);
+
+        var choice = Choice(window);
+        var box = choice.Box.ShouldNotBeNull();
+        choice.Shown.ShouldBeLessThan(choice.Rows.Count);
+        box.Height.ShouldBeLessThanOrEqualTo(Editor(window).Bounds.Height);
+
+        Press(window, Key.Up);
+
+        choice.Index.ShouldBe(choice.Rows.Count - 1);
+        choice.First.ShouldBe(choice.Rows.Count - choice.Shown);
+        choice.RowAt(new Point(box.Center.X, box.Bottom - KnobChoice.Padding - KnobChoice.RowHeight / 2)).ShouldBe(choice.Rows.Count - 1);
+    }
+
+    [AvaloniaFact]
+    public void The_wheel_scrolls_an_open_list_and_not_the_view()
+    {
+        var (patch, value) = Board();
+        for (var i = 0; i < Patch.MostControls; i++) patch.AddControl();
+        var window = Open(patch);
+
+        AltL(window, value);
+
+        var choice = Choice(window);
+        var box = choice.Box.ShouldNotBeNull();
+        var view = Editor(window).GraphToScreen;
+
+        window.MouseWheel(Editor(window).TranslatePoint(box.Center, window)!.Value, new Vector(0, -1));
+        Settle(window);
+
+        choice.First.ShouldBeGreaterThan(0);
+        Editor(window).GraphToScreen.ShouldBe(view);
+        choice.For.ShouldNotBeNull();
+    }
 }
