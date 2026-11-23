@@ -517,6 +517,63 @@ public sealed class DelayState
     }
 
     /// <summary>
+    /// What trace <paramref name="slot"/> held over its newest <paramref name="span"/>
+    /// evaluations: their mean, and the highest of them.
+    /// </summary>
+    /// <remarks>
+    /// With <paramref name="wrap"/> above nought the values are taken as positions
+    /// round a circle of that length and the mean is the circle's, read back
+    /// between nought and <paramref name="wrap"/>: a phase that crossed its top in
+    /// the window reads as just past it, where a plain mean would read the middle.
+    /// May be read across a write, and is meant to be: see <see cref="Tap"/>.
+    /// </remarks>
+    public (float Mean, float Top) Average(int slot, int span, float wrap = 0f)
+    {
+        if ((uint)slot >= (uint)traces.Length) return (0f, 0f);
+
+        var ring = traces[slot];
+
+        span = Math.Clamp(span, 1, ring.Length);
+
+        var start = traceHeads[slot] - span;
+        var circular = wrap > 0f && float.IsFinite(wrap);
+        var turn = circular ? Math.Tau / wrap : 0d;
+
+        var top = float.NegativeInfinity;
+        var sum = 0d;
+        var across = 0d;
+        var up = 0d;
+
+        for (var i = 0; i < span; i++)
+        {
+            var value = ring[Index(start + i, ring.Length)];
+
+            top = MathF.Max(top, value);
+
+            if (circular)
+            {
+                across += Math.Cos(value * turn);
+                up += Math.Sin(value * turn);
+            }
+            else
+            {
+                sum += value;
+            }
+        }
+
+        if (!circular) return ((float)(sum / span), top);
+
+        // Evenly spread round the whole circle has no mean; nought is as good as any.
+        if (across * across + up * up < 1e-18) return (0f, top);
+
+        var mean = Math.Atan2(up, across) / turn;
+        if (mean < 0d) mean += wrap;
+
+        // A float rounding just under nought lands on wrap itself, which is nought.
+        return (mean >= wrap ? 0f : (float)mean, top);
+    }
+
+    /// <summary>
     /// Whether this state still fits a program. Op order decides which buffer is
     /// which, so a recompile that changes the delays gets fresh buffers, and the
     /// tail that was ringing belonged to a patch that no longer exists.

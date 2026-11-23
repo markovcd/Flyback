@@ -228,7 +228,8 @@ internal sealed class PatchWalk
                 for (var port = 0; port < Math.Min(def.TappedInputs, def.Inputs.Count); port++)
                 {
                     emitter.Tap(taps.Count, ResolveInput(node, def, port));
-                    taps.Add(new TapSpec(node.Id, PatchCompiler.WindowOf(node, def), Traces.Silence, Port: port));
+                    taps.Add(new TapSpec(
+                        node.Id, PatchCompiler.WindowOf(node, def), Traces.Silence, Port: port, Wrap: PatchCompiler.WrapOf(node, def)));
                 }
             }
         }

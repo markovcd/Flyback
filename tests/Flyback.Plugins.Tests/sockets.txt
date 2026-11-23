@@ -14,6 +14,7 @@ audio.sample | in, level, trigger | out, length
 audio.slew | in, rise, fall | out
 audio.tune | in, transpose, hold | hz, note
 beam | x, y, persistence, intensity, glow, hue | color
+bridge | in, window, wrap | value, top
 bus.receive |  | out
 bus.send | in | out
 color.gain | color, gain, bias | color

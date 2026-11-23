@@ -4,7 +4,7 @@ namespace Flyback.Engine.Compile;
 
 /// <summary>
 /// The join between what the speakers played and what the picture is allowed to
-/// know about it: one number per Meter, per frame.
+/// know about it: one number per Meter or Bridge reading, per frame.
 /// </summary>
 /// <remarks>
 /// <see cref="Traces"/>'s opposite. That carries a stretch of the past across as a
@@ -25,7 +25,7 @@ namespace Flyback.Engine.Compile;
 public static class Meters
 {
     /// <summary>
-    /// Measures every Meter the picture is listening to and plays the answer into
+    /// Measures every Meter and Bridge the picture is listening to and plays the answer into
     /// <paramref name="blocks"/>.
     /// </summary>
     /// <param name="heard">
@@ -55,27 +55,43 @@ public static class Meters
 
             var level = MeterSignals.Key(tap.Node, MeterSignals.Level);
             var peak = MeterSignals.Key(tap.Node, MeterSignals.Peak);
+            var value = MeterSignals.Key(tap.Node, MeterSignals.Value);
+            var top = MeterSignals.Key(tap.Node, MeterSignals.Top);
 
             // Every tap is offered, and a Scope's is refused here by nobody
             // reading it. That is cheaper than knowing which kind of module each
             // ring belongs to, and it is the same question either way: a name a
             // program does not read is a measurement nothing would look at, and
             // the window behind it is a few hundred thousand samples to walk.
-            if (!Wanted(blocks, level, peak)) continue;
+            var loud = Wanted(blocks, level, peak);
+            var carried = Wanted(blocks, value, top);
+
+            if (!loud && !carried) continue;
 
             var span = memory is null
                 ? 0
                 : Math.Clamp((int)Math.Round(tap.Window * memory.SampleRate), 1, DelayState.TraceSamples);
 
-            var (loudest, loudness) = memory is null ? (0f, 0f) : memory.Measure(slot, span);
+            if (loud)
+            {
+                var (loudest, loudness) = memory is null ? (0f, 0f) : memory.Measure(slot, span);
 
-            Play(blocks, level, loudness);
-            Play(blocks, peak, loudest);
+                Play(blocks, level, loudness);
+                Play(blocks, peak, loudest);
+            }
+
+            if (carried)
+            {
+                var (mean, highest) = memory is null ? (0f, 0f) : memory.Average(slot, span, tap.Wrap);
+
+                Play(blocks, value, mean);
+                Play(blocks, top, highest);
+            }
         }
     }
 
     /// <summary>
-    /// Every Meter back to nothing, for when the sound stops. The programs are
+    /// Every Meter and Bridge back to nothing, for when the sound stops. The programs are
     /// still loaded and the picture is still being drawn, so the readings have to
     /// be put out rather than merely left — see the note on <c>memory</c> above.
     /// </summary>

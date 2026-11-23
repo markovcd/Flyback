@@ -3,7 +3,7 @@ using Flyback.Core.Compile;
 namespace Flyback.Engine.Compile;
 
 /// <summary>
-/// One tapped input of a Scope, Analyzer, Meter or Beam, as the two programs of a
+/// One tapped input of a Scope, Analyzer, Meter, Bridge or Beam, as the two programs of a
 /// patch see it between them: the speakers' program writes into it and the
 /// screen's program reads out of it.
 /// </summary>
@@ -26,4 +26,9 @@ namespace Flyback.Engine.Compile;
 /// <param name="Port">
 /// Which input was tapped, in the speakers' program: a Beam taps two.
 /// </param>
-public sealed record TapSpec(Guid Node, float Window, LoadedSample Trace, ChartKind Chart = ChartKind.Trace, int Port = 0);
+/// <param name="Wrap">
+/// Where a Bridge's value wraps, read off its knob at compile time; nought for a
+/// plain value and for every other module.
+/// </param>
+public sealed record TapSpec(
+    Guid Node, float Window, LoadedSample Trace, ChartKind Chart = ChartKind.Trace, int Port = 0, float Wrap = 0f);

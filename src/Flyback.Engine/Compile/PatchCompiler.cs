@@ -127,6 +127,19 @@ public static class PatchCompiler
     }
 
     /// <summary>
+    /// Where a Bridge's value wraps, off its knob: nought for a plain value, and
+    /// for every module that is not a Bridge.
+    /// </summary>
+    internal static float WrapOf(NodeInstance node, NodeDef def)
+    {
+        if (def.TypeId != BridgeModule.TypeId) return 0f;
+
+        var wrap = DefaultFor(node, BridgeModule.WrapPort, def.Inputs[BridgeModule.WrapPort]);
+
+        return float.IsFinite(wrap) ? Math.Clamp(wrap, 0f, BridgeModule.MaxWrap) : 0f;
+    }
+
+    /// <summary>
     /// The knob value for an unconnected input, falling back to the definition's
     /// default when a saved patch predates a change to the module's sockets.
     /// </summary>

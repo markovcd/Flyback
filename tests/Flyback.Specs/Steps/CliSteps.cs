@@ -258,6 +258,10 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
         Crossings(t => (0.8, t)).ShouldBe(up * 2, "crossings near the side");
     }
 
+    [Then("the still is an even gray of {float}")]
+    public void ThenStillGray(float level) =>
+        Shot().Pixels.ShouldAllBe(value => Math.Abs(value - level) < 0.03f);
+
     [Then("the still is black")]
     public void ThenStillBlack() => Shot().Pixels.ShouldAllBe(value => value == 0f);
 

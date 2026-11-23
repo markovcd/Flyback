@@ -77,6 +77,7 @@ context, decision, consequences.
 | [0059](0059-a-picture-comes-in-as-a-texture.md) | A picture comes in as a texture *(user-directed)* |
 | [0053](0053-a-scope-records-what-the-speakers-played.md) | A Scope records what the speakers played *(user-directed)* |
 | [0058](0058-the-picture-is-told-how-loud-the-sound-is.md) | The picture is told how loud the sound is *(user-directed)* |
+| [0238](0238-a-bridge-carries-a-sound-value-into-the-picture.md) | A Bridge carries a sound value into the picture *(user-directed)* |
 | [0073](0073-an-analyzer-is-a-scope-filled-with-a-spectrum.md) | An Analyzer is a Scope filled with a spectrum *(user-directed)* |
 | [0203](0203-a-plot-draws-a-pitch-function-as-a-curve-in-the-picture.md) | A Plot draws a pitch function as a curve in the picture *(user-directed)* |
 | [0213](0213-a-raymarch-is-its-scene-written-out-once-a-step.md) | A Raymarch is its scene written out once a step *(user-directed)* |

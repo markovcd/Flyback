@@ -197,10 +197,10 @@ internal static class ModuleGlyphs
             + "M13.6,8 A1.4,1.4 0 1 1 16.4,8 A1.4,1.4 0 1 1 13.6,8 "
             + "M14.6,16 A1.4,1.4 0 1 1 17.4,16 A1.4,1.4 0 1 1 14.6,16",
 
-        // Measurement's six ways of looking at a signal: two charts, one
+        // Measurement's seven ways of looking at a signal: two charts, one
         // ruled where it is now and one biased into the past, that same past
         // turned into a spectrum or drawn as an X-Y trace, a level read as a number instead of drawn,
-        // and a loop read as a waveform.
+        // a value carried across as itself, and a loop read as a waveform.
         [ChartModules.ProbeTypeId] =
             "M3,5 L21,5 L21,19 L3,19 Z M12,5 L12,19 "
             + "M4,12 C6,7 8,7 10,12 C11,14 13,14 14,12 C16,7 18,7 20,12",
@@ -210,6 +210,7 @@ internal static class ModuleGlyphs
         [BeamModule.TypeId] =
             "M3,4 L21,4 L21,20 L3,20 Z M12,7 C17,7 17,17 12,17 C7,17 7,7 12,7 C15,7 15,12 12,12 C9,12 9,17 12,17",
         [MeterModule.TypeId] = "M8,4 L13,4 L13,20 L8,20 Z M15.5,6 L19.5,6 M15.5,11 L19.5,11 M15.5,16 L19.5,16",
+        [BridgeModule.TypeId] = "M2,18 L22,18 M4,18 C4,4 20,4 20,18 M8.5,18 L8.5,9.5 M12,18 L12,8 M15.5,18 L15.5,9.5",
         [ScanModule.TypeId] =
             "M3,5 L21,5 L21,19 L3,19 Z M5,12 L19,12 "
             + "M10,10.3 L12,8.3 L14,10.3 M10,13.7 L12,15.7 L14,13.7",

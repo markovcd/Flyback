@@ -1,7 +1,7 @@
 namespace Flyback.Core.Compile;
 
 /// <summary>
-/// The names a Meter's readings are played on, which is all the module and the
+/// The names a Meter's or a Bridge's readings are played on, which is all the module and the
 /// thing measuring for it have to agree about.
 /// </summary>
 /// <remarks>
@@ -24,6 +24,12 @@ internal static class MeterSignals
 
     /// <summary>The furthest the window got from nought, which is what hits.</summary>
     public const string Peak = "peak";
+
+    /// <summary>The window's mean, which is what a Bridge carries.</summary>
+    public const string Value = "value";
+
+    /// <summary>The highest the window got, which is how a Bridge carries a trigger.</summary>
+    public const string Top = "top";
 
     /// <summary>
     /// The name one Meter's reading is played on. Built from the node id because

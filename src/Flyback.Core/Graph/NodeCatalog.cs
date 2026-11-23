@@ -83,6 +83,7 @@ public static class NodeCatalog
             .Concat(ChartModules.Defs())
             .Append(BeamModule.Def())
             .Append(MeterModule.Def())
+            .Append(BridgeModule.Def())
             .Append(ScanModule.Def())
             .Concat(SourceModules.Defs())
             .Concat(MidiModules.Defs())

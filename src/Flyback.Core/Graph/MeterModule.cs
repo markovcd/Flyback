@@ -58,7 +58,8 @@ internal static class MeterModule
             },
             "How loud the sound is, as a number to draw with: patch a signal into 'in' and drive a "
             + "hue, a size or a brightness from 'level' or 'peak'. Costs the picture nothing and "
-            + "keeps the GPU. Reads nothing where no sound runs, as in an exported still.")
+            + "keeps the GPU. Reads nothing where no sound runs, as in an exported still. For a value itself "
+            + "rather than its loudness, use a Bridge.")
         {
             Words = "loudness as a number",
             // Tapped but not charted: what it wants from the ring is two numbers
