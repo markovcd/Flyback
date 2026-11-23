@@ -42,7 +42,7 @@ internal static class JsLayout
             ["planes"] = Index(arrays?.Planes, sizeof(double), address),
             ["traces"] = Indices(arrays?.Traces ?? [], sizeof(float), address),
             ["traceHeads"] = Index(arrays?.TraceHeads, sizeof(int), address),
-            ["traceLength"] = DelayState.TraceSamples,
+            ["traceLengths"] = new JsonArray([.. (arrays?.Traces ?? []).Select(trace => (JsonNode)trace.Length)]),
 
             // JSON has no NaN or infinities, so those go as the text the script reads back with Number.
             ["constants"] = new JsonArray([.. JsEmitter.ConstantsOf(program).Select(value => double.IsFinite(value)

@@ -154,6 +154,7 @@ public sealed class AudioRenderer
                 program.UnitCount,
                 program.TraceCount,
                 program.PlaneCount)
+            && existing.TracesFit(program)
             && existing.Owners.Match(program.Owners))
         {
             return existing;

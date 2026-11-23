@@ -94,7 +94,21 @@ public sealed class DelayState
         int unitCount = 0,
         int traceCount = 0,
         int planeCount = 0)
+        : this(lengthsInSeconds, sampleRate, phaseCount, unitCount, Enumerable.Repeat(TraceSamples, traceCount).ToArray(), planeCount)
     {
+    }
+
+    /// <param name="ringLengths">How many evaluations each trace keeps, one per tap.</param>
+    private DelayState(
+        IReadOnlyList<float> lengthsInSeconds,
+        int sampleRate,
+        int phaseCount,
+        int unitCount,
+        int[] ringLengths,
+        int planeCount)
+    {
+        var traceCount = ringLengths.Length;
+
         SampleRate = sampleRate;
         lengths = [.. lengthsInSeconds];
         lines = new float[lengthsInSeconds.Count][];
@@ -110,7 +124,7 @@ public sealed class DelayState
         traces = new float[traceCount][];
         traceHeads = new int[traceCount];
 
-        for (var i = 0; i < traceCount; i++) traces[i] = new float[TraceSamples];
+        for (var i = 0; i < traceCount; i++) traces[i] = new float[ringLengths[i]];
 
         for (var i = 0; i < lines.Length; i++)
         {
@@ -132,7 +146,7 @@ public sealed class DelayState
             sampleRate,
             program.PhaseCount,
             program.UnitCount,
-            program.TraceCount,
+            RingLengths(program, sampleRate),
             program.PlaneCount)
     {
         Owners = program.Owners;
@@ -144,6 +158,28 @@ public sealed class DelayState
     }
 
     public int SampleRate { get; private set; }
+
+    /// <summary>
+    /// Whether every trace is as long as <paramref name="program"/>'s taps want at
+    /// this rate, which a window turned on a Meter or a Scope changes.
+    /// </summary>
+    internal bool TracesFit(CompiledPatch program)
+    {
+        if (program.TraceCount != traces.Length) return false;
+
+        var wanted = RingLengths(program, SampleRate);
+
+        for (var i = 0; i < traces.Length; i++)
+            if (traces[i].Length != wanted[i])
+                return false;
+
+        return true;
+    }
+
+    // One per trace slot; a slot the taps do not describe keeps the whole ring.
+    private static int[] RingLengths(CompiledPatch program, int sampleRate) =>
+        [.. Enumerable.Range(0, program.TraceCount)
+            .Select(i => i < program.Taps.Count ? TapRings.Length(program.Taps[i], sampleRate) : TraceSamples)];
 
     /// <summary>
     /// Cells for one leg of a sound run on several cores (ADR-0230): every small array its

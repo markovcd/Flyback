@@ -60,7 +60,7 @@ internal static class JsEmitter
             text.Append(CultureInfo.InvariantCulture, $"const L{i} = m.lines[{i}], N{i} = m.lineLengths[{i}];\n");
 
         for (var i = 0; i < program.TraceCount; i++)
-            text.Append(CultureInfo.InvariantCulture, $"const T{i} = m.traces[{i}];\n");
+            text.Append(CultureInfo.InvariantCulture, $"const T{i} = m.traces[{i}], TN{i} = m.traceLengths[{i}];\n");
 
         for (var i = 0; i < program.TableArray.Length; i++)
             text.Append(CultureInfo.InvariantCulture, $"const S{i} = m.tables[{i}][0], SN{i} = m.tables[{i}][1], SR{i} = m.tables[{i}][2];\n");
@@ -190,7 +190,7 @@ internal static class JsEmitter
                 $"r{op.Out} = 0; r{op.Out + 1} = 0; r{op.Out + 2} = 0;",
 
             OpCode.Tap => k >= 0 && k < program.TraceCount
-                ? $"{{ const h = I32[TH + {k}]; F32[T{k} + h] = Number.isFinite({a}) ? {a} : 0; I32[TH + {k}] = (h + 1) % TL; }}"
+                ? $"{{ const h = I32[TH + {k}]; F32[T{k} + h] = Number.isFinite({a}) ? {a} : 0; I32[TH + {k}] = (h + 1) % TN{k}; }}"
                 : "",
 
             OpCode.Table => k >= 0 && k < program.TableArray.Length
@@ -366,7 +366,7 @@ internal static class JsEmitter
         const RATE = m.sampleRate * m.oversample;
         const LIVE = m.live, LIVEN = m.liveCount;
         const POS = m.positions, PHASES = m.phases, PREVIOUS = m.previous, RUNNING = m.running;
-        const UNITS = m.units, PLANES = m.planes, TH = m.traceHeads, TL = m.traceLength;
+        const UNITS = m.units, PLANES = m.planes, TH = m.traceHeads;
         const K = Float64Array.from(m.constants, Number);
         const JUST_BELOW_ONE = 0.99999999999999989;
         const H = new Float64Array(3);

@@ -40,7 +40,7 @@ public static class Spectra
     /// The shortest segment, for a window shorter than <see cref="SegmentSeconds"/>.
     /// Below this the bins are wider than the chart's first two decades together.
     /// </summary>
-    private const int ShortestSegment = 256;
+    internal const int ShortestSegment = 256;
 
     /// <summary>
     /// How many segments a window is averaged over at most. Half-overlapping
