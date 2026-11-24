@@ -14,9 +14,9 @@ flowchart TB
     pluginAuthor(["<b>Plugin author</b><br/>[Person]<br/>Writes a plugin against the contract, packs and signs it, and submits it."]):::person
     agent(["<b>Agent</b><br/>[Person]<br/>Builds Flyback, and drives it headless to check its work."]):::person
     subgraph flyback["Flyback"]
-        editor["<b>Editor</b><br/>[Container: .NET 10, Avalonia]<br/>Edits, plays and records patches, with the assistant beside them, and installs plugins and updates."]:::container
-        viewer["<b>flyback-viewer</b><br/>[Container: .NET 10, Avalonia]<br/>Plays a patch and writes nothing, in a window or hidden."]:::container
-        cli["<b>flyback-cli</b><br/>[Container: .NET 10 console]<br/>Renders, checks and prints patches, packs plugins, and asks the assistant and the decision model."]:::container
+        editor["<b>Editor</b><br/>[Container: .NET 11, Avalonia]<br/>Edits, plays and records patches, with the assistant beside them, and installs plugins and updates."]:::container
+        viewer["<b>flyback-viewer</b><br/>[Container: .NET 11, Avalonia]<br/>Plays a patch and writes nothing, in a window or hidden."]:::container
+        cli["<b>flyback-cli</b><br/>[Container: .NET 11 console]<br/>Renders, checks and prints patches, packs plugins, and asks the assistant and the decision model."]:::container
         dataFolder[("<b>Data folder</b><br/>[Container: Files]<br/>settings.json, allowed plugins, saved presets, conversations and recovery.")]:::store
         pluginsFolder[("<b>Plugins folder</b><br/>[Container: Files]<br/>The shipped plugins and installed plugin packages, beside the programs.")]:::store
     end

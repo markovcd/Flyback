@@ -132,7 +132,7 @@ def build(project, log):
 
 def run(project, log):
     """Runs one test project; returns (total, failed test names)."""
-    runner = os.path.join(root, "tests", project, "bin", "Debug", "net10.0", project)
+    runner = os.path.join(root, "tests", project, "bin", "Debug", "net11.0", project)
     if os.name == "nt":
         runner += ".exe"
     command = [runner] + [a for c in args.classes for a in ("-class", c)] + [a for m in args.methods for a in ("-method", m)]

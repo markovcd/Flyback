@@ -120,8 +120,8 @@ jobs:
           mkdir -p test-results/cgl
           for name in "Ahead and behind" "Grid" "Nebula" "Ring scan" "Whole band" "Three channels" "Feedback tunnel"; do
             file="test-results/cgl/${name// /-}"
-            dotnet src/Flyback.Cli/bin/Release/net10.0/flyback-cli.dll render --preset "$name" --at 1.1 --size 640x360 --gpu -o "$file-gpu.png" || true
-            dotnet src/Flyback.Cli/bin/Release/net10.0/flyback-cli.dll render --preset "$name" --at 1.1 --size 640x360 --processor -o "$file-processor.png" || true
+            dotnet src/Flyback.Cli/bin/Release/net11.0/flyback-cli.dll render --preset "$name" --at 1.1 --size 640x360 --gpu -o "$file-gpu.png" || true
+            dotnet src/Flyback.Cli/bin/Release/net11.0/flyback-cli.dll render --preset "$name" --at 1.1 --size 640x360 --processor -o "$file-processor.png" || true
           done
 
       # Python is python3 on macOS and python on Windows.

@@ -60,7 +60,7 @@ public sealed class HoverCommandTests : IDisposable
 
         code.ShouldBe(Exit.Ok, error);
 
-        var root = JsonDocument.Parse(output).RootElement;
+        var root = JsonElement.Parse(output);
         root.GetProperty("hover").GetProperty("title").GetString().ShouldBe("sine · Sine (osc.sine)");
         root.TryGetProperty("signature", out _).ShouldBeFalse("outside a call there is no signature, and nothing is written for it");
     }

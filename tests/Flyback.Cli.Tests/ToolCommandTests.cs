@@ -32,7 +32,7 @@ public sealed class ToolCommandTests : IDisposable
 
         ToolCommand.List(Catalog, json: true, output, SettingsPath).ShouldBe(Exit.Ok);
 
-        var tools = JsonDocument.Parse(output.ToString()).RootElement.EnumerateArray().ToList();
+        var tools = JsonElement.Parse(output.ToString()).EnumerateArray().ToList();
 
         tools.Select(tool => tool.GetProperty("name").GetString()).ShouldContain("write_patch");
         tools.Select(tool => tool.GetProperty("name").GetString()).ShouldNotContain("listen");
@@ -184,7 +184,7 @@ public sealed class ToolCommandTests : IDisposable
         var output = new StringWriter();
         ToolCommand.History(History, new FileInfo(Path("p.fbk")), null, true, output, new StringWriter()).ShouldBe(Exit.Ok);
 
-        var listed = JsonDocument.Parse(output.ToString()).RootElement;
+        var listed = JsonElement.Parse(output.ToString());
 
         listed.GetProperty("step").GetInt32().ShouldBe(1);
         listed.GetProperty("steps")[1].GetProperty("tool").GetString().ShouldBe("edit_patch");
@@ -209,7 +209,7 @@ public sealed class ToolCommandTests : IDisposable
     {
         var (_, said, _) = await Call("p.fbk", "write_patch", Source("rings() |> out.color"), json: true);
 
-        var line = JsonDocument.Parse(said).RootElement;
+        var line = JsonElement.Parse(said);
 
         line.GetProperty("ok").GetBoolean().ShouldBeTrue();
         line.GetProperty("wrote").GetBoolean().ShouldBeTrue();

@@ -123,7 +123,7 @@ jobs:
       # The workload set is pinned, as an action is: a newer set can name a manifest
       # NuGet does not have yet, and the install fails.
       - name: Install the android workload
-        run: dotnet workload install android --version 10.0.402
+        run: dotnet workload install android --version 11.0.100
 
       # The version as release.sh works it out, from the same input and tags. The
       # keystore lives for this step only, outside the workspace, under a password
@@ -151,7 +151,7 @@ jobs:
             -p:AndroidSigningStorePass=env:ANDROID_KEYSTORE_PASSWORD \
             -p:AndroidSigningKeyPass=env:ANDROID_KEYSTORE_PASSWORD
           mkdir -p apk
-          cp src/Flyback.Editor.Android/bin/Release/net10.0-android/*-Signed.apk "apk/flyback-${version}-android-arm64.apk"
+          cp src/Flyback.Editor.Android/bin/Release/net11.0-android/*-Signed.apk "apk/flyback-${version}-android-arm64.apk"
 
       # Signed under the committed certificate and nothing else, and not debuggable.
       - name: Check the APK
@@ -198,7 +198,7 @@ jobs:
             -p:AndroidSigningKeyAlias=upload \
             -p:AndroidSigningStorePass=env:PLAY_UPLOAD_PASSWORD \
             -p:AndroidSigningKeyPass=env:PLAY_UPLOAD_PASSWORD
-          cp src/Flyback.Editor.Android/bin/Release/net10.0-android/*-Signed.aab "apk/flyback-${version}-android-play.aab"
+          cp src/Flyback.Editor.Android/bin/Release/net11.0-android/*-Signed.aab "apk/flyback-${version}-android-play.aab"
           ls -l apk/*.aab
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

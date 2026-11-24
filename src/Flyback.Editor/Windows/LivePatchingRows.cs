@@ -70,8 +70,8 @@ internal sealed class LivePatchingRows
 
         moduleOpacity.Value = look.ModuleOpacity;
         textOpacity.Value = look.TextOpacity;
-        moduleFade.Value = (decimal)look.ModuleFadeSeconds;
-        textFade.Value = (decimal)look.TextFadeSeconds;
+        moduleFade.Value = Boxed.Of(look.ModuleFadeSeconds);
+        textFade.Value = Boxed.Of(look.TextFadeSeconds);
         textWakes.SelectedIndex = look.TextWakesOnPointer ? 0 : 1;
     }
 
@@ -97,9 +97,9 @@ internal sealed class LivePatchingRows
     private static NumericUpDown Number(string name, double least, double most, double step) => new()
     {
         Name = name,
-        Minimum = (decimal)least,
-        Maximum = (decimal)most,
-        Increment = (decimal)step,
+        Minimum = Boxed.Of(least),
+        Maximum = Boxed.Of(most),
+        Increment = Boxed.Of(step),
         FormatString = "0.#",
         FontSize = Text.Body,
         HorizontalAlignment = HorizontalAlignment.Stretch,

@@ -37,7 +37,7 @@ done
 
 command -v xcrun >/dev/null || { echo "no xcrun: this needs a Mac with Xcode" >&2; exit 2; }
 
-app=src/Flyback.Editor.iOS/bin/Release/net10.0-ios/iossimulator-arm64/Flyback.Editor.iOS.app
+app=src/Flyback.Editor.iOS/bin/Release/net11.0-ios/iossimulator-arm64/Flyback.Editor.iOS.app
 logs="$(mktemp -d)"
 booted_here=""
 

@@ -43,13 +43,13 @@
     <PackageVersion Include="Svg.Controls.Skia.Avalonia" Version="12.0.0.17" />
 
     <!--
-      The editor in a browser: the natives Avalonia.Browser brings are older than
-      the managed SkiaSharp and HarfBuzzSharp the editor resolves. Each matches the
-      managed version Flyback.Editor.Web resolves, not the viewer's below: SkiaSharp
+      The editor in a browser: the natives Avalonia.Browser brings are linked by an
+      Emscripten older than the runtime's. Each matches the managed SkiaSharp and
+      HarfBuzzSharp below, which Flyback.Editor.Web asks for by name: SkiaSharp
       refuses a native of another version at startup.
     -->
-    <PackageVersion Include="SkiaSharp.NativeAssets.WebAssembly" Version="4.148.0" />
-    <PackageVersion Include="HarfBuzzSharp.NativeAssets.WebAssembly" Version="14.2.0" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.WebAssembly" Version="4.156.0" />
+    <PackageVersion Include="HarfBuzzSharp.NativeAssets.WebAssembly" Version="14.4.0.100" />
 
     <!-- The viewer, held to the same Skia and HarfBuzz as the editor it shares a folder with. -->
     <PackageVersion Include="SkiaSharp" Version="4.156.0" />
@@ -58,15 +58,15 @@
     <PackageVersion Include="HarfBuzzSharp.NativeAssets.Linux" Version="14.4.0.100" />
 
     <!-- The editor's container and its HTTP clients (ADR-0150): the runtime's own, versioned with it. -->
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.14" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="11.0.0" />
   </ItemGroup>
 
   <!-- The command line, the preset site, and the two platform plugins that need something. -->
   <ItemGroup>
     <PackageVersion Include="NAudio.Wasapi" Version="3.3.0" />
-    <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="10.0.14" />
-    <PackageVersion Include="System.CommandLine" Version="2.0.14" />
+    <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="11.0.0" />
+    <PackageVersion Include="System.CommandLine" Version="3.0.0" />
   </ItemGroup>
 
   <!-- Runs in the compiler and ships in nothing, which is what ADR-0019 allows Core. -->
