@@ -34,7 +34,8 @@ concurrency:
 
 jobs:
   simulator:
-    runs-on: macos-26
+    # The .NET 11 ios workload needs Xcode 27.2, which only GitHub's xcode-27 image carries.
+    runs-on: xcode-27
     # A cold workload install, restore, AOT build and a simulator boot; the default of six hours is what a hang costs.
     timeout-minutes: 60
     env:
@@ -46,7 +47,7 @@ jobs:
         with:
           persist-credentials: false
 
-      # The image links Xcode_26.6.0.app to Xcode_26.6.app; the iOS SDK cannot find
+      # The image links Xcode_27.2.0.app to Xcode_27.2.app; the iOS SDK cannot find
       # clang through the link, so the real folder is selected.
       - name: Use the newest Xcode
         run: |
