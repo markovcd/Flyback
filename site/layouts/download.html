@@ -48,6 +48,9 @@
         <p>The same tab sets a library folder. A sound or a picture a patch names that is not beside the patch is
         looked for there, and one chosen from it is named from it, so the patch finds it on any machine with the
         same library.</p>
+        <p>To use the picture as a live source in VJ software such as Resolume, install the NDI plugin from the
+        preset site and <a href="https://ndi.video/tools/">NDI Tools</a>, then pick NDI under <strong>Settings → Send</strong>.
+        Flyback sends the preview as it is drawn, to any machine on the network.</p>
         <p><a class="button" href="tutorials.html" style="margin-top: 10px">Watch the tutorials →</a></p>
       </div>
       <div>
@@ -67,6 +70,7 @@ flyback-cli compare nebula.fbk nebula-ported.fbk
 flyback-cli measure nebula.fbk LFO Mixer.out --seconds 10
 flyback-cli mix --preset "Acid" --from 60
 flyback-cli ableton --seconds 10
+flyback-cli send nebula.fbk --to ndi --seconds 60
 flyback-cli print nebula.fbk -o nebula.fbks
 flyback-cli print --preset "Whole band"
 flyback-cli pack --preset "Mycelium" -o mycelium.fbkb

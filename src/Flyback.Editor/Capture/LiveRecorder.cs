@@ -330,23 +330,7 @@ internal sealed class LiveRecorder : IFrameSink, IAudioSink, IDisposable
     /// </summary>
     private void Flip(ReadOnlySpan<byte> rgba)
     {
-        var width = settings.Size.Width;
-        var height = settings.Size.Height;
-        var stride = width * 4;
-
-        for (var y = 0; y < height; y++)
-        {
-            var source = rgba.Slice((height - 1 - y) * stride, stride);
-            var target = bgra.AsSpan(y * stride, stride);
-
-            for (var x = 0; x < stride; x += 4)
-            {
-                target[x] = source[x + 2];
-                target[x + 1] = source[x + 1];
-                target[x + 2] = source[x];
-                target[x + 3] = source[x + 3];
-            }
-        }
+        GlFrame.ToBgra(rgba, settings.Size.Width, settings.Size.Height, bgra);
 
         held = true;
     }

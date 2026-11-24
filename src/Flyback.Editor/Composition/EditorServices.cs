@@ -195,6 +195,7 @@ internal static class EditorServices
         services.AddPart<FullScreenSection>();
         services.AddPart<SoundSection>();
         if (setup.Host.Records) services.AddPart<RecordingSection>();
+        if (setup.Host.Records && setup.Plugins.VideoOutputs.Count > 0) services.AddPart<SendingSection>();
         services.AddPart<PlayingSection>();
         services.AddPart<CanvasSection>();
         services.AddPart<FilesSection>();

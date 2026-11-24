@@ -24,6 +24,7 @@
 - A sequencer's block reads names with `$`: `notes() [ $root C3 ]`, and a list writes in all its notes, so a loop can vary a pattern.
 - Play → Check the Mix (Ctrl+Shift+H) listens to a few seconds from the playhead and flags clipping, DC, a missing sub, muddy low mids, a wide low end, a loudness far off, a missing master chain and silent sound sources. Desktop only.
 - The knob panel holds up to 128 knobs, switches and buttons, and the canvas's list of knobs scrolls when it is taller than the view.
+- Settings → Send sends the picture live to VJ software such as Resolume over NDI, with the NDI plugin from the preset site and NDI Tools installed; `flyback-cli send` does the same without a window.
 
 ### Viewer
 

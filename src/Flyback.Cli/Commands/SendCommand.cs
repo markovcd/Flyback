@@ -21,7 +21,6 @@ namespace Flyback.Cli.Commands;
 /// Plays a patch's picture into a plugin's picture output for a while, with no window,
 /// and says how many frames went: how a script or an agent checks an output works.
 /// </summary>
-/// <remarks>Hidden from the help until a shipped plugin offers an output.</remarks>
 internal static class SendCommand
 {
     public static Command Build(PluginRegistry plugins, OutputSettings defaults, Option<bool> json)
@@ -60,8 +59,6 @@ internal static class SendCommand
         {
             given.Patch, given.Preset, given.Presets, to, outputs, size, seconds, fps, fast, json,
         };
-
-        command.Hidden = true;
 
         command.SetAction((result, cancellation) =>
         {

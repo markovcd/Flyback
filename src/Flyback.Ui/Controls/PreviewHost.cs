@@ -162,17 +162,19 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     public void Rewind() => active.Rewind();
 
     /// <summary>
-    /// Raised when a recording in progress loses the renderer it was reading —
-    /// the GPU failing over to the processor mid-take. The message is written
-    /// for the status bar.
+    /// Raised when the frames being taken lose the renderer they were read from:
+    /// the GPU failing over to the processor mid-take. The message is written for
+    /// the status bar.
     /// </summary>
     public event Action<string>? CaptureLost;
 
-    private IFrameSink? capturing;
+    /// <summary>Everyone taking frames: a take, a picture output, or both at once.</summary>
+    private readonly List<IFrameSink> capturing = [];
 
     /// <summary>
-    /// Points the renderer at a sink, and keeps it pointed there across whatever
-    /// happens to the backend. Returns why it cannot, or null having started.
+    /// Points the renderer at a sink, beside any already taking frames, and keeps it
+    /// pointed there across whatever happens to the backend. Returns why it cannot,
+    /// or null having started.
     /// </summary>
     /// <remarks>
     /// Only the GPU path can do this: reading frames back off the card is the whole
@@ -182,22 +184,22 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     internal string? BeginCapture(IFrameSink sink)
     {
         if (active is not ICapturedPreview captured)
-            return "The picture is being drawn on the processor, which is too slow to record from.";
+            return "The picture is being drawn on the processor, which is too slow to take frames from.";
 
         if (captured.CaptureUnavailable is { } why) return why;
 
-        capturing = sink;
-        captured.Capture = sink;
+        if (!capturing.Contains(sink)) capturing.Add(sink);
+        captured.Capture = FrameFan.Of(capturing);
 
         return null;
     }
 
-    /// <summary>Stops feeding frames. Harmless when nothing was being recorded.</summary>
-    internal void EndCapture()
+    /// <summary>Stops feeding frames to <paramref name="sink"/>. Harmless when it was not taking any.</summary>
+    internal void EndCapture(IFrameSink sink)
     {
-        capturing = null;
+        capturing.Remove(sink);
 
-        if (active is ICapturedPreview captured) captured.Capture = null;
+        if (active is ICapturedPreview captured) captured.Capture = FrameFan.Of(capturing);
     }
 
     /// <summary>
@@ -326,16 +328,16 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
         // A take reading from a renderer that has just been dropped would go on
         // writing the last frame it got, for as long as anyone left it running.
         // Better to say the picture has gone than to fill a file with it.
-        if (capturing is null) return;
+        if (capturing.Count == 0) return;
 
         if (surface is ICapturedPreview incoming)
         {
-            incoming.Capture = capturing;
+            incoming.Capture = FrameFan.Of(capturing);
         }
         else
         {
-            capturing = null;
-            CaptureLost?.Invoke("The recording lost the GPU renderer and has been stopped.");
+            capturing.Clear();
+            CaptureLost?.Invoke("The picture left the GPU renderer, so it is no longer recorded or sent.");
         }
     }
 }

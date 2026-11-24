@@ -155,9 +155,11 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IGpuPreview, ICapture
     }
 
     /// <summary>Why frames cannot be read back here, or null when they can.</summary>
-    internal string? CaptureUnavailable => renderer is { } active
-        ? active.CaptureUnavailable
-        : "The graphics context is not up yet.";
+    /// <remarks>
+    /// Null before the context is up: a sink set then is fed once it is, and a context
+    /// that never comes up fails over to the processor, which drops the sink.
+    /// </remarks>
+    internal string? CaptureUnavailable => renderer?.CaptureUnavailable;
 
     IFrameSink? ICapturedPreview.Capture { get => Capture; set => Capture = value; }
 

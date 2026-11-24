@@ -32,7 +32,7 @@ internal sealed unsafe class NdiFeed : IVideoFeed
     {
         Width = format.Width,
         Height = format.Height,
-        FourCC = NdiVideoFrame.Bgra,
+        FourCC = NdiVideoFrame.Bgrx,
         FrameRateNumerator = rate.Numerator,
         FrameRateDenominator = rate.Denominator,
         AspectRatio = format.Width / (float)format.Height,

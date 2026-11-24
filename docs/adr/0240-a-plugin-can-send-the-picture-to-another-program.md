@@ -28,9 +28,16 @@ which for NDI is a sound backend registered by the same plugin through the
 existing contract. The contract moves to 1.1.0.
 
 **`flyback-cli send` is how an output is checked**: it plays a patch into one with no
-window, paced to the clock unless `--fast`, and says how many frames went. It is
-hidden from the help, and the editor offers no switch, until a shipped plugin
-offers an output.
+window, paced to the clock unless `--fast`, and says how many frames went.
+
+**In the editor, Settings → Send picks the output**, a tab listed only where a plugin
+offers one. The preview's frames are read back off the GPU as a take's are, beside a
+take running at the same time, turned round on a thread of their own, and sent at
+the preview's size and rate, up to 60 frames a second. A size change opens the
+output again. Live, a frame's time is how long sending has run, the one clock that
+never jumps back on a rewind. A picture drawn on the CPU is not sent: reading it
+back is what is too slow, as it is for a take. The first output is NDI, which
+loads the user's own runtime and is offered from the preset site.
 
 ## Consequences
 

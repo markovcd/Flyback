@@ -12,6 +12,7 @@
     <PluginProject Include="..\src\plugins\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" FolderName="Easy" />
     <PluginProject Include="..\src\plugins\Flyback.Plugins.Speech\Flyback.Plugins.Speech.csproj" FolderName="Speech" />
     <PluginProject Include="..\src\plugins\Flyback.Plugins.Drawings\Flyback.Plugins.Drawings.csproj" FolderName="Drawings" />
+    <PluginProject Include="..\src\plugins\Flyback.Plugins.Ndi\Flyback.Plugins.Ndi.csproj" FolderName="Ndi" />
   </ItemGroup>
 
   <!-- Writes each as "project|FolderName", a line apiece. -->

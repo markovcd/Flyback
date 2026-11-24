@@ -6,8 +6,11 @@ namespace Flyback.Plugins.Ndi;
 [StructLayout(LayoutKind.Sequential)]
 internal struct NdiVideoFrame
 {
-    /// <summary><c>NDIlib_FourCC_type_BGRA</c>: four bytes a pixel, blue first, alpha honored.</summary>
-    public const int Bgra = 'B' | ('G' << 8) | ('R' << 16) | ('A' << 24);
+    /// <summary>
+    /// <c>NDIlib_FourCC_type_BGRX</c>: four bytes a pixel, blue first, the fourth ignored.
+    /// The picture is opaque, and a receiver honoring alpha would see through it wherever a shader left alpha low.
+    /// </summary>
+    public const int Bgrx = 'B' | ('G' << 8) | ('R' << 16) | ('X' << 24);
 
     /// <summary><c>NDIlib_frame_format_type_progressive</c>.</summary>
     public const int Progressive = 1;

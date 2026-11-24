@@ -183,6 +183,18 @@ public sealed class OutputSettings
     /// </summary>
     public Dictionary<string, Dictionary<string, string>> SoundIn { get; set; } = new(StringComparer.Ordinal);
 
+    /// <summary>
+    /// The id of the picture output the preview is sent to — the Picture section — or
+    /// empty for none. One that cannot run this launch is passed over, not forgotten.
+    /// </summary>
+    public string PictureOutput { get; set; } = string.Empty;
+
+    /// <summary>
+    /// What each picture output's own form was last set to, filed under the output's
+    /// id (ADR-0085). Goes through <see cref="PictureOutputOf"/> and <see cref="RememberPictureOutput"/>.
+    /// </summary>
+    public Dictionary<string, Dictionary<string, string>> PictureOutputs { get; set; } = new(StringComparer.Ordinal);
+
     /// <summary>What a MIDI controller does to a knob sitting somewhere else — the Playing section.</summary>
     public Takeover Takeover { get; set; }
 
@@ -287,6 +299,14 @@ public sealed class OutputSettings
     public void RememberSoundIn(string backend, SettingValues values) =>
         SoundIn[backend] = new Dictionary<string, string>(values.All, StringComparer.Ordinal);
 
+    /// <summary>What is set for one picture output, and nothing for one nobody has configured.</summary>
+    public SettingValues PictureOutputOf(string output) =>
+        PictureOutputs.TryGetValue(output, out var held) ? new SettingValues(held) : SettingValues.None;
+
+    /// <summary>Takes one picture output's answers, leaving every other output's alone.</summary>
+    public void RememberPictureOutput(string output, SettingValues values) =>
+        PictureOutputs[output] = new Dictionary<string, string>(values.All, StringComparer.Ordinal);
+
     /// <summary>960 x 540: enough to judge a patch by, cheap enough to keep up.</summary>
     public const int DefaultWidth = 960, DefaultHeight = 540;
 
@@ -381,6 +401,8 @@ public sealed class OutputSettings
             settings.SoundOutput ??= string.Empty;
             settings.Sound ??= new(StringComparer.Ordinal);
             settings.SoundIn ??= new(StringComparer.Ordinal);
+            settings.PictureOutput ??= string.Empty;
+            settings.PictureOutputs ??= new(StringComparer.Ordinal);
 
             if (!Enum.IsDefined(settings.Takeover)) settings.Takeover = Takeover.Jump;
             if (!Enum.IsDefined(settings.Keyboard)) settings.Keyboard = KeyboardLayout.Piano;

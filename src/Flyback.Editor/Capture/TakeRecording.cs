@@ -522,7 +522,7 @@ internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAs
     {
         // Neither the render thread nor the sound callback may still be handing
         // frames to something that is closing its file.
-        preview.EndCapture();
+        if (recorder is { } running) preview.EndCapture(running);
         audio.Capture = null;
 
         ticker?.Stop();

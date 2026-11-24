@@ -30,8 +30,8 @@ public class NdiFeedTests
     }
 
     [Fact]
-    public void The_pixels_are_BGRA_as_NDI_spells_it() =>
-        BitConverter.GetBytes(NdiVideoFrame.Bgra).ShouldBe("BGRA"u8.ToArray());
+    public void The_pixels_are_BGRX_as_NDI_spells_it() =>
+        BitConverter.GetBytes(NdiVideoFrame.Bgrx).ShouldBe("BGRX"u8.ToArray());
 
     [Fact]
     public void A_frame_carries_its_moment_as_NDI_s_timecode()
