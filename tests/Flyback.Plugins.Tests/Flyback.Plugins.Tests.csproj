@@ -47,6 +47,7 @@
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" FolderName="Easy" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Speech\Flyback.Plugins.Speech.csproj" FolderName="Speech" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Drawings\Flyback.Plugins.Drawings.csproj" FolderName="Drawings" />
+    <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Ndi\Flyback.Plugins.Ndi.csproj" FolderName="Ndi" />
   </ItemGroup>
 
   <!-- The blocking devices' thread and the MIDI stream reader, compiled in here as they are into each plugin that has one. -->

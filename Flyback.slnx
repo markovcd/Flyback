@@ -57,6 +57,7 @@
     <Project Path="src/plugins/Flyback.Plugins.Figures/Flyback.Plugins.Figures.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.Fractals/Flyback.Plugins.Fractals.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.LinuxIO/Flyback.Plugins.LinuxIO.csproj" />
+    <Project Path="src/plugins/Flyback.Plugins.Ndi/Flyback.Plugins.Ndi.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.MacIO/Flyback.Plugins.MacIO.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.Mastering/Flyback.Plugins.Mastering.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.Picture/Flyback.Plugins.Picture.csproj" />
@@ -83,6 +84,7 @@
     <Project Path="tests/Flyback.Assist.Tests/Flyback.Assist.Tests.csproj" />
     <Project Path="tests/Flyback.Plugins.WinIO.Tests/Flyback.Plugins.WinIO.Tests.csproj" />
     <Project Path="tests/Flyback.Plugins.LinuxIO.Tests/Flyback.Plugins.LinuxIO.Tests.csproj" />
+    <Project Path="tests/Flyback.Plugins.Ndi.Tests/Flyback.Plugins.Ndi.Tests.csproj" />
     <Project Path="tests/Flyback.Plugins.Sample/Flyback.Plugins.Sample.csproj" />
     <Project Path="tests/Flyback.Plugins.Testing/Flyback.Plugins.Testing.csproj" />
     <Project Path="tests/Flyback.Plugins.Tests/Flyback.Plugins.Tests.csproj" />

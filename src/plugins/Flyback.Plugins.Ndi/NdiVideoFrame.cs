@@ -1,0 +1,32 @@
+using System.Runtime.InteropServices;
+
+namespace Flyback.Plugins.Ndi;
+
+/// <summary>NDI's <c>NDIlib_video_frame_v2_t</c>, laid out as the C header has it.</summary>
+[StructLayout(LayoutKind.Sequential)]
+internal struct NdiVideoFrame
+{
+    /// <summary><c>NDIlib_FourCC_type_BGRA</c>: four bytes a pixel, blue first, alpha honored.</summary>
+    public const int Bgra = 'B' | ('G' << 8) | ('R' << 16) | ('A' << 24);
+
+    /// <summary><c>NDIlib_frame_format_type_progressive</c>.</summary>
+    public const int Progressive = 1;
+
+    public int Width;
+    public int Height;
+    public int FourCC;
+    public int FrameRateNumerator;
+    public int FrameRateDenominator;
+    public float AspectRatio;
+    public int FrameFormat;
+
+    /// <summary>When the frame is of, in 100-nanosecond units, which lines it up with sound sent beside it.</summary>
+    public long Timecode;
+
+    public IntPtr Data;
+    public int LineStride;
+    public IntPtr Metadata;
+
+    /// <summary>Filled in by NDI on receipt.</summary>
+    public long Timestamp;
+}

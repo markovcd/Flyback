@@ -112,6 +112,7 @@
     <PluginProject Include="..\plugins\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" FolderName="Easy" />
     <PluginProject Include="..\plugins\Flyback.Plugins.Speech\Flyback.Plugins.Speech.csproj" FolderName="Speech" />
     <PluginProject Include="..\plugins\Flyback.Plugins.Drawings\Flyback.Plugins.Drawings.csproj" FolderName="Drawings" />
+    <PluginProject Include="..\plugins\Flyback.Plugins.Ndi\Flyback.Plugins.Ndi.csproj" FolderName="Ndi" />
   </ItemGroup>
 
   <!-- The editor's own packages come with Flyback.Editor; this adds the desktop platform. -->

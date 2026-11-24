@@ -46,7 +46,6 @@ public class ContractSurfaceTests
         ["Flyback.Core.Graph.SongPart"] = "SongExtra's default, one named part of the Song and its levels.",
         ["Flyback.Plugins.Midi.MidiAction"] = "MidiMessage.Action's type, which a MIDI input plugin builds a message with.",
         ["Flyback.Plugins.Settings.SettingField+Switch"] = "A field kind a plugin's settings form is built from.",
-        ["Flyback.Plugins.Settings.SettingField+Text"] = "A field kind a plugin's settings form is built from.",
     };
 
     private static readonly Assembly[] Contract = [typeof(NodeDef).Assembly, typeof(IFlybackPlugin).Assembly];
