@@ -13,6 +13,7 @@ Standing rules for working in this repo are in `docs/agents/rules/`. They apply 
 - @docs/agents/rules/honest-tests.md — a failing test is fixed by fixing the code, never by weakening, skipping or special-casing the test.
 - @docs/agents/rules/security.md — keys stay out of everything; a check is never loosened to make something work.
 - @docs/agents/rules/ci-cd.md — land small and often, a red `main` is fixed before anything else, and `main` is always releasable.
+- @docs/agents/rules/close-what-you-open.md — an app, simulator, emulator or process started on the user's machines is closed when the work is done.
 
 Rules that bind only one kind of change are skills in `.claude/skills/`, loaded when their description matches: `pipeline` (workflows, the Dockerfile, a release), `plugin-contract` (public API in Core and Plugins), `saved-data` (anything saved or passed between versions) and `outside-input` (code that reads input from outside). They are as binding as the rules above. Every other skill there is know-how for one task, and its name and description are visible every session.
 
