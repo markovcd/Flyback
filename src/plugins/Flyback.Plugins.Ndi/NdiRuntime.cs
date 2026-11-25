@@ -140,7 +140,7 @@ internal static unsafe class NdiRuntime
 
             try
             {
-                var settings = new NdiSendCreate { Name = utf8 };
+                var settings = new NdiSendCreate { Name = utf8, ClockVideo = 0, ClockAudio = 0 };
 
                 return create(&settings);
             }

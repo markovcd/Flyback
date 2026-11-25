@@ -57,3 +57,17 @@ Flyback.Ui	Property	Public	LineIn.IsListening	Flyback.Ui.Audio.LineIn
 Flyback.Ui	Property	Public	StatsOverlay.Said	Flyback.Ui.Controls.StatsOverlay
 Flyback.Viewer.Desktop	Ordinary	Internal	ViewerPlayer.Compiled()	Flyback.Viewer.Desktop.ViewerPlayer
 Flyback.Viewer.Desktop	Property	Internal	ViewerWindow.Preview	Flyback.Viewer.Desktop.ViewerWindow
+Flyback.Core	Field	Internal	BeatFollowModule.BeatPort	Flyback.Core.Graph.BeatFollowModule
+Flyback.Core	Field	Internal	BeatFollowModule.BeatsPort	Flyback.Core.Graph.BeatFollowModule
+Flyback.Core	Field	Internal	BeatFollowModule.BpmPort	Flyback.Core.Graph.BeatFollowModule
+Flyback.Core	Field	Internal	BeatFollowModule.LockedPort	Flyback.Core.Graph.BeatFollowModule
+Flyback.Core	Field	Internal	BeatFollowModule.PhasePort	Flyback.Core.Graph.BeatFollowModule
+Flyback.Core	Field	Internal	BeatFollowModule.ResetPort	Flyback.Core.Graph.BeatFollowModule
+Flyback.Core	Field	Internal	HitsModule.HatsOut	Flyback.Core.Graph.HitsModule
+Flyback.Core	Field	Internal	HitsModule.KickLevelOut	Flyback.Core.Graph.HitsModule
+Flyback.Core	Field	Internal	HitsModule.KickOut	Flyback.Core.Graph.HitsModule
+Flyback.Core	Field	Internal	HitsModule.SnareOut	Flyback.Core.Graph.HitsModule
+Flyback.Editor	Property	Internal	SendingSection.SendingTo	Flyback.Editor.Capture.SendingSection
+Flyback.Engine	Constructor	Public	DelayState.DelayState(IReadOnlyList<float>, int, int, int, int, int)	Flyback.Engine.Compile.DelayState
+Flyback.Plugins.Ndi	Field	Public	NdiVideoFrame.Metadata	Flyback.Plugins.Ndi.NdiVideoFrame
+Flyback.Plugins.Ndi	Field	Public	NdiVideoFrame.Timestamp	Flyback.Plugins.Ndi.NdiVideoFrame

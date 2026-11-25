@@ -28,8 +28,9 @@ internal struct NdiVideoFrame
 
     public IntPtr Data;
     public int LineStride;
+    /// <summary>No metadata is sent; the field holds the C layout, which a test pins.</summary>
     public IntPtr Metadata;
 
-    /// <summary>Filled in by NDI on receipt.</summary>
+    /// <summary>Filled in by NDI on receipt; the field holds the C layout, which a test pins.</summary>
     public long Timestamp;
 }

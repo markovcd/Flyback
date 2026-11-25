@@ -13,6 +13,7 @@ internal static class BeatFollowModule
     internal const int InPort = 0, SlowestPort = 1, FastestPort = 2, SettlePort = 3, NudgePort = 4;
 
     /// <summary>The output sockets, by index.</summary>
+    /// <remarks>Named for the code that reads them, tests included: <see cref="Emit"/> fills them in this order.</remarks>
     internal const int BeatsPort = 0, PhasePort = 1, BpmPort = 2, LockedPort = 3, BeatPort = 4, ResetPort = 5;
 
     /// <summary>The shortest gap between two hits, in seconds: anything sooner is the same hit seen twice.</summary>

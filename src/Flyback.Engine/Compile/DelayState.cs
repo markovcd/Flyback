@@ -69,6 +69,7 @@ public sealed class DelayState
     private float[][] traces;
     private readonly int[] traceHeads;
 
+    /// <summary>Memory built from its parts rather than from a program; tests use it to run a hand-made piece of one.</summary>
     /// <param name="lengthsInSeconds">Longest delay each line must hold, in program order.</param>
     /// <param name="sampleRate">
     /// Evaluations per second — the oversampled rate on the audio path, since
@@ -82,7 +83,7 @@ public sealed class DelayState
     /// How many one-evaluation cells the program needs, and a single number like
     /// an accumulator.
     /// </param>
-    /// <param name="traceCount"></param>
+    /// <param name="traceCount">How many traces the program needs, each keeping <see cref="TraceSamples"/>.</param>
     /// <param name="planeCount">
     /// How many planes the program needs — one per cycle in the patch, and one
     /// cell each here for the reason <see cref="planes"/> gives.

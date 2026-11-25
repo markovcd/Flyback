@@ -13,6 +13,7 @@ internal static class HitsModule
     internal const int InPort = 0, LowPort = 1, HighPort = 2, SensitivityPort = 3, LengthPort = 4, RestPort = 5, MemoryPort = 6;
 
     /// <summary>The outputs, by position: three gates, then how hard each band was hit.</summary>
+    /// <remarks>Named for the code that reads them, tests included: <see cref="Emit"/> fills them in this order.</remarks>
     internal const int KickOut = 0, SnareOut = 1, HatsOut = 2, KickLevelOut = 3, SnareLevelOut = 4, HatsLevelOut = 5;
 
     /// <summary>A band's quick level, followed up in a millisecond and down in forty, as a Slew times it.</summary>
