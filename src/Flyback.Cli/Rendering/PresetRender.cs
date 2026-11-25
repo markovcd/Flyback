@@ -13,7 +13,7 @@ namespace Flyback.Cli.Rendering;
 /// <remarks>
 /// The still is 1280x720 at four seconds in, as webp at quality 88. The loop is six
 /// silent seconds at 640x360 in VP9. The track is the first thirty seconds brought
-/// to -16 LUFS with a four-second fade, as the Pages site's tracks are. A patch that
+/// to -16 LUFS with a four-second fade, as the website's tracks are. A patch that
 /// wires only a picture or only a sound gets only that half, and a silent one no
 /// track at all. With <paramref name="stillOnly"/>, the still is all that is made.
 /// </remarks>

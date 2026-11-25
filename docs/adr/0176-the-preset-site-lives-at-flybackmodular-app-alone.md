@@ -24,3 +24,9 @@ names it, and GitHub Pages holds only a page that sends its old paths there.
 - This breaks a published address on purpose, which the `saved-data` skill leaves to the user.
   Before 1.0.0 no saved work depends on it.
 - The staging copy stays on its own hostname until it is moved too.
+
+## Amendment, 2026-11-25: GitHub Pages is retired
+
+The redirect stub and the Pages workflow are gone, and Pages is unpublished, so nothing
+answers at `markovcd.github.io/Flyback`. The About window of editors 0.5.1 to 0.7.1
+links that address, and those editors already could not reach the site.

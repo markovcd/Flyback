@@ -140,6 +140,4 @@ curl -X DELETE -H "CF-Access-Client-Id: $FLYBACK_ACCESS_ID" -H "CF-Access-Client
 
 `env.production` in `wrangler.jsonc` names a database and a bucket called `flyback-site`, and the custom domain `flybackmodular.app`, made the way steps 1 to 4 say: the Access application has that hostname as its destinations, and its audience tag is `ACCESS_AUD`. `WORKER_ENVIRONMENT` is `production` and `PRESET_SITE_URL` is `https://flybackmodular.app`.
 
-GitHub Pages holds only `deploy/pages/redirect.html`, which sends `markovcd.github.io/Flyback/<path>` to the same path on the website.
-
 The free plan's 10 ms of CPU a request is enough for everything but a large upload's form; check `wrangler tail` against real traffic and take the paid plan if submissions are cut off.

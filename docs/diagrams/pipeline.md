@@ -46,7 +46,6 @@ flowchart TB
     c_android -- "failed on the schedule" --> tell
     ios -- "failed on the schedule" --> tell
 
-    pages["Pages · pages.yml<br/>the redirect stub, when deploy/pages changes"]
     hand --> ios["iOS · ios.yml<br/>builds the iOS editor and plays it in the simulator"]
     daily --> ios
 

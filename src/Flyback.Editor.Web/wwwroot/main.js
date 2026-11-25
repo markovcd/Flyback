@@ -137,7 +137,7 @@ runtime.setModuleImports('page', {
     try { localStorage.setItem(`flyback.editor.${section}`, json); } catch { }
   },
   stillsUrl: () => new URL('../stills/', location.href).href,
-  // The preset site behind the page, which its <html> names; GitHub Pages has none.
+  // The preset site behind the page, which its <html> names; null where none does.
   siteUrl: () => {
     const at = document.documentElement.dataset.presetSite;
     return at === undefined ? null : new URL(at, location.href).href;

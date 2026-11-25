@@ -1,9 +1,9 @@
-// The presets page, which GitHub Pages serves too with no API behind it: the shelf of shipped and shared presets,
+// The presets page: the shelf of shipped and shared presets,
 // one shared preset, the form that submits one, and admin sign-in, reports and letters.
 (function () {
   var api = "api/v1/";
 
-  // No API answers on GitHub Pages, which serves the shelf too.
+  // Where no API answers, the shelf still shows the shipped presets.
   var admin = fetch(api + "admin").then(function (r) { return r.json(); })
     .then(function (state) { state.served = true; return state; })
     .catch(function () { return { enabled: false, signedIn: false, served: false }; });
@@ -289,7 +289,7 @@
       settle();
     }
 
-    /** The shared presets that match, a page at a time; none where there is no API, as on GitHub Pages. */
+    /** The shared presets that match, a page at a time; none where there is no API. */
     function load() {
       remember();
       var query = new URLSearchParams({ page: state.page });
