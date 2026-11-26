@@ -4,7 +4,7 @@ Planned on 2026-11-16, on `main` at `57aa9ab0`. It is on TODO.md; take it off th
 delete this file, in the commit that lands the last of it.
 
 - **Kind:** Plan
-- **Status:** Open. `fold` landed (ADR-0236); the rest waits on the user.
+- **Status:** Open. `fold` (ADR-0236) and the header (ADR-0241) landed; `module` is next.
 
 ## What is wanted
 
@@ -40,7 +40,7 @@ What it cannot, and should not try to:
 Each is marked `NEW` in the Raymarch sketch, `/mnt/project-files/plugin-packs/raymarch.fbks`
 in the project's shared files.
 
-1. **A header**: `pack <id> <semver>` and the language version it was written for.
+1. **A header** (landed, ADR-0241): `pack <id> <semver>` and `language <n>`, read into `LanguageLoad.Pack`.
 2. **`module name(...) = { ... }`**: a def the pack offers by id (`<pack id>.<name>`), with
    `///` lines that become its card: help, category, words and glyph.
 3. **Socket ranges and choices**: `travel = 0 in 0..100`, and

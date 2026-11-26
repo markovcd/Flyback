@@ -31,6 +31,9 @@ public sealed record LanguageLoad(Patch Patch, IReadOnlyList<LanguageIssue> Issu
     /// <remarks>Only text has them: a patch keeps none, so a saved or printed patch comes back without.</remarks>
     public IReadOnlyList<Level> Levels { get; init; } = [];
 
+    /// <summary>The module pack the text says it is, or null for a patch.</summary>
+    public PackHeader? Pack { get; init; }
+
     /// <summary>Whether the text built, warnings or not.</summary>
     public bool Ok => Errors == 0;
 

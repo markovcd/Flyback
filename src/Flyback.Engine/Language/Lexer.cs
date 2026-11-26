@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using Flyback.Core.Graph;
 
@@ -237,6 +237,12 @@ public static class Lexer
             return end;
         }
 
+        if (Version(source, start, i) is { } version)
+        {
+            tokens.Add(new Token(TokenKind.Version, source[start..version], line, column));
+            return version;
+        }
+
         // Digits that run on into a letter or a second point are one mistake, said
         // whole, rather than a number and then whatever the rest reads as.
         if (i < source.Length && (char.IsAsciiLetterOrDigit(source[i]) || source[i] == '_' || (source[i] == '.' && !source.AsSpan(i).StartsWith(".."))))
@@ -244,6 +250,24 @@ public static class Lexer
 
         tokens.Add(new Token(TokenKind.Number, text, line, column, value));
         return i;
+    }
+
+    /// <summary>
+    /// Where a version such as <c>1.2.0</c> that began at <paramref name="start"/> ends, or null
+    /// where what follows the number read so far is not the third whole number of one.
+    /// </summary>
+    private static int? Version(string source, int start, int after)
+    {
+        if (source.AsSpan(start, after - start).Count('.') != 1) return null;
+        if (after + 1 >= source.Length || source[after] != '.' || !char.IsAsciiDigit(source[after + 1])) return null;
+
+        var i = after + 1;
+        while (i < source.Length && char.IsAsciiDigit(source[i])) i++;
+
+        var runsOn = i < source.Length
+            && (char.IsAsciiLetterOrDigit(source[i]) || source[i] == '_' || (source[i] == '.' && !source.AsSpan(i).StartsWith("..")));
+
+        return runsOn ? null : i;
     }
 
     /// <summary>

@@ -198,6 +198,16 @@ Feature: A patch can be written as text
     When the patch is written out as text and read back
     Then the speakers play 0.8
 
+  Scenario: A module pack says which pack it is in its first lines
+    Given the text:
+      """
+      pack ada.echoes 1.2.0
+      language 1
+      sine(freq: 220) |> out.left
+      """
+    Then it reads without complaint
+    And the text is the pack "ada.echoes" at version "1.2.0"
+
   Scenario: An if builds the branch its condition picks as the text is read
     Given the text:
       """

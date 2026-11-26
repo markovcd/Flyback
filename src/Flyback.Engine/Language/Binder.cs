@@ -36,6 +36,7 @@ public sealed class Binder
     private readonly SourceSites sourceSites = new();
     private readonly Carrying carrying;
     private readonly PatchLines lines;
+    private readonly PackLines head;
 
     private readonly Boxes boxes;
     private readonly LevelTrail levels;
@@ -74,6 +75,7 @@ public sealed class Binder
         identity = wiring.Identity;
         carrying = new Carrying(modules, wiring, this.issues);
         lines = new PatchLines(patch, this.issues);
+        head = new PackLines(this.issues);
         boxes = new Boxes(patch, this.issues, sourceSites);
         levels = new LevelTrail(patch, wiring.IsShared);
 
@@ -89,6 +91,9 @@ public sealed class Binder
 
     /// <summary>The groups, def calls, loops and passes the text opened, outermost first, once <see cref="Build"/> has run.</summary>
     public IReadOnlyList<Level> Levels => levels.Tree;
+
+    /// <summary>The module pack the text opened by saying it is, once <see cref="Build"/> has run.</summary>
+    public PackHeader? Pack => head.Header;
 
     /// <summary>The patch these statements describe, laid out and ready to compile.</summary>
     public Patch Build(IReadOnlyList<Statement> statements)
@@ -113,7 +118,25 @@ public sealed class Binder
         foreach (var statement in Lines(statements))
             foreach (var name in statement.Binds) boundOn.TryAdd(name, statement.Line);
 
-        foreach (var statement in statements) Run(statement, scope);
+        // A pack's header is read only from the lines that open the file; Run refuses it anywhere else.
+        var opening = true;
+
+        foreach (var statement in statements)
+        {
+            switch (statement)
+            {
+                case PackStatement pack when opening:
+                    head.Read(pack);
+                    continue;
+
+                case LanguageStatement language when opening:
+                    head.Read(language);
+                    continue;
+            }
+
+            opening = false;
+            Run(statement, scope);
+        }
 
         boxes.Draw();
 
@@ -168,6 +191,8 @@ public sealed class Binder
         "author" => "author \"Ada\"",
         "tags" => "tags \"drone\" \"slow\"",
         "panel" => "panel level = 0.5",
+        "pack" => "pack ada.echoes 1.0.0",
+        "language" => $"language {PatchLanguage.Version}",
         _ => null,
     };
 
@@ -311,6 +336,10 @@ public sealed class Binder
 
             case TagsStatement tags:
                 lines.Tag(tags);
+                break;
+
+            case PackStatement or LanguageStatement:
+                head.Misplaced(statement);
                 break;
 
             case OffStatement off:

@@ -159,6 +159,14 @@ public sealed class EditingSteps(PatchContext context, Session session, EditorDr
     [Then("it reads without complaint")]
     public void ThenReadsCleanly() => Text.Ok.ShouldBeTrue(Text.Report);
 
+    [Then("the text is the pack {string} at version {string}")]
+    public void ThenThePack(string id, string version)
+    {
+        var pack = Text.Pack.ShouldNotBeNull();
+        pack.Id.ShouldBe(id);
+        pack.Version.ShouldBe(version);
+    }
+
     [Then("it reads with a warning on line {int}")]
     public void ThenReadsWithAWarning(int line)
     {

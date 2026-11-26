@@ -8,6 +8,9 @@ public enum TokenKind
     /// <summary>A plain number, and what a note or a duration has already become.</summary>
     Number,
 
+    /// <summary><c>1.2.0</c>: three whole numbers joined by points, which only a pack's header line takes.</summary>
+    Version,
+
     /// <summary>The text between two quotes, with nothing done to what is inside.</summary>
     Text,
 

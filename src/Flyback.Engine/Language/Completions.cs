@@ -51,7 +51,7 @@ internal static class Completions
                 TokenKind.Pipe => Stages(),
                 TokenKind.Identifier => AfterWord(last.Text),
                 TokenKind.OpenParen or TokenKind.Comma when caret.Call() is { } call => Arguments(call).Concat(Values(true)),
-                TokenKind.Number or TokenKind.Text or TokenKind.Block or TokenKind.CloseParen or TokenKind.CloseBrace => [],
+                TokenKind.Number or TokenKind.Version or TokenKind.Text or TokenKind.Block or TokenKind.CloseParen or TokenKind.CloseBrace => [],
                 _ => Values(caret.Call() is not null),
             };
         }

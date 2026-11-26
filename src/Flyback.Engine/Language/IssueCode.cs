@@ -1,4 +1,4 @@
-namespace Flyback.Engine.Language;
+﻿namespace Flyback.Engine.Language;
 
 /// <summary>
 /// What kind of mistake a <see cref="LanguageIssue"/> is, as a word a program
@@ -197,4 +197,18 @@ public static class IssueCode
 
     /// <summary>A line a patch has once — keyboard, length, description, author, tags — said again.</summary>
     public const string SaidTwice = "said-twice";
+
+    // --- a pack's header ---------------------------------------------------------
+
+    /// <summary>A <c>pack</c> or <c>language</c> line after another statement, or inside a block.</summary>
+    public const string HeaderNotFirst = "header-not-first";
+
+    /// <summary>A pack's id that is not lower-case words joined by points, at least two of them.</summary>
+    public const string BadPackId = "bad-pack-id";
+
+    /// <summary>A <c>language</c> line that is not a whole number from 1.</summary>
+    public const string BadLanguage = "bad-language";
+
+    /// <summary>A file written for a later version of the text than this build reads.</summary>
+    public const string NewerLanguage = "newer-language";
 }

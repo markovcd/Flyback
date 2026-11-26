@@ -198,6 +198,12 @@ internal sealed class ExpressionParser
                 return new NumberExpr(token.Value, token.Scaled, line, column);
             }
 
+            case TokenKind.Version:
+                parser.Complain(IssueCode.MalformedNumber,
+                    $"'{Current.Text}' is not a number. Three whole numbers joined by points are a version, which only a pack's header takes: pack my.pack {Current.Text}.");
+                parser.Advance();
+                return null;
+
             case TokenKind.Text:
             {
                 var value = Current.Text;

@@ -1,4 +1,4 @@
-using Flyback.Core.Graph;
+﻿using Flyback.Core.Graph;
 using Flyback.Engine.Language.Ast;
 using Flyback.Engine.Language.Ast.Expressions;
 using Flyback.Engine.Language.Ast.Statements;
@@ -223,6 +223,10 @@ public sealed class Parser
         // And again: 'requires' names plugins only where one follows it.
         if (AtWord("requires") && Ahead().Kind is TokenKind.Identifier or TokenKind.Text) return Requires(line, column);
 
+        // A pack's header, each word only where what it heads follows it.
+        if (AtWord("pack") && Ahead().Kind == TokenKind.Identifier) return Pack(line, column);
+        if (AtWord("language") && Ahead().Kind == TokenKind.Number) return Language(line, column);
+
         // And again: 'panel' is a knob only when a name and an '=' follow it.
         if (AtWord("panel") && Ahead().Kind == TokenKind.Identifier && Ahead(2).Kind == TokenKind.Assign)
             return Panel(line, column);
@@ -259,6 +263,8 @@ public sealed class Parser
         || (AtWord("tags") && Ahead().Kind == TokenKind.Text)
         || (AtWord("off") && Ahead().Kind == TokenKind.Identifier)
         || (AtWord("requires") && Ahead().Kind is TokenKind.Identifier or TokenKind.Text)
+        || (AtWord("pack") && Ahead().Kind == TokenKind.Identifier)
+        || (AtWord("language") && Ahead().Kind == TokenKind.Number)
         || (AtWord("panel") && Ahead().Kind == TokenKind.Identifier && Ahead(2).Kind == TokenKind.Assign)
         || (Current.Kind == TokenKind.Identifier
             && Ahead().Kind == TokenKind.Dot
@@ -657,6 +663,47 @@ public sealed class Parser
         while (Take(TokenKind.Comma));
 
         return new RequiresStatement(plugins, line, column);
+    }
+
+    /// <summary><c>pack flyback.raymarch 1.0.0</c>: the pack's id, its parts joined by points, then its version.</summary>
+    private Statement? Pack(int line, int column)
+    {
+        at++;
+
+        var id = Current.Text;
+        at++;
+
+        while (Current.Kind == TokenKind.Dot && Ahead().Kind == TokenKind.Identifier)
+        {
+            id += "." + Ahead().Text;
+            at += 2;
+        }
+
+        if (Current.Kind != TokenKind.Version)
+        {
+            Complain(IssueCode.Syntax, $"expected the pack's version after its id, as in 'pack {id} 1.0.0', but found {Found()}.");
+            return null;
+        }
+
+        var version = Current.Text;
+        at++;
+
+        return new PackStatement(id, version, line, column);
+    }
+
+    /// <summary><c>language 1</c>: the version of the text the file was written for.</summary>
+    private Statement? Language(int line, int column)
+    {
+        at++;
+
+        var version = Current;
+        at++;
+
+        if (version.Scaled == NumberStyle.Plain) return new LanguageStatement(version.Value, line, column);
+
+        issues.Add(new LanguageIssue(version.Line, version.Column, IssueCode.BadLanguage,
+            $"'{version.Text}' is not a version of the text. It is a whole number, as in 'language {PatchLanguage.Version}'."));
+        return null;
     }
 
     /// <summary><c>panel name = value</c>, then its settings as named arguments.</summary>

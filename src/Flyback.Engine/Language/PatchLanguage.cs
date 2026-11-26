@@ -1,4 +1,4 @@
-using Flyback.Core.Graph;
+﻿using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 
 namespace Flyback.Engine.Language;
@@ -15,6 +15,9 @@ public static class PatchLanguage
 {
     /// <summary>The extension a source file takes, beside .fbk for the patch it builds into.</summary>
     public const string FileExtension = "fbks";
+
+    /// <summary>The latest version of the text this build reads, as a <c>language</c> line names it.</summary>
+    public const int Version = 1;
 
     /// <summary>
     /// The patch <paramref name="source"/> describes, against
@@ -37,6 +40,7 @@ public static class PatchLanguage
             Source = source,
             Map = binder.Map(source),
             Levels = binder.Levels,
+            Pack = binder.Pack,
         };
     }
 }
