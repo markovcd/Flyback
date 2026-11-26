@@ -28,7 +28,7 @@ public class GroupLibraryTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    private GroupLibrary Library() => new(NodeCatalog.BuiltIn, folder);
+    private GroupLibrary Library() => new(() => NodeCatalog.BuiltIn, folder);
 
     /// <summary>Time into a sine into the Output, with the middle pair boxed up.</summary>
     private static Patch Chain(out NodeGroup group, string? named = "Voice")
@@ -220,7 +220,7 @@ public class GroupLibraryTests : IDisposable
 
     [Fact]
     public void A_folder_that_is_not_there_is_an_empty_list() =>
-        new GroupLibrary(NodeCatalog.BuiltIn, Path.Combine(folder, "nowhere")).All.ShouldBeEmpty();
+        new GroupLibrary(() => NodeCatalog.BuiltIn, Path.Combine(folder, "nowhere")).All.ShouldBeEmpty();
 
     /// <summary>
     /// Kept shut, whether or not it was shut when it was kept. A box is what a
