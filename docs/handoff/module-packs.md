@@ -51,9 +51,10 @@ in the project's shared files.
 
 ## Saving, versioning and checking
 
-- **A pack's modules keep their id in a saved patch**, like a DLL's (ADR-0026), and a
-  patch that names a pack you lack offers it (ADR-0135). The alternative, copying the
-  def's text into each patch so it always opens, is the user's call.
+- **A saved patch carries the text of the pack modules it uses** (the user's call,
+  2026-11-26), beside their ids and the pack's version, so it opens anywhere, offline and
+  with the pack not installed. Where an installed copy of the pack is newer, the editor
+  offers to update the patch's copy; it never swaps it unasked.
 - **A pack has its own semver and names only core modules and sockets**, which saved
   patches already promise to keep working. The plugin contract gains nothing.
 - **Building a pack always ends**: loops unroll over written lists, nothing recurses, and
