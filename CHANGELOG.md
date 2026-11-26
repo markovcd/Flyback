@@ -4,6 +4,7 @@
 
 ### Modules
 
+- Added Interval: the time since the sample before, and whether the program remembers across samples, so a filter or a glide built from a cycle can turn hertz and seconds, and stand aside on the picture.
 - Added Counter: counts the rises on a trigger and comes round to 0 every `length`, with `phase` and a `wrap` that passes every `length`th trigger, so Counters chain into beats, bars and phrases.
 - A Bridge carries a value the sound works out, such as an envelope, a count or a phase, into the picture.
 - Beat Follow keeps a beat to the kicks a microphone hears, with the tempo, the phase and a trigger on every beat, and carries on through a break.

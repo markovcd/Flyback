@@ -88,6 +88,7 @@ flyback.voice.hiss | in, level, cutoff, resonance, gain, seed | out
 flyback.voice.osc | in, freq, detune, mix, phase, amp, bias | out, wide
 flyback.voice.stroke | in, rate, offset, curve | out, phase
 flyback.voice.wander | in, rate, seed, low, high | out
+interval |  | seconds, remembers
 math.abs | in | out
 math.add | a, b | out
 math.atan2 | a, b | out

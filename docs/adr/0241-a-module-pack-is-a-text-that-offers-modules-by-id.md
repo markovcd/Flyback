@@ -78,6 +78,13 @@ two share a name; a patch then wires `raymarch().depth`. Without them the output
 or `out_1` onward for a bracketed list. `out` heads such a line only where a name follows it,
 which the Output module (`out.left`) never has, and only a module's body takes one.
 
+**A body that runs with memory asks the Interval module**, whose `seconds` and `remembers`
+are what `Emitter.Interval` and `Emitter.HasMemory` give a C# module, from the same shared
+cells. A cycle is the memory itself (ADR-0075); mixing on `remembers` gives the picture a
+wire, as ADR-0041 has a C# module do. It is a core module in the palette rather than words
+only a pack may write, since a canvas patch building a filter by hand needs the same two
+numbers.
+
 ## Consequences
 
 - It lands dark: nothing reads `Pack` or `Modules` yet, and the language guide and the

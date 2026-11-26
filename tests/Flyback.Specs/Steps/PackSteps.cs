@@ -1,3 +1,4 @@
+using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
@@ -47,6 +48,19 @@ public sealed class PackSteps
         program.Evaluate(0d, 0d, 0d, registers, default, state);
 
         registers[program.OutputBase].ShouldBe(expected, 1e-6);
+    }
+
+    [Then("with the pack the sound is about {float} at {float} seconds")]
+    public void ThenThePackSoundsAt(float expected, float seconds)
+    {
+        var program = Patch.CompileForAudio(modules).Program;
+        var state = new DelayState(program, GlobalConstants.SampleRate);
+        var registers = program.AllocateRegisters();
+        var last = (int)(seconds * GlobalConstants.SampleRate);
+
+        for (var i = 0; i <= last; i++) program.Evaluate(0d, 0d, i / (double)GlobalConstants.SampleRate, registers, default, state);
+
+        registers[program.OutputBase].ShouldBe(expected, 0.02, $"at {seconds} s");
     }
 
     private Patch Patch => patch.ShouldNotBeNull("no text has been read");

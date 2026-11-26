@@ -99,6 +99,7 @@ public static class NodeCatalog
             .Append(FilterModule.Def())
             .Append(NoiseModule.Def())
             .Append(SlewModule.Def())
+            .Append(IntervalModule.Def())
             .Append(DriveModule.Def())
             .Append(DelayModule.Def())
             .Append(ReverbModule.Def())

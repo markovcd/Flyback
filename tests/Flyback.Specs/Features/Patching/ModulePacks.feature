@@ -50,3 +50,27 @@ Feature: Module packs
       out.volume = 1
       """
     Then with the pack the speakers play 0.4
+
+  Scenario: A pack's module built from a cycle turns hertz with the Interval
+    Given the pack:
+      """
+      pack ada.lag 1.0.0
+
+      /// A one-pole lowpass.
+      module lag(in = 0, hz = 10) = {
+        let clock = interval()
+        let k = 1 - exp(-6.2831853 * hz * clock.seconds)
+        let held = add(a: 0)
+        let next = math.mix(in, held + (in - held) * k, clock.remembers)
+        held.b <- next
+        next
+      }
+      """
+    When the text is read with the pack:
+      """
+      ada.lag.lag(in: square(freq: 1), hz: 10) |> out.left
+      out.volume = 1
+      """
+    Then with the pack the sound is about -1 at 0.45 seconds
+    And with the pack the sound is about 0.26 at 0.516 seconds
+    And with the pack the sound is about 1 at 0.95 seconds

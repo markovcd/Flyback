@@ -4,7 +4,7 @@ Planned on 2026-11-16, on `main` at `57aa9ab0`. It is on TODO.md; take it off th
 delete this file, in the commit that lands the last of it.
 
 - **Kind:** Plan
-- **Status:** Open. `fold` (ADR-0236), the header and `module` (ADR-0241), and placing a pack's module as one module expanded before compiling (ADR-0242) loading the packs installed in a folder and bundles carrying them (ADR-0243) landed; every host taking a bundle's packs, and the editor taking a pack added to its folder while it runs, landed, and so did socket ranges and choices and named outputs; "running with memory" is next.
+- **Status:** Open. `fold` (ADR-0236), the header and `module` (ADR-0241), and placing a pack's module as one module expanded before compiling (ADR-0242) loading the packs installed in a folder and bundles carrying them (ADR-0243) landed; every host taking a bundle's packs, and the editor taking a pack added to its folder while it runs, landed, and so did socket ranges and choices, named outputs and the Interval module for running with memory; porting Effects is next.
 
 ## What is wanted
 
@@ -46,8 +46,8 @@ in the project's shared files.
 3. **Socket ranges and choices** (landed, ADR-0241): `travel = 0 in 0..100`, and
    `steps = 32 in [16, 32, 64]` shown as a setting, one body built for each way they combine.
 4. **Named outputs with help** (landed, ADR-0241): `out depth = ... "How far each ray went."`
-5. **"Running with memory"**, the value `Emitter.HasMemory` gives a C# module (on the sound,
-   not on the picture), which the Limiter and the envelopes read.
+5. **"Running with memory"** (landed, ADR-0241): the Interval module's `seconds` and
+   `remembers`, the values `Emitter.Interval` and `Emitter.HasMemory` give a C# module.
 
 ## Placing (landed, ADR-0242)
 

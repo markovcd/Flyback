@@ -32,7 +32,7 @@ public sealed class ModuleScenarioTests
         "flyback.mastering.compressor", "flyback.mastering.crossover", "flyback.mastering.eq", "flyback.mastering.limiter", "flyback.mastering.loudness", "flyback.mastering.maximizer", "flyback.mastering.width",
         "flyback.picture.arc", "flyback.picture.box", "flyback.picture.cells", "flyback.picture.circle", "flyback.picture.combine", "flyback.picture.fill", "flyback.picture.fractal", "flyback.picture.grade", "flyback.picture.hsv", "flyback.picture.layer", "flyback.picture.palette", "flyback.picture.polygon", "flyback.picture.posterise", "flyback.picture.star",
         "flyback.voice.bell", "flyback.voice.crush", "flyback.voice.decay", "flyback.voice.euclid", "flyback.voice.fade", "flyback.voice.fm", "flyback.voice.fold", "flyback.voice.hiss", "flyback.voice.osc", "flyback.voice.stroke", "flyback.voice.wander",
-        "math.clamp", "math.desk", "math.mix", "math.mixer", "math.remap", "math.smoothstep",
+        "math.clamp", "math.desk", "math.mixer", "math.remap", "math.smoothstep",
         "meter",
         "pattern.checker", "pattern.rings",
         "poly.spread",
