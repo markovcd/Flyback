@@ -17,8 +17,12 @@ namespace Flyback.Engine.Graph;
 /// reads without throwing and is not the patch that was packed. Null only for a
 /// value made by hand.
 /// </param>
+/// <param name="Packs">The packs the bundle carried that were not installed, which its patch was read with.</param>
+/// <param name="Modules">The catalog the patch was read against, with <paramref name="Packs"/> in it; null where nothing was added.</param>
 public readonly record struct LoadedBundle(
     Patch Patch,
     IReadOnlyDictionary<string, byte[]> Files,
     string? Conversation = null,
-    PatchLoad? Load = null);
+    PatchLoad? Load = null,
+    IReadOnlyList<Packs.PackSource>? Packs = null,
+    ModuleCatalog? Modules = null);

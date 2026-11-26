@@ -41,5 +41,5 @@ switched off hands its `in` on, as any module does.
 - A pack's module costs exactly the modules its body is made of, on every backend.
 - The editor, the inspector and saved patches see one module; only compiling looks inside.
 - Not yet covered: a panel knob or MIDI linked to a pack module's socket, a probe or a
-  meter on the module itself, and carrying the pack's text in a saved patch. They are the
+  meter on the module itself, and a bundle carrying the packs its patch uses. They are the
   next steps in `docs/handoff/module-packs.md`.

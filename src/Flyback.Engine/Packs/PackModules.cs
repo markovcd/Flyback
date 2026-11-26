@@ -12,16 +12,19 @@ namespace Flyback.Engine.Packs;
 internal static class PackModules
 {
     private static readonly ConditionalWeakTable<NodeDef, PackStencil> Stencils = new();
+    private static readonly ConditionalWeakTable<NodeDef, PackSource> Sources = new();
 
     /// <summary>What placing <paramref name="def"/> copies, or null for a module no pack offers.</summary>
     public static PackStencil? StencilOf(NodeDef def) => Stencils.TryGetValue(def, out var stencil) ? stencil : null;
+
+    /// <summary>The pack <paramref name="def"/> came from, or null for a module no pack offers.</summary>
+    public static PackSource? SourceOf(NodeDef def) => Sources.TryGetValue(def, out var source) ? source : null;
 
     /// <summary>
     /// <paramref name="catalog"/> with the modules the pack in <paramref name="source"/> offers,
     /// each built once to check it. A pack with any mistake in it adds nothing.
     /// </summary>
     /// <returns>The catalog, and every mistake, on the pack's own lines.</returns>
-    /// <remarks>Only tests call it until packs are loaded into the running catalog, the plan's next step.</remarks>
     public static (ModuleCatalog Catalog, IReadOnlyList<LanguageIssue> Issues) Into(ModuleCatalog catalog, string source)
     {
         var load = PatchLanguage.Build(source, catalog);
@@ -44,12 +47,19 @@ internal static class PackModules
 
         if (issues.Count > 0 || defs.Count == 0) return (catalog, issues);
 
-        var added = catalog.With(new ModuleProvider(pack.Id, pack.Id), [.. defs.Select(d => d.Def)]);
+        // The version rides in the name a saved patch keeps, so a patch says which one it was made with.
+        var added = catalog.With(new ModuleProvider(pack.Id, $"{pack.Id} {pack.Version}"), [.. defs.Select(d => d.Def)]);
 
         if (added.Rejected.Count > 0)
             return (catalog, [.. added.Rejected.Select(said => new LanguageIssue(1, 1, IssueCode.ModuleOutsidePack, said))]);
 
-        foreach (var (def, stencil) in defs) Stencils.AddOrUpdate(def, stencil);
+        var read = new PackSource(pack.Id, pack.Version, source);
+
+        foreach (var (def, stencil) in defs)
+        {
+            Stencils.AddOrUpdate(def, stencil);
+            Sources.AddOrUpdate(def, read);
+        }
 
         return (added.Catalog, []);
     }

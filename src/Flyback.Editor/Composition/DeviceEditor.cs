@@ -26,7 +26,7 @@ internal static class DeviceEditor
         Action<Reopen?>? relaunch = null,
         int? soundCores = null)
     {
-        var plugins = PluginHost.LoadLinked(app).Install();
+        var plugins = PluginHost.LoadLinked(app).WithPacks(folders.PackFolder).Install();
 
         var provider = EditorServices.Provider(new EditorSetup
         {

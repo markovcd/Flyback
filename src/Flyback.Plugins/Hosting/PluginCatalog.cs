@@ -58,6 +58,13 @@ internal sealed class PluginCatalog
         return this;
     }
 
+    /// <summary>This catalog with the packs in <paramref name="folder"/> added to its modules (<see cref="InstalledPacks"/>).</summary>
+    public PluginCatalog WithPacks(string? folder) => InstalledPacks.Into(this, folder);
+
+    /// <summary>This catalog with <paramref name="modules"/> in place of its own, and <paramref name="more"/> problems.</summary>
+    internal PluginCatalog With(ModuleCatalog modules, IReadOnlyList<PluginProblem> more) => new(
+        Plugins, AudioOutputs, modules, Presets, [.. Problems, .. more], MidiInputs, providers, AudioInputs, VideoOutputs);
+
     public IReadOnlyList<LoadedPlugin> Plugins { get; }
 
     public IReadOnlyList<IAudioOutput> AudioOutputs { get; }

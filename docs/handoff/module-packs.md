@@ -4,7 +4,7 @@ Planned on 2026-11-16, on `main` at `57aa9ab0`. It is on TODO.md; take it off th
 delete this file, in the commit that lands the last of it.
 
 - **Kind:** Plan
-- **Status:** Open. `fold` (ADR-0236), the header and `module` (ADR-0241), and placing a pack's module as one module expanded before compiling (ADR-0242) landed; a saved patch carrying the pack's text is next.
+- **Status:** Open. `fold` (ADR-0236), the header and `module` (ADR-0241), and placing a pack's module as one module expanded before compiling (ADR-0242) loading the packs installed in a folder and bundles carrying them (ADR-0243) landed; the editor taking a bundle's packs and a newly added pack while it runs is next.
 
 ## What is wanted
 
@@ -53,14 +53,28 @@ in the project's shared files.
 
 A pack's module is one module in the catalog, expanded into its body just before the
 compiler walks the patch. Still to do: panel knobs and MIDI linked to its sockets, a probe
-or meter on the module itself, and loading packs into the running catalog.
+or meter on the module itself.
+
+## Installing and bundles (landed, ADR-0243)
+
+Each `.fbks` in the packs folder (`packs` in the data folder on a desktop, `Packs` in the
+app's own folder on a phone) joins the catalog as `PluginHost.Load` and the device editor
+build it. A pack with a mistake adds nothing and is listed with the plugins' problems, by
+file and line. A bundle carries each pack its patch uses as `packs/<id>.fbks`, read into
+`LoadedBundle.Modules` where the pack is not installed. Still to do: the editor, viewer and
+CLI compiling a bundle against `LoadedBundle.Modules` (the editor installs one catalog at
+start, so this needs the catalog to change while it runs), the web editor, which has no
+folder, and a way to install a pack from the editor or the preset site.
 
 ## Saving, versioning and checking
 
-- **A saved patch carries the text of the pack modules it uses** (the user's call,
-  2026-11-26), beside their ids and the pack's version, so it opens anywhere, offline and
-  with the pack not installed. Where an installed copy of the pack is newer, the editor
-  offers to update the patch's copy; it never swaps it unasked.
+- **A `.fbks` or `.fbk` never carries a pack's text** (the user's call, 2026-11-26): the
+  module's id names its pack, and a `.fbk` at most notes the pack versions it was saved
+  against. **A bundle carries the packs** its patch uses, as `packs/<id>.fbks` beside the
+  samples, so a shared patch opens anywhere, offline.
+- **A patch whose pack is not installed** opens as one needing a missing plugin does,
+  saying which pack it needs and offering it from the preset site where it is there. A newer
+  installed version is used, and the editor says so once.
 - **A pack has its own semver and names only core modules and sockets**, which saved
   patches already promise to keep working. The plugin contract gains nothing.
 - **Building a pack always ends**: loops unroll over written lists, nothing recurses, and

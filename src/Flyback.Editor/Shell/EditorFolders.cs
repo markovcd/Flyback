@@ -40,6 +40,9 @@ public sealed record EditorFolders : IPresetFolder
     /// <summary>Where a plugin package opened in the window is installed.</summary>
     public string? PluginFolder { get; init; }
 
+    /// <summary>Where the module packs installed here are read from. Null loads none.</summary>
+    public string? PackFolder { get; init; }
+
     /// <summary>Where installing a plugin records the yes that lets it load, or null to record nothing.</summary>
     public string? AllowedPluginsPath { get; init; }
 

@@ -1,5 +1,6 @@
 using System.IO.Compression;
 using Flyback.Core.Graph;
+using Flyback.Engine.Packs;
 
 namespace Flyback.Engine.Graph;
 
@@ -46,6 +47,9 @@ public static class PatchBundle
     /// here: what is in it is the shell's.
     /// </summary>
     public const string ConversationEntry = "conversation.json";
+
+    /// <summary>Where the packs the patch's modules come from go, each as <c>&lt;id&gt;.fbks</c> (ADR-0241).</summary>
+    public const string PacksFolder = "packs/";
 
     /// <summary>The most a bundle may unpack to, counted as it inflates, so a zip bomb is refused before it fills memory.</summary>
     public const long UnpackedLimit = 1L << 30;
@@ -122,6 +126,13 @@ public static class PatchBundle
         using (var writing = new StreamWriter(zip.CreateEntry(PatchEntry).Open()))
             writing.Write(PatchIO.ToJson(packed, catalog));
 
+        foreach (var pack in Packs(packed, catalog))
+        {
+            using var writing = new StreamWriter(zip.CreateEntry(PacksFolder + pack.Id + ".fbks").Open());
+
+            writing.Write(pack.Text);
+        }
+
         if (conversation is not null)
         {
             using var writing = new StreamWriter(zip.CreateEntry(ConversationEntry).Open());
@@ -171,9 +182,42 @@ public static class PatchBundle
 
         var conversation = zip.GetEntry(ConversationEntry) is { } kept ? Text(kept, ref left) : null;
 
-        var load = PatchIO.Read(json, against);
+        var packs = new List<PackSource>();
+        var modules = against ?? NodeCatalog.Current;
 
-        return new LoadedBundle(load.Patch, files, conversation, load);
+        foreach (var entry in zip.Entries.OrderBy(e => e.FullName, StringComparer.Ordinal))
+        {
+            if (!entry.FullName.StartsWith(PacksFolder, StringComparison.Ordinal)) continue;
+            if (!Flat(entry.FullName[PacksFolder.Length..])) continue;
+
+            var text = Text(entry, ref left);
+            var (added, issues) = PackModules.Into(modules, text);
+
+            // Where the pack is installed already, the installed one stands and this adds nothing.
+            if (issues.Count > 0) continue;
+
+            if (PackModules.SourceOf(added.All[^1]) is { } source) packs.Add(source);
+
+            modules = added;
+        }
+
+        var load = PatchIO.Read(json, modules);
+
+        return new LoadedBundle(load.Patch, files, conversation, load, packs, packs.Count > 0 ? modules : null);
+    }
+
+    /// <summary>The packs the modules in <paramref name="patch"/> come from, once each, by id.</summary>
+    public static IReadOnlyList<PackSource> Packs(Patch patch, ModuleCatalog? against = null)
+    {
+        ArgumentNullException.ThrowIfNull(patch);
+
+        var catalog = against ?? NodeCatalog.Current;
+
+        return [.. patch.Nodes
+            .Select(node => catalog.Get(node.TypeId) is { } def ? PackModules.SourceOf(def) : null)
+            .OfType<PackSource>()
+            .DistinctBy(pack => pack.Id)
+            .OrderBy(pack => pack.Id, StringComparer.Ordinal)];
     }
 
     private static string Text(ZipArchiveEntry entry, ref long left)

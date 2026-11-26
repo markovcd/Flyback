@@ -34,9 +34,11 @@ internal static class PluginHost
         ? DataDirectory
         : ShippedDirectory;
 
-    public static PluginCatalog Load() => DefaultDirectory == ShippedDirectory
+    /// <summary>This machine's plugins, with the packs in <see cref="InstalledPacks.DefaultFolder"/>.</summary>
+    public static PluginCatalog Load() => (DefaultDirectory == ShippedDirectory
         ? Load(DefaultDirectory, PluginTrust.For(DefaultDirectory))
-        : Load([(ShippedDirectory, PluginTrust.For(ShippedDirectory)), (DefaultDirectory, PluginTrust.For(DefaultDirectory))]);
+        : Load([(ShippedDirectory, PluginTrust.For(ShippedDirectory)), (DefaultDirectory, PluginTrust.For(DefaultDirectory))]))
+        .WithPacks(InstalledPacks.DefaultFolder);
 
     public static PluginCatalog Load(string directory, PluginTrust trust) => Load([(directory, trust)]);
 

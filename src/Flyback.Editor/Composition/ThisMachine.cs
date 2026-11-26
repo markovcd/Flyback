@@ -37,6 +37,7 @@ internal static class ThisMachine
         LayoutPath = WindowLayout.File,
         RecoveryFolder = Recovery.Folder,
         PluginFolder = PluginHost.DefaultDirectory,
+        PackFolder = InstalledPacks.DefaultFolder,
         AllowedPluginsPath = PluginAllowances.DefaultFile,
         SharedPresetFolder = KeptSharedPresets.DefaultFolder,
         ModelFolder = ModelStore.DefaultRoot,

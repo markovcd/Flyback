@@ -24,6 +24,7 @@ internal static class DeviceFolders
         return new()
         {
             GroupFolder = Path.Combine(root, "Groups"),
+            PackFolder = Path.Combine(root, "Packs"),
             PresetFolder = Path.Combine(root, "Presets"),
             ThumbnailFolder = Path.Combine(root, "Thumbnails"),
             SettingsPath = Path.Combine(root, "settings.json"),
