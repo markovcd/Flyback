@@ -21,6 +21,7 @@ internal static class PackModules
     /// each built once to check it. A pack with any mistake in it adds nothing.
     /// </summary>
     /// <returns>The catalog, and every mistake, on the pack's own lines.</returns>
+    /// <remarks>Only tests call it until packs are loaded into the running catalog, the plan's next step.</remarks>
     public static (ModuleCatalog Catalog, IReadOnlyList<LanguageIssue> Issues) Into(ModuleCatalog catalog, string source)
     {
         var load = PatchLanguage.Build(source, catalog);

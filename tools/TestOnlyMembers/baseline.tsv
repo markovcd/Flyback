@@ -71,3 +71,4 @@ Flyback.Editor	Property	Internal	SendingSection.SendingTo	Flyback.Editor.Capture
 Flyback.Engine	Constructor	Public	DelayState.DelayState(IReadOnlyList<float>, int, int, int, int, int)	Flyback.Engine.Compile.DelayState
 Flyback.Plugins.Ndi	Field	Public	NdiVideoFrame.Metadata	Flyback.Plugins.Ndi.NdiVideoFrame
 Flyback.Plugins.Ndi	Field	Public	NdiVideoFrame.Timestamp	Flyback.Plugins.Ndi.NdiVideoFrame
+Flyback.Engine	Ordinary	Public	PackModules.Into(ModuleCatalog, string)	Flyback.Engine.Packs.PackModules

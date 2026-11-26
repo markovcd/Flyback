@@ -10,8 +10,6 @@ namespace Flyback.Engine.Language;
 /// <param name="Glyph">The SVG path drawn on its card, or null.</param>
 public sealed record ModuleCard(string Help, string? Category, string Words, string? Glyph)
 {
-    public static readonly ModuleCard Empty = new("", null, "", null);
-
     /// <summary>
     /// The card written in the unbroken run of <c>///</c> lines straight above
     /// <paramref name="line"/>, counted from one.

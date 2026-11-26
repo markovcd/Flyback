@@ -74,7 +74,7 @@ public class PackModuleTests
 
     [Fact]
     public void A_module_with_no_lines_above_has_an_empty_card() =>
-        Built(Header + "module tape(in = 0) = in").Modules.ShouldHaveSingleItem().Card.ShouldBe(ModuleCard.Empty);
+        Built(Header + "module tape(in = 0) = in").Modules.ShouldHaveSingleItem().Card.ShouldBe(new ModuleCard("", null, "", null));
 
     [Fact]
     public void A_sentence_with_a_colon_in_it_stays_help() =>
