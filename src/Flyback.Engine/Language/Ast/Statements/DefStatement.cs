@@ -17,5 +17,8 @@ public sealed record DefStatement(
     /// <summary>Whether it was written <c>module</c>: a def its pack offers by id.</summary>
     public bool Offered { get; init; }
 
+    /// <summary>The <c>out</c> lines a module's body ends with, in order; empty where it ends with a plain result.</summary>
+    public IReadOnlyList<NamedOutput> Named { get; init; } = [];
+
     public override string Naming => (Offered ? "module " : "def ") + Name;
 }

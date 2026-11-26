@@ -65,6 +65,19 @@ a module's choices combine is built when the pack loads, so a mistake on any bra
 found there, and at most 64 ways are allowed. The text picks a setting by name, a number or
 a text, as it does a plugin module's.
 
+**A module's body may end with `out` lines naming its outputs**, each with its help:
+
+```
+out color "The lit scene, fogged."
+out depth = mix(1, t / FAR, hit) "How far each ray went."
+```
+
+A bare name gives the binding of that name, `= value` gives anything else, and the text in
+quotes is the socket's help. The lines come last, so nothing but `}` follows them, and no
+two share a name; a patch then wires `raymarch().depth`. Without them the outputs are `out`,
+or `out_1` onward for a bracketed list. `out` heads such a line only where a name follows it,
+which the Output module (`out.left`) never has, and only a module's body takes one.
+
 ## Consequences
 
 - It lands dark: nothing reads `Pack` or `Modules` yet, and the language guide and the

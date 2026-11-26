@@ -238,4 +238,7 @@ public static class IssueCode
 
     /// <summary>A module whose choices combine more ways than it may be built.</summary>
     public const string ModuleTooManyChoices = "module-too-many-choices";
+
+    /// <summary>A module's <c>out</c> line whose name another of its outputs already has.</summary>
+    public const string ModuleDuplicateOutput = "module-duplicate-output";
 }

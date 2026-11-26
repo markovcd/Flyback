@@ -1,6 +1,7 @@
 ﻿using Flyback.Core.Graph;
 using Flyback.Engine.Language.Ast;
 using Flyback.Engine.Language.Ast.Expressions;
+using Flyback.Engine.Language.Ast.Statements;
 using Flyback.Engine.Graph;
 
 namespace Flyback.Engine.Language;
@@ -59,9 +60,18 @@ public static class PatchLanguage
             module.Name,
             [.. module.Parameters.Where(p => p.Within is not ListExpr).Select(Socket)],
             [.. module.Parameters.Where(p => p.Within is ListExpr).Select(Choice)],
-            module.Results?.Count ?? (module.Result is Ast.Expressions.TupleExpr tuple ? tuple.Items.Count : 1),
+            Outputs(module),
             ModuleCard.Above(lines, module.Line),
             module.Line))];
+    }
+
+    private static IReadOnlyList<PackOutput> Outputs(DefStatement module)
+    {
+        if (module.Named.Count > 0) return [.. module.Named.Select(o => new PackOutput(o.Name, o.Help))];
+
+        var count = module.Results?.Count ?? (module.Result is TupleExpr tuple ? tuple.Items.Count : 1);
+
+        return [.. Enumerable.Range(0, count).Select(i => new PackOutput(count == 1 ? "out" : $"out_{i + 1}"))];
     }
 
     private static PackSocket Socket(Parameter parameter) => parameter.Within is RangeExpr range

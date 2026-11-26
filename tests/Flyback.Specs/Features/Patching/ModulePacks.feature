@@ -32,3 +32,21 @@ Feature: Module packs
       out.volume = 1
       """
     Then with the pack the speakers play 0.8
+
+  Scenario: A pack's module names its outputs, and a wire takes one by its name
+    Given the pack:
+      """
+      pack ada.levels 1.0.0
+
+      /// Two steady levels.
+      module pair(level = 0.8) = {
+        out full = level "The level as it is."
+        out half = level * 0.5 "Half the level."
+      }
+      """
+    When the text is read with the pack:
+      """
+      ada.levels.pair().half |> out.left
+      out.volume = 1
+      """
+    Then with the pack the speakers play 0.4

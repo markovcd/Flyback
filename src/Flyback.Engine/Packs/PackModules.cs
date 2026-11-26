@@ -100,7 +100,7 @@ internal static class PackModules
         Title(module.Name),
         module.Card.Category ?? "Packs",
         [.. module.Sockets.Select(Port)],
-        [.. Enumerable.Range(0, module.Outputs).Select(i => new PortSpec(module.Outputs == 1 ? "out" : $"out_{i + 1}", PortKind.Any))],
+        [.. module.Outputs.Select(o => new PortSpec(o.Name, PortKind.Any) { Help = o.Help })],
         Never,
         module.Card.Help)
     {

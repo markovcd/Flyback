@@ -189,7 +189,7 @@ public sealed class Parser
 
         if (AtWord("let")) return Let(line, column);
         if (AtWord("def")) return Def(line, column);
-        if (AtModule()) return Def(line, column) is DefStatement def ? def with { Offered = true } : null;
+        if (AtModule()) return Def(line, column, module: true) is DefStatement def ? def with { Offered = true } : null;
         if (AtWord("group")) return Group(line, column);
 
         // Only with the layout after it, so a binding somebody called 'keyboard'
@@ -319,7 +319,7 @@ public sealed class Parser
         return new LetStatement(name, value, line, column);
     }
 
-    private Statement? Def(int line, int column)
+    private Statement? Def(int line, int column, bool module = false)
     {
         at++;
 
@@ -390,17 +390,20 @@ public sealed class Parser
                 : null;
         }
 
-        if (!Braced(out var body, out var result, out var results)) return null;
+        var named = module ? new List<NamedOutput>() : null;
+
+        if (!Braced(out var body, out var result, out var results, named)) return null;
         if (result is null && results is null) Complain(IssueCode.EmptyBody, "this body says nothing at the end of it.");
 
-        return new DefStatement(name, parameters, body, result, results, line, column);
+        return new DefStatement(name, parameters, body, result, results, line, column) { Named = named ?? [] };
     }
 
     /// <summary>
     /// A def's or a loop's body, after its '{' and through its '}': statements, then
     /// what it is worth. False where the closing brace is missing, said as an issue.
     /// </summary>
-    internal bool Braced(out List<Statement> body, out Expr? result, out IReadOnlyList<Expr>? results)
+    /// <param name="named">Where a module's body puts its <c>out</c> lines; null for any other body, which may not have them.</param>
+    internal bool Braced(out List<Statement> body, out Expr? result, out IReadOnlyList<Expr>? results, List<NamedOutput>? named = null)
     {
         body = [];
         result = null;
@@ -410,6 +413,24 @@ public sealed class Parser
 
         while (Current.Kind is not (TokenKind.CloseBrace or TokenKind.End))
         {
+            if (AtOut())
+            {
+                if (named is null)
+                {
+                    Complain(IssueCode.Syntax, "only a module's body names its outputs with 'out'. A def's body ends with what it hands back.");
+                    SkipToBreak();
+                    SkipBreaks();
+                    continue;
+                }
+
+                var values = Outputs(named);
+
+                if (values.Count == 1) result = values[0];
+                else if (values.Count > 1) results = values;
+
+                break;
+            }
+
             // The last thing in the block is what it is worth, and it is
             // an expression rather than a statement. Recognised by being the
             // last: anything followed by the closing brace.
@@ -439,6 +460,65 @@ public sealed class Parser
         }
 
         return Expect(TokenKind.CloseBrace, "'}' to close the body");
+    }
+
+    /// <summary><c>out</c> with a name after it, which nothing else starts: the Output module is <c>out.left</c>.</summary>
+    private bool AtOut() => AtWord("out") && Ahead().Kind == TokenKind.Identifier;
+
+    /// <summary>
+    /// The <c>out</c> lines that end a module's body, through to its closing brace: each a
+    /// name, the value it gives where that is not the binding of the same name, and its help.
+    /// </summary>
+    private List<Expr> Outputs(List<NamedOutput> named)
+    {
+        var values = new List<Expr>();
+
+        while (AtOut())
+        {
+            var line = Current.Line;
+            var column = Current.Column;
+            at++;
+
+            var name = Current;
+            at++;
+
+            Expr? value = new NameExpr(name.Text, null, name.Line, name.Column);
+
+            if (Take(TokenKind.Assign) && (value = expressions.Pipeline()) is null)
+            {
+                SkipToBreak();
+                SkipBreaks();
+                continue;
+            }
+
+            var help = "";
+
+            if (Current.Kind == TokenKind.Text)
+            {
+                help = Current.Text;
+                at++;
+            }
+
+            named.Add(new NamedOutput(name.Text, help, line, column));
+            values.Add(value);
+
+            Finished(inBraces: true);
+            while (Current.Kind is not (TokenKind.NewLine or TokenKind.CloseBrace or TokenKind.End)) at++;
+            SkipBreaks();
+        }
+
+        if (Current.Kind is not (TokenKind.CloseBrace or TokenKind.End))
+        {
+            Complain(IssueCode.Syntax, "a module's body ends with its 'out' lines, so nothing follows them but '}'.");
+
+            for (var depth = 0; Current.Kind != TokenKind.End && (depth > 0 || Current.Kind != TokenKind.CloseBrace); at++)
+            {
+                if (Current.Kind == TokenKind.OpenBrace) depth++;
+                else if (Current.Kind == TokenKind.CloseBrace) depth--;
+            }
+        }
+
+        return values;
     }
 
     /// <summary>The items of a list, separated by commas, to the end of the tokens.</summary>

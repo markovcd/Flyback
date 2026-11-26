@@ -4,13 +4,13 @@ namespace Flyback.Engine.Language;
 /// <param name="TypeId">The pack's id and the module's name, as a patch places it: <c>ada.echoes.tape</c>.</param>
 /// <param name="Sockets">The parameters a wire can feed, in the order written.</param>
 /// <param name="Choices">The parameters written with choices, which are settings rather than sockets.</param>
-/// <param name="Outputs">How many things its body ends with, each an output.</param>
+/// <param name="Outputs">What its body ends with, each an output: named by its <c>out</c> lines, or <c>out</c>, <c>out_1</c>, ... where it has none.</param>
 /// <param name="Line">Where its <c>module</c> line is, counted from one.</param>
 public sealed record PackModule(
     string TypeId,
     string Name,
     IReadOnlyList<PackSocket> Sockets,
     IReadOnlyList<PackChoice> Choices,
-    int Outputs,
+    IReadOnlyList<PackOutput> Outputs,
     ModuleCard Card,
     int Line);

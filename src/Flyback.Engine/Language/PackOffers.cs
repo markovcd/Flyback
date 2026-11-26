@@ -41,6 +41,7 @@ internal sealed partial class PackOffers(Issues issues)
         }
 
         var sound = module.Parameters.Aggregate(true, (ok, parameter) => Checked(parameter) && ok);
+        sound = Named(module) && sound;
         var settings = module.Parameters.Select(p => p.Within is ListExpr list ? list.Items.Count : 1).Aggregate(1L, (a, b) => a * b);
 
         if (sound && settings > MostSettings)
@@ -51,6 +52,24 @@ internal sealed partial class PackOffers(Issues issues)
         }
 
         if (sound) offered.Add(module);
+    }
+
+    /// <summary>Whether every output a module names has a name of its own.</summary>
+    private bool Named(DefStatement module)
+    {
+        var taken = new HashSet<string>(StringComparer.Ordinal);
+        var sound = true;
+
+        foreach (var output in module.Named)
+        {
+            if (taken.Add(output.Name)) continue;
+
+            issues.Complain(IssueCode.ModuleDuplicateOutput, output.Line, output.Column,
+                $"'{module.Name}' already has an output called '{output.Name}'. Give each 'out' a name of its own.");
+            sound = false;
+        }
+
+        return sound;
     }
 
     /// <summary>The most ways a module's choices may combine, since each is built when the pack loads.</summary>

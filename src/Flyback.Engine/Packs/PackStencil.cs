@@ -23,7 +23,7 @@ internal sealed record PackStencil(Patch Inner, IReadOnlyList<Guid> Sockets, IRe
     {
         var harness = new System.Text.StringBuilder(source).Append('\n');
         var inputs = module.Sockets.Select((_, i) => $"pack_socket_{i}__").ToList();
-        var outputs = Enumerable.Range(0, module.Outputs).Select(i => $"pack_result_{i}__").ToList();
+        var outputs = module.Outputs.Select((_, i) => $"pack_result_{i}__").ToList();
 
         foreach (var input in inputs) harness.Append($"let {input} = {PackStandIns.SocketTypeId}()\n");
 
