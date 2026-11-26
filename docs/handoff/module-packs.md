@@ -4,7 +4,7 @@ Planned on 2026-11-16, on `main` at `57aa9ab0`. It is on TODO.md; take it off th
 delete this file, in the commit that lands the last of it.
 
 - **Kind:** Plan
-- **Status:** Open. `fold` (ADR-0236), the header and `module` (ADR-0241), and placing a pack's module as one module expanded before compiling (ADR-0242) loading the packs installed in a folder and bundles carrying them (ADR-0243) landed; the editor taking a bundle's packs landed; the viewer and CLI doing the same, and a pack added while the editor runs, are next.
+- **Status:** Open. `fold` (ADR-0236), the header and `module` (ADR-0241), and placing a pack's module as one module expanded before compiling (ADR-0242) loading the packs installed in a folder and bundles carrying them (ADR-0243) landed; every host taking a bundle's packs, and the editor taking a pack added to its folder while it runs, landed; socket ranges and choices are next.
 
 ## What is wanted
 
@@ -62,9 +62,10 @@ app's own folder on a phone) joins the catalog as `PluginHost.Load` and the devi
 build it. A pack with a mistake adds nothing and is listed with the plugins' problems, by
 file and line. A bundle carries each pack its patch uses as `packs/<id>.fbks`, read into
 `LoadedBundle.Modules` where the pack is not installed. The editor takes a bundle's packs
-into its module list while it runs (`PluginCatalog.Take`). Still to do: the viewer and CLI
-compiling a bundle against `LoadedBundle.Modules`, a pack added to the folder while the
-editor runs, the web editor, which has no folder, and a way to install a pack from the
+into its module list while it runs (`PluginCatalog.Take`). A pack added to the folder, or
+written again, joins the list the next time the module list opens, a file opens or a
+program driving the editor calls (`PackShelf`). The viewer, the CLI and the web
+viewer compile a bundle with its packs too. Still to do: the web editor, which has no folder, and a way to install a pack from the
 editor or the preset site.
 
 ## Saving, versioning and checking

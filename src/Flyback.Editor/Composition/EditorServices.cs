@@ -88,6 +88,7 @@ internal static class EditorServices
         services.AddSingleton<IIlCompilerSetup>(setup.Launch);
         services.AddSingleton(setup.Usage);
         services.AddSingleton(setup.Plugins);
+        services.AddSingleton<Packs.PackShelf>();
         services.AddSingleton(setup.Assistants);
 
         // Long enough for a plugin to download. The site packs a preset with brotli; a page's browser unpacks for itself.

@@ -1,5 +1,6 @@
 using System.IO.Compression;
 using Flyback.Core.Graph;
+using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Language;
 using Flyback.Engine.Packs;
@@ -110,6 +111,32 @@ public class PackBundleTests
         var load = PatchIO.Read(PatchIO.ToJson(patch, catalog), NodeCatalog.BuiltIn);
 
         load.MissingProviders.ShouldBe([new ModuleProvider("ada.echoes", "ada.echoes 1.2.0")]);
+    }
+
+    /// <summary>A program opening one bundle compiles it against the catalog every patch is read against, so the bundle's packs go there.</summary>
+    [Fact]
+    public void A_bundle_opened_from_disk_compiles_with_the_pack_it_carries()
+    {
+        var catalog = Installed(Echoes);
+        var patch = Built("ada.echoes.wobble() |> out.left", catalog);
+        var path = Path.Combine(Path.GetTempPath(), $"flyback-pack-{Guid.NewGuid():N}.fbkb");
+        var was = NodeCatalog.Current;
+
+        try
+        {
+            using (var file = File.Create(path)) PatchBundle.Write(file, patch, _ => null, catalog);
+
+            var open = PatchFile.Open(new FileInfo(path));
+
+            open.Problems.ShouldBeEmpty();
+            NodeCatalog.Current.Get("ada.echoes.wobble").ShouldNotBeNull();
+            Should.NotThrow(() => open.Patch.ShouldNotBeNull().Patch.CompileForAudio());
+        }
+        finally
+        {
+            NodeCatalog.Install(was);
+            File.Delete(path);
+        }
     }
 
     [Fact]

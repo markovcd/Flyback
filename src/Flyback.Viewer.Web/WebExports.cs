@@ -114,6 +114,7 @@ public static partial class WebExports
     {
         var bundle = PatchFile.Read(name, bytes, Plugins.Modules);
         if (bundle.Load is { IsComplete: false } lacking) throw Refused(lacking);
+        if (bundle.Modules is { } carried) Plugins.Take(carried);
 
         var files = BundleFiles.Of(bundle);
 

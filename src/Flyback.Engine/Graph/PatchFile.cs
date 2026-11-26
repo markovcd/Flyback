@@ -45,6 +45,10 @@ public static class PatchFile
             var bundle = PatchBundle.Read(archive);
             var files = BundleFiles.Of(bundle);
 
+            // A program opening one patch compiles it against the catalog every patch is read
+            // against, so the packs the bundle brought go there.
+            if (bundle.Modules is { } carried) NodeCatalog.Install(carried);
+
             return new PatchOpen(new Opened(bundle.Patch, files, files), []);
         }
         catch (Exception ex)

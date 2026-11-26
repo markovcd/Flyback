@@ -74,8 +74,10 @@ internal sealed class Palette
         OutputSettingRepository repository,
         EditorFolders folders,
         LastPress lastPress,
-        ModuleFinder finder)
+        ModuleFinder finder,
+        Packs.PackShelf packs)
     {
+        this.packs = packs;
         var groupFolder = folders.GroupFolder ?? Path.Combine(Path.GetTempPath(), "flyback-no-groups", Guid.NewGuid().ToString("N"));
 
         this.editor = editor;
@@ -229,8 +231,11 @@ internal sealed class Palette
     /// </summary>
     private WireDrop? wiring;
 
+    private readonly Packs.PackShelf packs;
+
     public void Show(Point at)
     {
+        packs.Refresh();
         addingAt = at;
         Flyout.Content ??= list.Value;
 

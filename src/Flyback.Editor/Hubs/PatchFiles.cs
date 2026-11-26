@@ -31,6 +31,7 @@ internal sealed class PatchFiles
     private readonly NodeEditor editor;
     private readonly Document document;
     private readonly PluginCatalog plugins;
+    private readonly Packs.PackShelf packs;
     private readonly ReportLine report;
     private readonly Usage usage;
     private readonly IPatchConversation conversation;
@@ -58,8 +59,10 @@ internal sealed class PatchFiles
         IPatchConversation conversation,
         Playback playback,
         IFilePickers pickers,
-        Reactions reactions)
+        Reactions reactions,
+        Packs.PackShelf packs)
     {
+        this.packs = packs;
         this.pickers = pickers;
         this.reactions = reactions;
         this.editor = editor;
@@ -248,6 +251,9 @@ internal sealed class PatchFiles
     /// </summary>
     public async Task OpenFileAsync(IStorageFile file)
     {
+        // A pack added since the module list was built is one the file may use.
+        packs.Refresh();
+
         if (PatchFileKinds.Bundled(file.Name))
         {
             await OpenBundleAsync(file);

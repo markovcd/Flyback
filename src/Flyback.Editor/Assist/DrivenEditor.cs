@@ -16,7 +16,8 @@ internal sealed class DrivenEditor(
     EditorFolders folders,
     IAssistantEditor editor,
     PluginCatalog plugins,
-    AssistantSettingRepository settings) : IStartAt, IDisposable
+    AssistantSettingRepository settings,
+    Packs.PackShelf packs) : IStartAt, IDisposable
 {
     private ChannelServer? server;
 
@@ -92,6 +93,8 @@ internal sealed class DrivenEditor(
 
     private async Task<ChannelReply> Answer(DrivenBench bench, ChannelRequest request, CancellationToken cancel)
     {
+        packs.Refresh();
+
         if (request.Say is { } said)
         {
             editor.Report(said, null);

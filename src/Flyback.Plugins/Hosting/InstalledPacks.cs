@@ -1,4 +1,5 @@
 using Flyback.Core;
+using Flyback.Core.Graph;
 using Flyback.Engine.Packs;
 
 namespace Flyback.Plugins.Hosting;
@@ -30,8 +31,17 @@ internal static class InstalledPacks
     {
         if (folder is null || !Directory.Exists(folder)) return catalog;
 
-        var modules = catalog.Modules;
+        var (modules, problems) = Into(catalog.Modules, folder);
+
+        return catalog.With(modules, problems);
+    }
+
+    /// <summary><paramref name="modules"/> with every pack in <paramref name="folder"/>, and what was wrong with any.</summary>
+    public static (ModuleCatalog Modules, IReadOnlyList<PluginProblem> Problems) Into(ModuleCatalog modules, string folder)
+    {
         var problems = new List<PluginProblem>();
+
+        if (!Directory.Exists(folder)) return (modules, problems);
 
         var files = Directory.EnumerateFiles(folder, "*" + Extension)
             .Where(file => !Path.GetFileName(file).StartsWith('.'))
@@ -55,8 +65,19 @@ internal static class InstalledPacks
             else problems.AddRange(issues.Select(issue => Problem(file, folder, $"line {issue.Line}: {issue.Message}")));
         }
 
-        return catalog.With(modules, problems);
+        return (modules, problems);
     }
+
+    /// <summary>
+    /// The name, size and time of every pack file in <paramref name="folder"/>, one string that
+    /// changes when any file is added, removed or written.
+    /// </summary>
+    public static string Stamp(string? folder) =>
+        folder is null || !Directory.Exists(folder)
+            ? ""
+            : string.Join('\n', new DirectoryInfo(folder).EnumerateFiles("*" + Extension)
+                .OrderBy(file => file.Name, StringComparer.Ordinal)
+                .Select(file => $"{file.Name}|{file.Length}|{file.LastWriteTimeUtc.Ticks}"));
 
     private static PluginProblem Problem(string file, string folder, string message) =>
         new(Path.GetFileName(file), message) { Folder = folder };

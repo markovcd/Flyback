@@ -34,4 +34,6 @@ installed pack stands over the bundle's copy.
 - The editor's catalog changes while it runs: opening a bundle that brings a pack hands
   the catalog it was read against to `PluginCatalog.Take`, which installs it and raises
   `ModulesChanged`, and the module list is built again. What reads the modules asks the
-  catalog each time rather than keeping the list it started with.
+  catalog each time rather than keeping the list it started with. The packs folder is read
+  again when it has changed, before the module list opens, a file opens or a program
+  driving the editor calls; a pack a bundle brought stays.

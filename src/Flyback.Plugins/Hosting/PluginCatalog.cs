@@ -38,6 +38,7 @@ internal sealed class PluginCatalog
         Plugins = plugins;
         AudioOutputs = audioOutputs;
         Modules = modules;
+        Plain = modules;
         Presets = [.. PresetOrder.Of(presets)];
         Problems = problems;
         MidiInputs = midiInputs ?? [];
@@ -82,7 +83,13 @@ internal sealed class PluginCatalog
 
     /// <summary>This catalog with <paramref name="modules"/> in place of its own, and <paramref name="more"/> problems.</summary>
     internal PluginCatalog With(ModuleCatalog modules, IReadOnlyList<PluginProblem> more) => new(
-        Plugins, AudioOutputs, modules, Presets, [.. Problems, .. more], MidiInputs, providers, AudioInputs, VideoOutputs);
+        Plugins, AudioOutputs, modules, Presets, [.. Problems, .. more], MidiInputs, providers, AudioInputs, VideoOutputs)
+    {
+        Plain = Plain,
+    };
+
+    /// <summary>The plugins' modules and the engine's, without any pack's.</summary>
+    internal ModuleCatalog Plain { get; private init; }
 
     public IReadOnlyList<LoadedPlugin> Plugins { get; }
 

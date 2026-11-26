@@ -549,7 +549,8 @@ and Android programs each fulfill; `Notices`, one record per notice, with `React
 and the start phases; and `Settings`, what a settings section is built from
 (`ISettingsSection`, `SettingsSession`, `InspectorRows`). Each names only what is
 below it. The features stand on it in an order of their own, lowest first, each with
-its region, its controls and its settings section together: `Site`, `Decide`, `Midi`
+its region, its controls and its settings section together: `Packs` (the installed
+module packs, read again as the folder changes), `Site`, `Decide`, `Midi`
 (the instruments), `Canvas` (the node editor and the palette), `Hubs` (`Document`,
 `Playback`, `PatchFiles`, and what writes the panel into the text), `Assist`, `Knobs`
 (the knob panel and the Playing section), `PluginPackages`, `Capture`, `Files`, `Gallery`,
