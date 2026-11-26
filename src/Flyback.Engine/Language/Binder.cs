@@ -37,6 +37,7 @@ public sealed class Binder
     private readonly Carrying carrying;
     private readonly PatchLines lines;
     private readonly PackLines head;
+    private readonly PackOffers offers;
 
     private readonly Boxes boxes;
     private readonly LevelTrail levels;
@@ -76,6 +77,7 @@ public sealed class Binder
         carrying = new Carrying(modules, wiring, this.issues);
         lines = new PatchLines(patch, this.issues);
         head = new PackLines(this.issues);
+        offers = new PackOffers(this.issues);
         boxes = new Boxes(patch, this.issues, sourceSites);
         levels = new LevelTrail(patch, wiring.IsShared);
 
@@ -94,6 +96,9 @@ public sealed class Binder
 
     /// <summary>The module pack the text opened by saying it is, once <see cref="Build"/> has run.</summary>
     public PackHeader? Pack => head.Header;
+
+    /// <summary>The <c>module</c> defs the pack offers, once <see cref="Build"/> has run.</summary>
+    public IReadOnlyList<DefStatement> Offered => offers.Offered;
 
     /// <summary>The patch these statements describe, laid out and ready to compile.</summary>
     public Patch Build(IReadOnlyList<Statement> statements)
@@ -249,9 +254,14 @@ public sealed class Binder
                 // A def is in sight in the body it is written in and every body inside that,
                 // and a name means one def wherever it is read.
                 if (scope.Def(def.Name) is not null)
+                {
                     issues.Complain(IssueCode.DefTwice, def.Line, def.Column, $"'{def.Name}' is already the name of a def.");
+                }
                 else
+                {
                     scope.Declare(def);
+                    if (def.Offered) offers.Offer(def, head.Header, scope.Top);
+                }
 
                 for (var i = 0; i < def.Parameters.Count; i++)
                 {

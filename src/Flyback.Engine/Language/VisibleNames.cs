@@ -35,7 +35,7 @@ internal static class VisibleNames
                         frames.Peek().Names.AddRange(Listed(tokens, i + 1, CompletionKind.Name));
                     break;
 
-                case TokenKind.Identifier when token.Text == "def":
+                case TokenKind.Identifier when token.Text is "def" or "module":
                     if (At(tokens, i + 1, TokenKind.Identifier) is not { } named) break;
 
                     var bracketed = At(tokens, i + 2, TokenKind.OpenParen) is not null;

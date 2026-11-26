@@ -167,6 +167,15 @@ public sealed class EditingSteps(PatchContext context, Session session, EditorDr
         pack.Version.ShouldBe(version);
     }
 
+    [Then("the pack offers {string} in {string}, helped by {string}")]
+    public void ThenThePackOffers(string typeId, string category, string help)
+    {
+        var module = Text.Modules.ShouldHaveSingleItem();
+        module.TypeId.ShouldBe(typeId);
+        module.Card.Category.ShouldBe(category);
+        module.Card.Help.ShouldBe(help);
+    }
+
     [Then("it reads with a warning on line {int}")]
     public void ThenReadsWithAWarning(int line)
     {

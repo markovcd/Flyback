@@ -34,6 +34,9 @@ public sealed record LanguageLoad(Patch Patch, IReadOnlyList<LanguageIssue> Issu
     /// <summary>The module pack the text says it is, or null for a patch.</summary>
     public PackHeader? Pack { get; init; }
 
+    /// <summary>The modules the pack offers, in the order written; empty for a patch.</summary>
+    public IReadOnlyList<PackModule> Modules { get; init; } = [];
+
     /// <summary>Whether the text built, warnings or not.</summary>
     public bool Ok => Errors == 0;
 

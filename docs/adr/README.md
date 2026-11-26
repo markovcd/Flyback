@@ -26,7 +26,7 @@ context, decision, consequences.
 | [0234](0234-the-text-has-if-decided-as-it-is-built.md) | The text has `if`, decided as it is built *(user-directed)* |
 | [0235](0235-a-list-is-read-by-position-and-a-block-reads-names.md) | A list is read by position, and a block reads names *(user-directed)* |
 | [0236](0236-the-text-has-fold-which-carries-a-value-from-pass-to-pass.md) | The text has `fold`, which carries a value from pass to pass *(user-directed)* |
-| [0241](0241-a-module-pack-opens-with-its-id-its-version-and-its-text.md) | A module pack opens with its id, its version and its text *(user-directed)* |
+| [0241](0241-a-module-pack-is-a-text-that-offers-modules-by-id.md) | A module pack is a text that offers modules by id *(user-directed)* |
 | [0218](0218-the-levels-the-text-opens-are-bands-inside-their-box.md) | The levels the text opens are bands inside their box *(user-directed)* |
 | [0224](0224-a-comment-starts-with-two-slashes.md) | A comment starts with two slashes *(user-directed)* |
 | [0221](0221-a-group-may-hold-one-module.md) | A group may hold one module *(user-directed)* |

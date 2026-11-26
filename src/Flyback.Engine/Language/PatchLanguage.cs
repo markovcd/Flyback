@@ -41,6 +41,22 @@ public static class PatchLanguage
             Map = binder.Map(source),
             Levels = binder.Levels,
             Pack = binder.Pack,
+            Modules = Offered(binder, source),
         };
+    }
+
+    /// <summary>The modules a pack offers, each with the card written above it.</summary>
+    private static IReadOnlyList<PackModule> Offered(Binder binder, string source)
+    {
+        if (binder.Pack is not { } pack || binder.Offered.Count == 0) return [];
+
+        var lines = source.ReplaceLineEndings("\n").Split('\n');
+
+        return [.. binder.Offered.Select(module => new PackModule(
+            pack.Id + "." + module.Name,
+            module.Name,
+            [.. module.Parameters.Select(p => p.Name)],
+            ModuleCard.Above(lines, module.Line),
+            module.Line))];
     }
 }

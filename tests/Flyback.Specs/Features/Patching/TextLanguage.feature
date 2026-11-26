@@ -208,6 +208,20 @@ Feature: A patch can be written as text
     Then it reads without complaint
     And the text is the pack "ada.echoes" at version "1.2.0"
 
+  Scenario: A module pack offers its modules by id, each with its card
+    Given the text:
+      """
+      pack ada.echoes 1.2.0
+
+      /// A gentle wobble.
+      /// category: Oscillators · words: vibrato
+      module wobble(rate = 3) = sine(freq: rate)
+
+      wobble(rate: 5) |> out.left
+      """
+    Then it reads without complaint
+    And the pack offers "ada.echoes.wobble" in "Oscillators", helped by "A gentle wobble."
+
   Scenario: An if builds the branch its condition picks as the text is read
     Given the text:
       """

@@ -189,6 +189,7 @@ public sealed class Parser
 
         if (AtWord("let")) return Let(line, column);
         if (AtWord("def")) return Def(line, column);
+        if (AtModule()) return Def(line, column) is DefStatement def ? def with { Offered = true } : null;
         if (AtWord("group")) return Group(line, column);
 
         // Only with the layout after it, so a binding somebody called 'keyboard'
@@ -255,7 +256,7 @@ public sealed class Parser
 
     /// <summary>Whether what comes next is one of <see cref="Statement"/>'s own forms rather than a pipeline.</summary>
     private bool AtStatement() =>
-        AtWord("let") || AtWord("def") || AtWord("group")
+        AtWord("let") || AtWord("def") || AtWord("group") || AtModule()
         || (AtWord("keyboard") && Ahead().Kind == TokenKind.Identifier)
         || (AtWord("length") && Ahead().Kind == TokenKind.Number)
         || (AtWord("description") && Ahead().Kind == TokenKind.Text)
@@ -270,6 +271,10 @@ public sealed class Parser
             && Ahead().Kind == TokenKind.Dot
             && Ahead(2).Kind == TokenKind.Identifier
             && Ahead(3).Kind is TokenKind.Assign or TokenKind.BackWire);
+
+    /// <summary>A <c>module</c> only where a name and its brackets follow, so a binding called 'module' still reads.</summary>
+    private bool AtModule() =>
+        AtWord("module") && Ahead().Kind == TokenKind.Identifier && Ahead(2).Kind == TokenKind.OpenParen;
 
     private Statement? Let(int line, int column)
     {

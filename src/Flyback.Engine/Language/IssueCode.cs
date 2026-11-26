@@ -211,4 +211,16 @@ public static class IssueCode
 
     /// <summary>A file written for a later version of the text than this build reads.</summary>
     public const string NewerLanguage = "newer-language";
+
+    /// <summary>A <c>module</c> in a file that does not open as a pack.</summary>
+    public const string ModuleOutsidePack = "module-outside-pack";
+
+    /// <summary>A <c>module</c> inside a group, def, loop or if.</summary>
+    public const string ModuleNotAtTop = "module-not-at-top";
+
+    /// <summary>A module's name that is not lower case, so its type id would not be one.</summary>
+    public const string BadModuleName = "bad-module-name";
+
+    /// <summary>A module's parameter with no default, which every socket has.</summary>
+    public const string ModuleInputWithoutDefault = "module-input-without-default";
 }

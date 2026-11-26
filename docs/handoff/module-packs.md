@@ -4,7 +4,7 @@ Planned on 2026-11-16, on `main` at `57aa9ab0`. It is on TODO.md; take it off th
 delete this file, in the commit that lands the last of it.
 
 - **Kind:** Plan
-- **Status:** Open. `fold` (ADR-0236) and the header (ADR-0241) landed; `module` is next.
+- **Status:** Open. `fold` (ADR-0236), the header and `module` (ADR-0241) landed; placing a pack's module in a patch is next.
 
 ## What is wanted
 
@@ -41,8 +41,8 @@ Each is marked `NEW` in the Raymarch sketch, `/mnt/project-files/plugin-packs/ra
 in the project's shared files.
 
 1. **A header** (landed, ADR-0241): `pack <id> <semver>` and `language <n>`, read into `LanguageLoad.Pack`.
-2. **`module name(...) = { ... }`**: a def the pack offers by id (`<pack id>.<name>`), with
-   `///` lines that become its card: help, category, words and glyph.
+2. **`module name(...) = { ... }`** (landed, ADR-0241): a def the pack offers by id
+   (`<pack id>.<name>`), with `///` lines that become its card, read into `LanguageLoad.Modules`.
 3. **Socket ranges and choices**: `travel = 0 in 0..100`, and
    `steps: 16 | 32 | 64 = 32` shown as a setting.
 4. **Named outputs with help**: `out depth = ... "How far each ray went."`
