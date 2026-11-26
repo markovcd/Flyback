@@ -37,8 +37,10 @@ public sealed class InstalledPacksTests : IDisposable
     [Fact]
     public void No_folder_leaves_the_catalog_as_it_was()
     {
-        PluginCatalog.Empty.WithPacks(null).ShouldBeSameAs(PluginCatalog.Empty);
-        PluginCatalog.Empty.WithPacks(Path.Combine(folder.FullName, "absent")).ShouldBeSameAs(PluginCatalog.Empty);
+        var empty = PluginCatalog.Empty;
+
+        empty.WithPacks(null).ShouldBeSameAs(empty);
+        empty.WithPacks(Path.Combine(folder.FullName, "absent")).ShouldBeSameAs(empty);
     }
 
     [Fact]

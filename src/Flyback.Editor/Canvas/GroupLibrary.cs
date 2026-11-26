@@ -28,14 +28,21 @@ public sealed class GroupLibrary
     /// </summary>
     public static string DefaultFolder => Path.Combine(GlobalConstants.DataFolder, "groups");
 
-    private readonly ModuleCatalog catalog;
+    private readonly Func<ModuleCatalog> modules;
     private List<SavedGroup>? kept;
 
     /// <param name="catalog">What the fragments are read against, so a missing plugin is named.</param>
     /// <param name="folder">Somewhere other than the usual place, for the tests.</param>
     public GroupLibrary(ModuleCatalog catalog, string? folder = null)
+        : this(() => catalog, folder)
     {
-        this.catalog = catalog;
+    }
+
+    /// <param name="modules">What the fragments are read against, asked each time, since a pack may arrive while the editor runs.</param>
+    /// <param name="folder">Somewhere other than the usual place, for the tests.</param>
+    public GroupLibrary(Func<ModuleCatalog> modules, string? folder = null)
+    {
+        this.modules = modules;
         Folder = folder ?? DefaultFolder;
     }
 
@@ -127,11 +134,11 @@ public sealed class GroupLibrary
 
         var path = Named(group.Name)?.Path ?? FreshPath(group.Name);
 
-        File.WriteAllText(path, PatchIO.ToJson(fragment, catalog));
+        File.WriteAllText(path, PatchIO.ToJson(fragment, modules()));
         Reload();
 
         return Kept.FirstOrDefault(entry => entry.Path == path)
-            ?? new SavedGroup(group.Name, path, PatchIO.Read(File.ReadAllText(path), catalog));
+            ?? new SavedGroup(group.Name, path, PatchIO.Read(File.ReadAllText(path), modules()));
     }
 
     /// <summary>Forgets one, which is deleting the file it was.</summary>
@@ -154,7 +161,7 @@ public sealed class GroupLibrary
     {
         try
         {
-            var load = PatchIO.Read(File.ReadAllText(file), catalog);
+            var load = PatchIO.Read(File.ReadAllText(file), modules());
 
             // The name on the box inside, because that is the name somebody
             // typed and a file name has been through a sieve to get here. A

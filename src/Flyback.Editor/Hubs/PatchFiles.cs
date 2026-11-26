@@ -648,6 +648,9 @@ internal sealed class PatchFiles
                 return;
             }
 
+            // Packs the bundle carries that are not installed join the module list for this run.
+            if (bundle.Modules is { } carried) plugins.Take(carried);
+
             // A bundle answers for its own files first and falls through to the folder
             // it was opened from, which is why that folder is this one's rather than
             // whatever the last document left behind.
@@ -666,9 +669,13 @@ internal sealed class PatchFiles
             // A bundle carries its conversation inside it — ADR-0072.
             conversation.Open(bundle.Conversation);
 
-            report.Say(bundle.Files.Count == 0
+            var packs = bundle.Packs is [_, ..] carriedPacks
+                ? $" Using {string.Join(", ", carriedPacks.Select(p => $"{p.Id} {p.Version}"))} from the bundle, not installed here."
+                : "";
+
+            report.Say((bundle.Files.Count == 0
                 ? $"Opened {file.Name}."
-                : $"Opened {file.Name}, carrying {bundle.Files.Count} file(s).");
+                : $"Opened {file.Name}, carrying {bundle.Files.Count} file(s).") + packs);
         }
         catch (Exception ex)
         {

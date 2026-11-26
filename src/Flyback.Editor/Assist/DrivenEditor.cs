@@ -70,7 +70,7 @@ internal sealed class DrivenEditor(
 
         var bench = new DrivenBench(
             editor,
-            plugins.Modules,
+            () => plugins.Modules,
             settings.GetProsePolicy,
             () => editor.Presets() ?? plugins.Presets);
 

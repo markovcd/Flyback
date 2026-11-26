@@ -244,6 +244,36 @@ public sealed class FileDropTests : EditorTest
         window.Title.ShouldBe(title);
     }
 
+    /// <summary>A bundle whose pack is not installed opens with the pack it carries, which joins the module list.</summary>
+    [AvaloniaFact]
+    public void A_bundle_brings_the_pack_its_patch_uses()
+    {
+        const string echoes = "pack ada.echoes 1.2.0\nmodule wobble(rate = 3) = sine(freq: rate)\n";
+
+        Directory.CreateDirectory(folder);
+
+        var (modules, issues) = Flyback.Engine.Packs.PackModules.Into(NodeCatalog.BuiltIn, echoes);
+        issues.ShouldBeEmpty();
+
+        var load = Flyback.Engine.Language.PatchLanguage.Build("ada.echoes.wobble() |> out.left", modules);
+        load.Issues.ShouldBeEmpty(load.Report);
+
+        var path = Path.Combine(folder, "wobble.fbkb");
+
+        using (var file = File.Create(path)) PatchBundle.Write(file, load.Patch, _ => null, modules);
+
+        var window = Open();
+        var changed = 0;
+        Service<Flyback.Plugins.Hosting.PluginCatalog>(window).ModulesChanged += () => changed++;
+
+        Drop(window, Carrying(StorageFiles.OnDisk(path)));
+        WaitForReport(window, "Opened wobble.fbkb. Using ada.echoes 1.2.0 from the bundle");
+
+        changed.ShouldBe(1);
+        Service<Flyback.Plugins.Hosting.PluginCatalog>(window).Modules.Get("ada.echoes.wobble").ShouldNotBeNull();
+        Editor(window).History.Patch.Nodes.ShouldContain(n => n.TypeId == "ada.echoes.wobble");
+    }
+
     /// <summary>A text patch that does not read is refused with each complaint and where it is.</summary>
     [AvaloniaFact]
     public void A_text_patch_that_does_not_read_says_what_and_where()

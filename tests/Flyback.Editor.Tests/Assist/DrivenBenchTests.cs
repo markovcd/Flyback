@@ -19,7 +19,7 @@ public sealed class DrivenBenchTests
 
     private readonly FakeAssistantEditor editor = new(Presets.Empty(NodeCatalog.BuiltIn));
 
-    private DrivenBench Bench() => new(editor, NodeCatalog.BuiltIn, () => ProsePolicy.Default, () => Presets.All);
+    private DrivenBench Bench() => new(editor, () => NodeCatalog.BuiltIn, () => ProsePolicy.Default, () => Presets.All);
 
     [Fact]
     public async Task An_edit_stays_off_the_canvas_until_it_is_proposed()

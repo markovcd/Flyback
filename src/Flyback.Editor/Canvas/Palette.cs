@@ -28,7 +28,7 @@ internal sealed class Palette
     private readonly NodeEditor editor;
     private readonly Reactions reactions;
     private readonly Func<KeyboardLayout> keyboard;
-    private readonly Lazy<ModulePalette> list;
+    private Lazy<ModulePalette> list;
     private readonly ReportLine report;
     private readonly Usage usage;
     private readonly LastPress lastPress;
@@ -85,11 +85,19 @@ internal sealed class Palette
         this.usage = usage;
         this.lastPress = lastPress;
 
-        Groups = new GroupLibrary(plugins.Modules, groupFolder);
+        Groups = new GroupLibrary(() => plugins.Modules, groupFolder);
 
         // Built when first shown: it lays out a button for every module and asks
-        // the hardware which instruments are plugged in.
-        list = new Lazy<ModulePalette>(() => new ModulePalette(plugins.Modules, Add, Groups, AddGroup, () => PanelInstrument.PluggedIn(midi, instruments), AddInstrument, finder));
+        // the hardware which instruments are plugged in. Built again when a pack arrives.
+        Lazy<ModulePalette> Listed() => new(() => new ModulePalette(plugins.Modules, Add, Groups, AddGroup, () => PanelInstrument.PluggedIn(midi, instruments), AddInstrument, finder));
+
+        list = Listed();
+
+        plugins.ModulesChanged += () =>
+        {
+            list = Listed();
+            Flyout.Content = null;
+        };
 
         Flyout.FlyoutPresenterClasses.Add(ModulePalette.PresenterClass);
 

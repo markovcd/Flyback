@@ -8,8 +8,8 @@ namespace Flyback.Plugins.Hosting;
 /// <summary>Everything one scan of the plugin directory found.</summary>
 internal sealed class PluginCatalog
 {
-    public static PluginCatalog Empty { get; } =
-        new([], [], NodeCatalog.BuiltIn, Engine.Graph.Presets.All, []);
+    /// <summary>A catalog of no plugins, new each time, since an editor holding one may change its modules (<see cref="Take"/>).</summary>
+    public static PluginCatalog Empty => new([], [], NodeCatalog.BuiltIn, Engine.Graph.Presets.All, []);
 
     /// <param name="problems">What went wrong on the way, one entry per plugin that could not be loaded or was refused.</param>
     /// <param name="plugins">Everything that loaded, whether or not it registered anything.</param>
@@ -54,8 +54,27 @@ internal sealed class PluginCatalog
     public PluginCatalog Install()
     {
         NodeCatalog.Install(Modules);
+        installed = true;
 
         return this;
+    }
+
+    private bool installed;
+
+    /// <summary>Raised on the thread that called <see cref="Take"/> once <see cref="Modules"/> has changed.</summary>
+    public event Action? ModulesChanged;
+
+    /// <summary>
+    /// Puts <paramref name="modules"/> in place of this catalog's while the program runs, as when a
+    /// bundle brings a pack, and installs them where this catalog was installed.
+    /// </summary>
+    internal void Take(ModuleCatalog modules)
+    {
+        Modules = modules;
+
+        if (installed) NodeCatalog.Install(modules);
+
+        ModulesChanged?.Invoke();
     }
 
     /// <summary>This catalog with the packs in <paramref name="folder"/> added to its modules (<see cref="InstalledPacks"/>).</summary>
@@ -89,7 +108,7 @@ internal sealed class PluginCatalog
     /// anything opens a patch — until then the program only knows the built-ins,
     /// and a patch needing a plugin would look broken when it is not.
     /// </summary>
-    public ModuleCatalog Modules { get; }
+    public ModuleCatalog Modules { get; private set; }
 
     /// <summary>
     /// Patches to start from, the engine's and any a plugin offered, in <see cref="PresetOrder"/>. A

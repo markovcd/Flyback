@@ -31,5 +31,7 @@ installed pack stands over the bundle's copy.
 - A shared patch opens anywhere, offline; a loose one without its pack opens as one
   needing a missing plugin does, saying which pack and which version.
 - An older Flyback ignores the `packs/` entries and reports the pack as missing.
-- The editor still installs one catalog at start, so a bundle's packs and a pack added
-  while it runs need the catalog to change under a running editor.
+- The editor's catalog changes while it runs: opening a bundle that brings a pack hands
+  the catalog it was read against to `PluginCatalog.Take`, which installs it and raises
+  `ModulesChanged`, and the module list is built again. What reads the modules asks the
+  catalog each time rather than keeping the list it started with.

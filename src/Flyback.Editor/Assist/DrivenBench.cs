@@ -19,11 +19,14 @@ namespace Flyback.Editor.Assist;
 /// </remarks>
 internal sealed class DrivenBench(
     IAssistantEditor editor,
-    ModuleCatalog modules,
+    Func<ModuleCatalog> catalog,
     Func<ProsePolicy> prose,
     Func<IReadOnlyList<PatchPreset>> presets)
 {
     private PatchWorkbench? bench;
+
+    /// <summary>The modules the editor has now; a pack may arrive while it runs.</summary>
+    private ModuleCatalog Modules => catalog();
 
     /// <summary>The canvas as the bench last took it up or put a proposal on it, as patch JSON.</summary>
     private string? seen;
@@ -64,7 +67,7 @@ internal sealed class DrivenBench(
     /// <summary>Puts the proposal on the canvas, with whatever the person changed meanwhile.</summary>
     private ToolOutcome Deliver(PatchWorkbench working, ToolOutcome outcome)
     {
-        var merged = MergedProposal.Of(PatchIO.Read(seen!, modules).Patch, editor.Current, working.Snapshot(), working.Text);
+        var merged = MergedProposal.Of(PatchIO.Read(seen!, Modules).Patch, editor.Current, working.Snapshot(), working.Text);
 
         editor.Apply(merged.Patch, merged.Text);
 
@@ -89,7 +92,7 @@ internal sealed class DrivenBench(
     /// <summary>The workbench, taking the canvas up afresh where it changed and nothing waits to be proposed.</summary>
     private PatchWorkbench Bench()
     {
-        if (bench is not null && (unproposed || PatchIO.ToJson(editor.Current, modules) == seen)) return bench;
+        if (bench is not null && (unproposed || PatchIO.ToJson(editor.Current, Modules) == seen)) return bench;
 
         if (bench is not null) meanwhile = Changed(bench);
 
@@ -99,7 +102,7 @@ internal sealed class DrivenBench(
     /// <summary>What the person changed on the canvas since <paramref name="working"/> took it up, in its handles.</summary>
     private string Changed(PatchWorkbench working)
     {
-        var was = PatchIO.Read(seen!, modules).Patch;
+        var was = PatchIO.Read(seen!, Modules).Patch;
         var now = editor.Current;
 
         if (!PatchShape.Of(was).Matches(now))
@@ -116,12 +119,12 @@ internal sealed class DrivenBench(
     /// <summary>A workbench over the canvas as it stands, written in <paramref name="text"/>, which is also what <c>reset</c> goes back to.</summary>
     private PatchWorkbench Over(IReadOnlyDictionary<string, Guid>? handles, string? text)
     {
-        seen = PatchIO.ToJson(editor.Current, modules);
+        seen = PatchIO.ToJson(editor.Current, Modules);
         unproposed = false;
 
         bench = new PatchWorkbench(
-            modules,
-            PatchIO.Read(seen, modules).Patch,
+            Modules,
+            PatchIO.Read(seen, Modules).Patch,
             vision: true,
             hearing: Listener.None,
             samples: editor.Samples,

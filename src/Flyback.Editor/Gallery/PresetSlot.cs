@@ -502,6 +502,8 @@ internal sealed class PresetSlot
         {
             var bundle = kept.Open(plugins.Modules);
 
+            if (bundle.Modules is { } packed) plugins.Take(packed);
+
             files.Became(
                 preset.Name,
                 beside: null,
@@ -711,6 +713,8 @@ internal sealed class PresetSlot
                     await installs.OfferMissingAsync(lacking, reopen);
                     return false;
                 }
+
+                if (bundle.Modules is { } carried) plugins.Take(carried);
 
                 files.Became(name, beside: null, new BundleFiles(bundle.Files, files.SoundFolder, files.PictureFolder), Shared(reopen));
                 patch = bundle.Patch;

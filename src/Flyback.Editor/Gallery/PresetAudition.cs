@@ -34,7 +34,7 @@ internal sealed class PresetAudition
 
     private readonly IAudioEngine audio;
     private readonly IlCompiler compiler;
-    private readonly ModuleCatalog modules;
+    private readonly PluginCatalog plugins;
 
     /// <summary>The presets somebody saved, whose bundles carry what they play.</summary>
     private readonly PresetLibrary saved;
@@ -64,7 +64,7 @@ internal sealed class PresetAudition
         off = host.InPage;
         this.audio = audio;
         this.compiler = compiler;
-        modules = plugins.Modules;
+        this.plugins = plugins;
         this.saved = saved;
         this.playback = playback;
     }
@@ -104,7 +104,7 @@ internal sealed class PresetAudition
             (opened, audition) = await Task.Run(() =>
             {
                 // With what it plays, which for a preset somebody saved is in its bundle.
-                var built = PresetLibrary.Open(tile.Preset, saved, modules);
+                var built = PresetLibrary.Open(tile.Preset, saved, plugins.Modules);
                 return (built, hear ? audio.PrepareAudition(built.Patch, built.Samples) : null);
             });
         }

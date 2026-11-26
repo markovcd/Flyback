@@ -36,7 +36,7 @@ internal sealed class PresetThumbnails
     public const int Width = PresetStill.Width;
     public const int Height = PresetStill.Height;
 
-    private readonly ModuleCatalog modules;
+    private readonly PluginCatalog plugins;
     private readonly IlCompiler? compiler;
     private readonly PresetLibrary? saved;
     private readonly Lazy<ThumbnailStore>? store;
@@ -60,7 +60,7 @@ internal sealed class PresetThumbnails
         PresetLibrary? saved = null,
         IStillShelf? shelf = null)
     {
-        modules = plugins.Modules;
+        this.plugins = plugins;
         this.compiler = compiler;
         this.saved = saved;
         this.shelf = shelf;
@@ -171,7 +171,7 @@ internal sealed class PresetThumbnails
 
             try
             {
-                var (patch, _, _) = PresetLibrary.Open(preset, saved, modules);
+                var (patch, _, _) = PresetLibrary.Open(preset, saved, plugins.Modules);
 
                 return new Thumbnail(null, "", patch.Description, patch.Author, patch.Tags) { Reaches = patch.Reaches() };
             }
@@ -248,7 +248,7 @@ internal sealed class PresetThumbnails
         {
             // A preset from a plugin is built here for the same reason the toolbar
             // builds it when it is picked: it needs the modules that plugin added.
-            var (patch, samples, pictures) = PresetLibrary.Open(preset, saved, modules);
+            var (patch, samples, pictures) = PresetLibrary.Open(preset, saved, plugins.Modules);
             var (kind, pixels) = PresetStill.Draw(patch, samples, pictures, program => compiler?.Compile(program, IlLane.AuditionPicture));
 
             var tile = Tile(new StillEntry(preset.Name, preset.Kind, kind, null, patch.Description, patch.Author, patch.Tags, patch.Reaches().Sound));

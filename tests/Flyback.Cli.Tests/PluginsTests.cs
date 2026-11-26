@@ -85,8 +85,9 @@ public class PluginsTests
         var folder = new Folder();
 
         folder.Plugins.Ready();
+        var first = folder.Plugins.Catalog;
         folder.Plugins.Ready();
-        folder.Plugins.Catalog.ShouldBeSameAs(PluginCatalog.Empty);
+        folder.Plugins.Catalog.ShouldBeSameAs(first);
 
         folder.Scans.ShouldBe(1);
         folder.Report.ToString().ShouldContain("nothing loaded");
