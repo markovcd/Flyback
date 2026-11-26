@@ -4,7 +4,7 @@ Planned on 2026-11-16, on `main` at `57aa9ab0`. It is on TODO.md; take it off th
 delete this file, in the commit that lands the last of it.
 
 - **Kind:** Plan
-- **Status:** Open. `fold` (ADR-0236), the header and `module` (ADR-0241) landed; placing a pack's module in a patch is next.
+- **Status:** Open. `fold` (ADR-0236), the header and `module` (ADR-0241), and placing a pack's module as one module expanded before compiling (ADR-0242) landed; a saved patch carrying the pack's text is next.
 
 ## What is wanted
 
@@ -48,6 +48,12 @@ in the project's shared files.
 4. **Named outputs with help**: `out depth = ... "How far each ray went."`
 5. **"Running with memory"**, the value `Emitter.HasMemory` gives a C# module (on the sound,
    not on the picture), which the Limiter and the envelopes read.
+
+## Placing (landed, ADR-0242)
+
+A pack's module is one module in the catalog, expanded into its body just before the
+compiler walks the patch. Still to do: panel knobs and MIDI linked to its sockets, a probe
+or meter on the module itself, and loading packs into the running catalog.
 
 ## Saving, versioning and checking
 

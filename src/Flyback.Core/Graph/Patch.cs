@@ -185,6 +185,15 @@ public sealed class Patch
     /// <summary>The module with <paramref name="id"/>, or null where there is none.</summary>
     internal NodeInstance? Find(Guid id) => Nodes.FirstOrDefault(n => n.Id == id);
 
+    /// <summary>A shallow copy over other modules and wires, sharing everything else with this one.</summary>
+    internal Patch With(List<NodeInstance> nodes, List<Connection> connections)
+    {
+        var copy = (Patch)MemberwiseClone();
+        copy.Nodes = nodes;
+        copy.Connections = connections;
+        return copy;
+    }
+
     /// <summary>The knob called <paramref name="id"/>, or null where the panel has none.</summary>
     internal PatchControl? Control(Guid id) => Controls?.FirstOrDefault(c => c.Id == id);
 

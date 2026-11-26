@@ -56,6 +56,8 @@ public static class PatchLanguage
             pack.Id + "." + module.Name,
             module.Name,
             [.. module.Parameters.Select(p => p.Name)],
+            [.. module.Parameters.Select(p => (float)(PackOffers.Number(p.Default) ?? 0d))],
+            module.Results?.Count ?? (module.Result is Ast.Expressions.TupleExpr tuple ? tuple.Items.Count : 1),
             ModuleCard.Above(lines, module.Line),
             module.Line))];
     }

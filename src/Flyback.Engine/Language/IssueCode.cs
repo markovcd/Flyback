@@ -223,4 +223,7 @@ public static class IssueCode
 
     /// <summary>A module's parameter with no default, which every socket has.</summary>
     public const string ModuleInputWithoutDefault = "module-input-without-default";
+
+    /// <summary>A module's parameter whose default is not a number, which a socket holds.</summary>
+    public const string ModuleDefaultNotANumber = "module-default-not-a-number";
 }

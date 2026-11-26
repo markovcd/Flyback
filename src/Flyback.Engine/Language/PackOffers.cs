@@ -1,4 +1,6 @@
 using System.Text.RegularExpressions;
+using Flyback.Engine.Language.Ast;
+using Flyback.Engine.Language.Ast.Expressions;
 using Flyback.Engine.Language.Ast.Statements;
 
 namespace Flyback.Engine.Language;
@@ -40,15 +42,40 @@ internal sealed partial class PackOffers(Issues issues)
 
         var sound = true;
 
-        foreach (var parameter in module.Parameters.Where(p => p.Default is null))
+        foreach (var parameter in module.Parameters)
         {
-            issues.Complain(IssueCode.ModuleInputWithoutDefault, parameter.Line, parameter.Column,
-                $"'{parameter.Name}' has no default. Every socket of a module has one, so give it a value: {parameter.Name} = 0.");
-            sound = false;
+            if (parameter.Default is null)
+            {
+                issues.Complain(IssueCode.ModuleInputWithoutDefault, parameter.Line, parameter.Column,
+                    $"'{parameter.Name}' has no default. Every socket of a module has one, so give it a value: {parameter.Name} = 0.");
+                sound = false;
+            }
+            else if (Number(parameter.Default) is null)
+            {
+                issues.Complain(IssueCode.ModuleDefaultNotANumber, parameter.Default.Line, parameter.Default.Column,
+                    $"'{parameter.Name}' is a socket, so its default is a number, a note or a duration, or arithmetic on those.");
+                sound = false;
+            }
         }
 
         if (sound) offered.Add(module);
     }
+
+    /// <summary>What a socket's default is worth, or null where it is not arithmetic on numbers.</summary>
+    internal static double? Number(Expr? expr) => expr switch
+    {
+        NumberExpr number => number.Value,
+        NegateExpr { Value: var inner } => -Number(inner),
+        BinaryExpr { Operator: var op, Left: var left, Right: var right } when Number(left) is { } a && Number(right) is { } b => op switch
+        {
+            TokenKind.Plus => a + b,
+            TokenKind.Minus => a - b,
+            TokenKind.Star => a * b,
+            TokenKind.Slash when b != 0 => a / b,
+            _ => null,
+        },
+        _ => null,
+    };
 
     [GeneratedRegex("^[a-z][a-z0-9_]*$")]
     private static partial Regex Name();

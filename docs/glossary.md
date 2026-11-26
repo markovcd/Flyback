@@ -158,7 +158,7 @@ Engineering words. They appear in docs, ADRs and comments, not in the UI.
 | **patch file** | `.fbk`: the patch as JSON. | `PatchIO` | document (unless the document is meant), project file |
 | **bundle** | `.fbkb`: a patch file with the sound files and pictures it names, and optionally its conversation. | `PatchBundle` | archive, package |
 | **text** | `.fbks`: the patch written in the Flyback language. | `PatchLanguage` | script, source |
-| **module pack**, **pack** | A text opening with a `pack` line, whose `module` defs a patch places by id, as a plugin's. | `PackHeader`, `PackModule` | plugin (a pack holds no code), library, bundle |
+| **module pack**, **pack** | A text opening with a `pack` line, whose `module` defs a patch places by id, as a plugin's. | `PackHeader`, `PackModule`, `PackModules` | plugin (a pack holds no code), library, bundle |
 | **plugin package** | `.fbkp`: a signed plugin, ready to install. | `PluginPackage` | bundle |
 | **library folder** | The folder set under Settings → Files where a sound file or picture a patch names is looked for when it is not beside the patch. | `OutputSettings.Library`, `SampleLibrary.Library` | search path, assets folder |
 | **recovery** | The snapshot of unsaved work each window keeps, reopened after a crash. | `Recovery` | autosave, backup |

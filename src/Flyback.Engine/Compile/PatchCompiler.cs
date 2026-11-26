@@ -95,7 +95,7 @@ public static class PatchCompiler
         IImageLibrary? pictures = null,
         bool played = false,
         (IReadOnlyCollection<Guid> Roots, List<MeasuredSocket> Sockets)? measured = null) =>
-        new PatchWalk(patch, sink, modules, probe, samples, pictures, played, measured).Run();
+        new PatchWalk(Packs.PackExpansion.Expand(patch, modules ?? NodeCatalog.Current), sink, modules, probe, samples, pictures, played, measured).Run();
 
     /// <summary>
     /// How much of the past a Scope is asking for, in seconds: its first duration
