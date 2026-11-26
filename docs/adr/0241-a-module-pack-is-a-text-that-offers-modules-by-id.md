@@ -56,6 +56,15 @@ module tape(in = 0, time = 0.25, feedback = 0.5) = { ... }
 What the text reads goes to `LanguageLoad.Pack` and `LanguageLoad.Modules`; the header
 changes nothing the file builds.
 
+**A socket's range and a setting's choices follow its default after `in`**:
+`travel = 0 in 0..100` turns the socket from 0 to 100, and `steps = 64 in [16, 32, 64]`
+makes `steps` a setting rather than a socket, since a choice decides which modules the body
+is built from. `in` reads as it does in `for`, and a list as it does anywhere else; `|` was
+weighed and set aside, since the text already reads a lone `|` as a mistyped pipe. Each way
+a module's choices combine is built when the pack loads, so a mistake on any branch is
+found there, and at most 64 ways are allowed. The text picks a setting by name, a number or
+a text, as it does a plugin module's.
+
 ## Consequences
 
 - It lands dark: nothing reads `Pack` or `Modules` yet, and the language guide and the

@@ -14,19 +14,23 @@ internal sealed record PackStencil(Patch Inner, IReadOnlyList<Guid> Sockets, IRe
 {
     /// <summary>
     /// Builds <paramref name="module"/> from its pack's <paramref name="source"/>, its
-    /// inputs fed by stand-ins and its outputs taken by them.
+    /// inputs fed by stand-ins, its outputs taken by them and its settings at <paramref name="chosen"/>.
     /// </summary>
+    /// <param name="chosen">One value for each of the module's choices, in order.</param>
     /// <returns>The stencil, or the issues that stopped it, reported on the pack's own lines.</returns>
     public static (PackStencil? Stencil, IReadOnlyList<LanguageIssue> Issues) Build(
-        string source, PackModule module, ModuleCatalog catalog)
+        string source, PackModule module, IReadOnlyList<string> chosen, ModuleCatalog catalog)
     {
         var harness = new System.Text.StringBuilder(source).Append('\n');
-        var inputs = module.Inputs.Select((_, i) => $"pack_socket_{i}__").ToList();
+        var inputs = module.Sockets.Select((_, i) => $"pack_socket_{i}__").ToList();
         var outputs = Enumerable.Range(0, module.Outputs).Select(i => $"pack_result_{i}__").ToList();
 
         foreach (var input in inputs) harness.Append($"let {input} = {PackStandIns.SocketTypeId}()\n");
 
-        var arguments = string.Join(", ", module.Inputs.Select((name, i) => $"{name}: {inputs[i]}"));
+        var arguments = string.Join(", ", [
+            .. module.Sockets.Select((socket, i) => $"{socket.Name}: {inputs[i]}"),
+            .. module.Choices.Select((choice, i) => $"{choice.Name}: {(choice.Texts ? $"\"{chosen[i]}\"" : chosen[i])}"),
+        ]);
         var taken = outputs.Count == 1 ? outputs[0] : $"({string.Join(", ", outputs)})";
 
         harness.Append($"let {taken} = {module.Name}({arguments})\n");

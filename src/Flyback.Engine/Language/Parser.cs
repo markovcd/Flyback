@@ -352,7 +352,28 @@ public sealed class Parser
 
                 if (Take(TokenKind.Assign) && (fallback = expressions.Pipeline()) is null) return null;
 
-                parameters.Add(new Parameter(parameter.Text, fallback, parameter.Line, parameter.Column));
+                Expr? within = null;
+
+                if (Current is { Kind: TokenKind.Identifier, Text: "in" })
+                {
+                    if (fallback is null)
+                    {
+                        Complain(IssueCode.Syntax, $"'in' follows a default: {parameter.Text} = 0 in 0..1.");
+                        return null;
+                    }
+
+                    at++;
+
+                    if ((within = expressions.Pipeline()) is null) return null;
+
+                    if (within is not (RangeExpr or ListExpr))
+                    {
+                        Complain(IssueCode.Syntax, $"'in' takes a range or a list of choices: {parameter.Text} = 0 in 0..1, or {parameter.Text} = 16 in [16, 32, 64].");
+                        return null;
+                    }
+                }
+
+                parameters.Add(new Parameter(parameter.Text, fallback, parameter.Line, parameter.Column) { Within = within });
             }
             while (Take(TokenKind.Comma) && Current.Kind != TokenKind.CloseParen);
 

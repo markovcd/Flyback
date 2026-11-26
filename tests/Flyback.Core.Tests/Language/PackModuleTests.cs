@@ -39,7 +39,8 @@ public class PackModuleTests
             """).Modules;
 
         modules.Select(m => m.TypeId).ShouldBe(["ada.echoes.tape", "ada.echoes.wobble"]);
-        modules[0].Inputs.ShouldBe(["in", "time", "feedback"]);
+        modules[0].Sockets.ShouldBe([new PackSocket("in", 0), new PackSocket("time", 0.25f), new PackSocket("feedback", 0.5f)]);
+        modules[0].Choices.ShouldBeEmpty();
         modules[1].Line.ShouldBe(4);
     }
 

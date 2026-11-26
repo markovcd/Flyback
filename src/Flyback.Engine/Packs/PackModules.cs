@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
 using Flyback.Engine.Language;
 
 namespace Flyback.Engine.Packs;
@@ -11,11 +12,26 @@ namespace Flyback.Engine.Packs;
 /// </summary>
 internal static class PackModules
 {
-    private static readonly ConditionalWeakTable<NodeDef, PackStencil> Stencils = new();
+    private static readonly ConditionalWeakTable<NodeDef, PackStencils> Stencils = new();
     private static readonly ConditionalWeakTable<NodeDef, PackSource> Sources = new();
 
-    /// <summary>What placing <paramref name="def"/> copies, or null for a module no pack offers.</summary>
-    public static PackStencil? StencilOf(NodeDef def) => Stencils.TryGetValue(def, out var stencil) ? stencil : null;
+    /// <summary>What the settings a pack's module keeps are filed under on each placed instance.</summary>
+    public const string SettingsKey = "pack";
+
+    /// <summary>Whether <paramref name="def"/> is a pack's module, placed by copying what its body is made of.</summary>
+    public static bool Offers(NodeDef def) => Stencils.TryGetValue(def, out _);
+
+    /// <summary>What placing <paramref name="node"/>, a <paramref name="def"/>, copies at the settings it holds; null for a module no pack offers.</summary>
+    public static PackStencil? StencilOf(NodeDef def, NodeInstance node)
+    {
+        if (!Stencils.TryGetValue(def, out var stencils)) return null;
+
+        var held = def.Extra<SettingsExtra>() is { } settings
+            ? new ExtraState(settings.Fields, node.StateOf(settings.Key))
+            : null;
+
+        return stencils.At([.. stencils.Choices.Select(choice => held?.Chosen(choice) ?? "")]);
+    }
 
     /// <summary>The pack <paramref name="def"/> came from, or null for a module no pack offers.</summary>
     public static PackSource? SourceOf(NodeDef def) => Sources.TryGetValue(def, out var source) ? source : null;
@@ -35,14 +51,23 @@ internal static class PackModules
             return (catalog, [new LanguageIssue(1, 1, IssueCode.ModuleOutsidePack, "this text is not a pack: it opens with 'pack <id> <version>'.")]);
 
         var issues = new List<LanguageIssue>();
-        var defs = new List<(NodeDef Def, PackStencil Stencil)>();
+        var defs = new List<(NodeDef Def, PackStencils Stencils)>();
 
         foreach (var module in load.Modules)
         {
-            var (stencil, said) = PackStencil.Build(source, module, catalog);
+            var built = new Dictionary<string, PackStencil>(StringComparer.Ordinal);
+            var said = new List<LanguageIssue>();
 
-            if (stencil is null) issues.AddRange(said);
-            else defs.Add((Def(module), stencil));
+            foreach (var chosen in Settings(module.Choices))
+            {
+                var (stencil, wrong) = PackStencil.Build(source, module, chosen, catalog);
+
+                if (stencil is null) said.AddRange(wrong);
+                else built[PackStencils.Key(chosen)] = stencil;
+            }
+
+            if (said.Count > 0) issues.AddRange(said.DistinctBy(issue => (issue.Line, issue.Column, issue.Code)));
+            else defs.Add((Def(module), new PackStencils([.. module.Choices.Select(c => c.Name)], [.. module.Choices.Select(c => c.Default)], built)));
         }
 
         if (issues.Count > 0 || defs.Count == 0) return (catalog, issues);
@@ -55,26 +80,42 @@ internal static class PackModules
 
         var read = new PackSource(pack.Id, pack.Version, source);
 
-        foreach (var (def, stencil) in defs)
+        foreach (var (def, stencils) in defs)
         {
-            Stencils.AddOrUpdate(def, stencil);
+            Stencils.AddOrUpdate(def, stencils);
             Sources.AddOrUpdate(def, read);
         }
 
         return (added.Catalog, []);
     }
 
+    /// <summary>Every way the choices combine, each one value per choice, in order.</summary>
+    private static IEnumerable<IReadOnlyList<string>> Settings(IReadOnlyList<PackChoice> choices) =>
+        choices.Aggregate(
+            (IEnumerable<IReadOnlyList<string>>)[[]],
+            (ways, choice) => ways.SelectMany(way => choice.Options.Select(option => (IReadOnlyList<string>)[.. way, option])));
+
     private static NodeDef Def(PackModule module) => new(
         module.TypeId,
         Title(module.Name),
         module.Card.Category ?? "Packs",
-        [.. module.Inputs.Select((name, i) => new PortSpec(name, PortKind.Any, module.Defaults[i]))],
+        [.. module.Sockets.Select(Port)],
         [.. Enumerable.Range(0, module.Outputs).Select(i => new PortSpec(module.Outputs == 1 ? "out" : $"out_{i + 1}", PortKind.Any))],
         Never,
         module.Card.Help)
     {
         Words = module.Card.Words,
+        Extras = module.Choices.Count == 0
+            ? []
+            : [new SettingsExtra(SettingsKey, [.. module.Choices.Select(Field)])],
     };
+
+    private static PortSpec Port(PackSocket socket) => socket is { Min: { } min, Max: { } max }
+        ? new(socket.Name, PortKind.Any, socket.Default, min, max)
+        : new(socket.Name, PortKind.Any, socket.Default);
+
+    private static ExtraField Field(PackChoice choice) =>
+        new ExtraField.Choice(choice.Name, choice.Name, [.. choice.Options.Select(o => new ChoiceOption(o, o))], choice.Default);
 
     /// <summary><c>tape_echo</c> as a card says it: "Tape echo".</summary>
     private static string Title(string name) =>

@@ -1,4 +1,6 @@
 ﻿using Flyback.Core.Graph;
+using Flyback.Engine.Language.Ast;
+using Flyback.Engine.Language.Ast.Expressions;
 using Flyback.Engine.Graph;
 
 namespace Flyback.Engine.Language;
@@ -55,10 +57,23 @@ public static class PatchLanguage
         return [.. binder.Offered.Select(module => new PackModule(
             pack.Id + "." + module.Name,
             module.Name,
-            [.. module.Parameters.Select(p => p.Name)],
-            [.. module.Parameters.Select(p => (float)(PackOffers.Number(p.Default) ?? 0d))],
+            [.. module.Parameters.Where(p => p.Within is not ListExpr).Select(Socket)],
+            [.. module.Parameters.Where(p => p.Within is ListExpr).Select(Choice)],
             module.Results?.Count ?? (module.Result is Ast.Expressions.TupleExpr tuple ? tuple.Items.Count : 1),
             ModuleCard.Above(lines, module.Line),
             module.Line))];
+    }
+
+    private static PackSocket Socket(Parameter parameter) => parameter.Within is RangeExpr range
+        ? new(parameter.Name, Value(parameter.Default), Value(range.Low), Value(range.High))
+        : new(parameter.Name, Value(parameter.Default));
+
+    private static float Value(Expr? expr) => (float)(PackOffers.Number(expr) ?? 0d);
+
+    private static PackChoice Choice(Parameter parameter)
+    {
+        var options = PackOffers.Options((ListExpr)parameter.Within!)!;
+
+        return new(parameter.Name, [.. options.Select(o => o.Value)], PackOffers.Option(parameter.Default!)!.Value.Value, options[0].Text);
     }
 }

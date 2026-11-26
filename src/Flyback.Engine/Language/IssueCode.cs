@@ -226,4 +226,16 @@ public static class IssueCode
 
     /// <summary>A module's parameter whose default is not a number, which a socket holds.</summary>
     public const string ModuleDefaultNotANumber = "module-default-not-a-number";
+
+    /// <summary>A module's socket range that is not two numbers, the lower first.</summary>
+    public const string ModuleBadRange = "module-bad-range";
+
+    /// <summary>A module's setting whose choices are not 2 to 32 different numbers or texts.</summary>
+    public const string ModuleBadChoices = "module-bad-choices";
+
+    /// <summary>A module's default outside the range or the choices written for it.</summary>
+    public const string ModuleDefaultOutsideRange = "module-default-outside-range";
+
+    /// <summary>A module whose choices combine more ways than it may be built.</summary>
+    public const string ModuleTooManyChoices = "module-too-many-choices";
 }

@@ -13,7 +13,7 @@ internal static class PackExpansion
     {
         var placed = patch.Nodes
             .Select(node => (Node: node, Def: catalog.Get(node.TypeId)))
-            .Where(p => p.Def is not null && PackModules.StencilOf(p.Def) is not null)
+            .Where(p => p.Def is not null && PackModules.Offers(p.Def))
             .ToList();
 
         if (placed.Count == 0) return patch;
@@ -21,7 +21,7 @@ internal static class PackExpansion
         var nodes = patch.Nodes.ToList();
         var wires = patch.Connections.ToList();
 
-        foreach (var (node, def) in placed) Swap(node, def!, PackModules.StencilOf(def!)!, nodes, wires, catalog);
+        foreach (var (node, def) in placed) Swap(node, def!, PackModules.StencilOf(def!, node)!, nodes, wires, catalog);
 
         return patch.With(nodes, wires);
     }
