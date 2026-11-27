@@ -79,6 +79,54 @@ internal static class InstalledPacks
                 .OrderBy(file => file.Name, StringComparer.Ordinal)
                 .Select(file => $"{file.Name}|{file.Length}|{file.LastWriteTimeUtc.Ticks}"));
 
+    /// <summary>
+    /// Writes the pack in <paramref name="text"/> into <paramref name="folder"/> as
+    /// <c>&lt;id&gt;.fbks</c>, over any earlier version of it, once it reads cleanly against
+    /// <paramref name="modules"/>, the catalog without packs.
+    /// </summary>
+    /// <returns>What was installed, or what stopped it.</returns>
+    public static (PackInstalled? Installed, IReadOnlyList<string> Problems) Install(ModuleCatalog modules, string folder, string text)
+    {
+        if (System.Text.Encoding.UTF8.GetByteCount(text) > MostBytes) return (null, [$"it is over {MostBytes / 1024} KB."]);
+
+        var (added, issues) = PackModules.Into(modules, text);
+
+        if (issues.Count > 0) return (null, [.. issues.Select(issue => $"line {issue.Line}: {issue.Message}")]);
+
+        var offered = added.All.Where(def => modules.Get(def.TypeId) is null).ToList();
+
+        if (offered.Count == 0 || PackModules.SourceOf(offered[0]) is not { } pack)
+            return (null, ["it is not a pack: it opens with no 'pack <id> <version>' line, or offers no module."]);
+
+        var file = Path.Combine(folder, pack.Id + Extension);
+        var replaced = File.Exists(file) && Read(file) is { } before ? VersionOf(modules, before) : null;
+
+        if (replaced is null && Directory.Exists(folder) && Directory.EnumerateFiles(folder, "*" + Extension).Count() >= MostPacks)
+            return (null, [$"the packs folder already holds {MostPacks}, the most it loads."]);
+
+        try
+        {
+            Directory.CreateDirectory(folder);
+
+            var writing = file + ".part";
+            File.WriteAllText(writing, text);
+            File.Move(writing, file, overwrite: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return (null, [$"it could not be written to the packs folder: {ex.Message}"]);
+        }
+
+        return (new PackInstalled(pack.Id, pack.Version, replaced, [.. offered.Select(def => def.TypeId)], file), []);
+    }
+
+    private static string? VersionOf(ModuleCatalog modules, string text)
+    {
+        var (added, issues) = PackModules.Into(modules, text);
+
+        return issues.Count > 0 ? null : added.All.Select(PackModules.SourceOf).OfType<PackSource>().FirstOrDefault()?.Version;
+    }
+
     private static PluginProblem Problem(string file, string folder, string message) =>
         new(Path.GetFileName(file), message) { Folder = folder };
 

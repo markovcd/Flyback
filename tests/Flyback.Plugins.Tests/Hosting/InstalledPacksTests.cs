@@ -94,4 +94,48 @@ public sealed class InstalledPacksTests : IDisposable
         catalog.Modules.Get("ada.echoes.wobble").ShouldBeNull();
         catalog.Problems.ShouldBeEmpty();
     }
+
+    [Fact]
+    public void Installing_writes_the_pack_under_its_id_and_says_what_it_offers()
+    {
+        var (installed, problems) = InstalledPacks.Install(Flyback.Core.Graph.NodeCatalog.BuiltIn, folder.FullName, Echoes);
+
+        problems.ShouldBeEmpty();
+        installed.ShouldNotBeNull().ShouldBe(new PackInstalled(
+            "ada.echoes", "1.0.0", null, installed.Modules, Path.Combine(folder.FullName, "ada.echoes.fbks")));
+        installed.Modules.ShouldBe(["ada.echoes.wobble"]);
+        Loaded().Modules.Get("ada.echoes.wobble").ShouldNotBeNull();
+    }
+
+    [Fact]
+    public void Installing_a_new_version_replaces_the_old_and_says_which_it_was()
+    {
+        InstalledPacks.Install(Flyback.Core.Graph.NodeCatalog.BuiltIn, folder.FullName, Echoes);
+
+        var (installed, _) = InstalledPacks.Install(Flyback.Core.Graph.NodeCatalog.BuiltIn, folder.FullName, Echoes.Replace("1.0.0", "1.1.0"));
+
+        installed.ShouldNotBeNull().Replaced.ShouldBe("1.0.0");
+        folder.GetFiles().ShouldHaveSingleItem().Name.ShouldBe("ada.echoes.fbks");
+        Loaded().Modules.ProviderOf("ada.echoes.wobble").ShouldBe(new("ada.echoes", "ada.echoes 1.1.0"));
+    }
+
+    [Fact]
+    public void A_pack_with_a_mistake_is_not_written()
+    {
+        var (installed, problems) = InstalledPacks.Install(
+            Flyback.Core.Graph.NodeCatalog.BuiltIn, folder.FullName, "pack ada.broken 1.0.0\nmodule bad(in = 0) = sine(fre: in)\n");
+
+        installed.ShouldBeNull();
+        problems.ShouldHaveSingleItem().ShouldStartWith("line 2: ");
+        folder.GetFiles().ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void A_patch_is_not_a_pack()
+    {
+        var (installed, problems) = InstalledPacks.Install(Flyback.Core.Graph.NodeCatalog.BuiltIn, folder.FullName, "sine(freq: 220) |> out.left");
+
+        installed.ShouldBeNull();
+        problems.ShouldHaveSingleItem().ShouldContain("not a pack");
+    }
 }

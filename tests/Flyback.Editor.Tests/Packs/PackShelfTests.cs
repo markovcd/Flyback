@@ -87,4 +87,33 @@ public sealed class PackShelfTests : EditorTest
         All<Avalonia.Controls.TextBlock>(window)
             .ShouldContain(t => t.Text != null && t.Text.StartsWith("A pack in the packs folder has a problem: broken.fbks: line 2", StringComparison.Ordinal));
     }
+
+    [AvaloniaFact]
+    public void Installing_a_pack_writes_it_into_the_folder_and_its_modules_join_the_list()
+    {
+        var window = Window();
+
+        var installed = Service<PackShelf>(window).Install(Echoes).ShouldNotBeNull();
+
+        installed.File.ShouldBe(Path.Combine(folder.FullName, "ada.echoes.fbks"));
+        File.ReadAllText(installed.File).ShouldBe(Echoes);
+        Service<PluginCatalog>(window).Modules.Get("ada.echoes.wobble").ShouldNotBeNull();
+
+        Settle(window);
+        All<Avalonia.Controls.TextBlock>(window)
+            .ShouldContain(t => t.Text == "Installed pack ada.echoes 1.0.0: Wobble. Its modules are in the module list.");
+    }
+
+    [AvaloniaFact]
+    public void A_pack_that_does_not_read_is_not_installed()
+    {
+        var window = Window();
+
+        Service<PackShelf>(window).Install("pack ada.broken 1.0.0\nmodule bad(in = 0) = sine(fre: in)\n").ShouldBeNull();
+
+        folder.GetFiles().ShouldBeEmpty();
+        Settle(window);
+        All<Avalonia.Controls.TextBlock>(window)
+            .ShouldContain(t => t.Text != null && t.Text.StartsWith("Pack not installed: line 2", StringComparison.Ordinal));
+    }
 }

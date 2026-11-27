@@ -405,6 +405,12 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
     [When("flyback-cli lists the levels of {string} around {string}")]
     public void WhenLevelsListed(string name, string module) => Run("levels", Path(name), "--of", module);
 
+    [When("flyback-cli packs install {string} into the folder {string}")]
+    public void WhenPackInstalled(string name, string packs) => Run("packs", "install", Path(name), "--folder", Path(packs));
+
+    [When("flyback-cli packs list the folder {string}")]
+    public void WhenPacksListed(string packs) => Run("packs", "list", "--folder", Path(packs));
+
     [When("flyback-cli describes the preset {string}")]
     public void WhenDescribed(string name) => Run("info", "--preset", name);
 

@@ -26,6 +26,10 @@ with a mistake adds nothing and is listed with the plugins' problems, by file an
 adds the packs that are not installed to the catalog the patch is read against; an
 installed pack stands over the bundle's copy.
 
+**Opening a pack file installs it.** It holds modules, not a patch, so the editor checks it
+and writes it into the packs folder as `<id>.fbks`, over any earlier version, rather than opening
+an empty canvas; `flyback-cli packs install` does the same from a script.
+
 ## Consequences
 
 - A shared patch opens anywhere, offline; a loose one without its pack opens as one

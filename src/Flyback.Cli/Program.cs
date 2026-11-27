@@ -100,6 +100,7 @@ internal static class Program
             PackPluginCommand.Build(),
             PluginKeyCommand.Build(),
             PluginCommand.Build(plugins, json),
+            PacksCommand.Build(plugins, json),
             ModulesCommand.Build(plugins, json),
             CompareCommand.Build(plugins, json),
             ProbeCommand.Build(plugins, json),

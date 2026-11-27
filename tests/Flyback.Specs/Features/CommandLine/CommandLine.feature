@@ -157,3 +157,17 @@ Feature: The command line says whether a patch works, and whether two are the sa
     When flyback-cli compares "low.fbk" with "high.fbk"
     Then the command says the patch has problems
     And it says they are not the same instrument
+
+  Scenario: A module pack installs into a packs folder, and the folder lists it
+    Given the text saved as "echoes.fbks":
+      """
+      pack ada.echoes 1.0.0
+
+      module wobble(rate = 3) = sine(freq: rate)
+      """
+    When flyback-cli packs install "echoes.fbks" into the folder "packs"
+    Then the command succeeds
+    And it names "ada.echoes.wobble"
+    When flyback-cli packs list the folder "packs"
+    Then the command succeeds
+    And it names "ada.echoes 1.0.0: ada.echoes.wobble"

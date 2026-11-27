@@ -274,6 +274,27 @@ public sealed class FileDropTests : EditorTest
         Editor(window).History.Patch.Nodes.ShouldContain(n => n.TypeId == "ada.echoes.wobble");
     }
 
+    /// <summary>A pack file is installed rather than opened, so the patch open stays open.</summary>
+    [AvaloniaFact]
+    public void A_dropped_pack_is_installed_and_the_patch_stays()
+    {
+        Directory.CreateDirectory(folder);
+
+        var packs = Path.Combine(folder, "packs");
+        var path = Path.Combine(folder, "echoes.fbks");
+        File.WriteAllText(path, "pack ada.echoes 1.0.0\nmodule wobble(rate = 3) = sine(freq: rate)\n");
+
+        var window = Open(setup: new Flyback.Editor.Shell.EditorSetup { Folders = new Flyback.Editor.Shell.EditorFolders { PackFolder = packs } });
+        var before = Editor(window).History.Patch;
+
+        Drop(window, Carrying(StorageFiles.OnDisk(path)));
+        WaitForReport(window, "Installed pack ada.echoes 1.0.0: Wobble.");
+
+        File.Exists(Path.Combine(packs, "ada.echoes.fbks")).ShouldBeTrue();
+        Service<Flyback.Plugins.Hosting.PluginCatalog>(window).Modules.Get("ada.echoes.wobble").ShouldNotBeNull();
+        Editor(window).History.Patch.ShouldBeSameAs(before);
+    }
+
     /// <summary>A text patch that does not read is refused with each complaint and where it is.</summary>
     [AvaloniaFact]
     public void A_text_patch_that_does_not_read_says_what_and_where()

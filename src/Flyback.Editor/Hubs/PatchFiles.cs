@@ -575,6 +575,13 @@ internal sealed class PatchFiles
             var text = await reader.ReadToEndAsync();
             var load = PatchLanguage.Build(text);
 
+            // A pack is installed rather than opened: it holds modules, not a patch.
+            if (load.Pack is not null)
+            {
+                packs.Install(text);
+                return;
+            }
+
             if (!load.Ok)
             {
                 report.Say(

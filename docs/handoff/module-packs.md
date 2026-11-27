@@ -4,7 +4,7 @@ Planned on 2026-11-16, on `main` at `57aa9ab0`. It is on TODO.md; take it off th
 delete this file, in the commit that lands the last of it.
 
 - **Kind:** Plan
-- **Status:** Open. `fold` (ADR-0236), the header and `module` (ADR-0241), and placing a pack's module as one module expanded before compiling (ADR-0242) loading the packs installed in a folder and bundles carrying them (ADR-0243) landed; every host taking a bundle's packs, and the editor taking a pack added to its folder while it runs, landed, and so did socket ranges and choices, named outputs and the Interval module for running with memory; Effects is written as a pack; installing from a file or the preset site is next.
+- **Status:** Open. `fold` (ADR-0236), the header and `module` (ADR-0241), and placing a pack's module as one module expanded before compiling (ADR-0242) loading the packs installed in a folder and bundles carrying them (ADR-0243) landed; every host taking a bundle's packs, and the editor taking a pack added to its folder while it runs, landed, and so did socket ranges and choices, named outputs and the Interval module for running with memory; Effects is written as a pack; installing from a file landed; installing from the preset site is next.
 
 ## What is wanted
 
@@ -65,8 +65,11 @@ file and line. A bundle carries each pack its patch uses as `packs/<id>.fbks`, r
 into its module list while it runs (`PluginCatalog.Take`). A pack added to the folder, or
 written again, joins the list the next time the module list opens, a file opens or a
 program driving the editor calls (`PackShelf`). The viewer, the CLI and the web
-viewer compile a bundle with its packs too. Still to do: the web editor, which has no folder, and a way to install a pack from the
-editor or the preset site.
+viewer compile a bundle with its packs too. A pack file opened or dropped on the editor is
+installed rather than opened (`PackShelf.Install`): checked, written as `<id>.fbks` over any
+earlier version, and its modules join the list. `flyback-cli packs install` and `packs list` do
+the same from a script, kept out of the help while packs are dark. Still to do: the web editor,
+which has no folder, installing from the preset site, and removing a pack.
 
 ## Saving, versioning and checking
 
@@ -105,5 +108,5 @@ Translate and Perspective. Not Speak, Mouth, Path or Text.
    are not the same, since the plugin computes outputs nobody wired and a Sine adds its
    `amp` and `bias`. Moving the plugin over still needs saved Echo settings carried from the
    `echo` key to `pack`, and the pack shipped in the app rather than a folder.
-3. Install a pack from a file and from the preset site; load packs on iOS and the web.
+3. Install a pack from a file (landed) and from the preset site; load packs on iOS and the web.
 4. Move the other plugins' modules over one plugin at a time.
