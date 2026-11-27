@@ -4,7 +4,7 @@ Planned on 2026-11-16, on `main` at `57aa9ab0`. It is on TODO.md; take it off th
 delete this file, in the commit that lands the last of it.
 
 - **Kind:** Plan
-- **Status:** Open. `fold` (ADR-0236), the header and `module` (ADR-0241), and placing a pack's module as one module expanded before compiling (ADR-0242) loading the packs installed in a folder and bundles carrying them (ADR-0243) landed; every host taking a bundle's packs, and the editor taking a pack added to its folder while it runs, landed, and so did socket ranges and choices, named outputs and the Interval module for running with memory; porting Effects is next.
+- **Status:** Open. `fold` (ADR-0236), the header and `module` (ADR-0241), and placing a pack's module as one module expanded before compiling (ADR-0242) loading the packs installed in a folder and bundles carrying them (ADR-0243) landed; every host taking a bundle's packs, and the editor taking a pack added to its folder while it runs, landed, and so did socket ranges and choices, named outputs and the Interval module for running with memory; Effects is written as a pack; installing from a file or the preset site is next.
 
 ## What is wanted
 
@@ -99,8 +99,11 @@ Translate and Perspective. Not Speak, Mouth, Path or Text.
 
 ## Order
 
-1. The five language pieces above, each landing dark.
-2. Port Effects as one pack and check it compiles to the same ops as the DLL, the way
-   `LoopTests.SameInstrument` checks a loop.
+1. The five language pieces above, each landing dark (landed).
+2. Port Effects as one pack (landed, dark: `src/packs/flyback.effects.fbks`). `EffectsPackTests`
+   holds it to the plugin by type id, sockets, and sound and picture sample for sample. The ops
+   are not the same, since the plugin computes outputs nobody wired and a Sine adds its
+   `amp` and `bias`. Moving the plugin over still needs saved Echo settings carried from the
+   `echo` key to `pack`, and the pack shipped in the app rather than a folder.
 3. Install a pack from a file and from the preset site; load packs on iOS and the web.
 4. Move the other plugins' modules over one plugin at a time.

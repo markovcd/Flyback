@@ -1,0 +1,93 @@
+pack flyback.effects 1.0.0
+
+// The Effects plugin's modules, written in the text.
+
+/// One voice heard as several: a short delay swept slowly under the dry signal. 'out' and 'wide' are a stereo pair. Audio only but for 'lfo': on the picture it is a wire.
+/// category: Time effects · words: thicken, detune, double
+/// glyph: M2,9 C4,6 6,6 8,9 C10,12 12,12 14,9 C16,6 18,6 20,9 M2,15 C4,12 6,12 8,15 C10,18 12,18 14,15 C16,12 18,12 20,15
+module chorus(in = 0 in -1..1, rate = 0.8 in 0.02..8, depth = 0.5 in 0..1, mix = 0.5 in 0..1) = {
+  let lfo = sine(freq: rate)
+  let offset = lfo * (clamp(depth, 0, 1) * 0.008)
+
+  // No feedback on either line: a chorus with feedback in it is a flanger.
+  out out = delay(in: in, time: 0.014 + offset, feedback: 0, mix: mix) "One side, or the whole of it in mono."
+  out wide = delay(in: in, time: 0.014 - offset, feedback: 0, mix: mix) "Swept opposite to 'out', for the other side."
+  out lfo "The sweep itself, -1 to 1. It works on the picture too."
+}
+
+/// A very short chorus whose copy cancels the original, sweeping a comb of notches through the sound. Audio only but for 'lfo': on the picture it is a wire.
+/// category: Time effects · words: jet sweep, comb
+/// glyph: M2,12 L4,4 L6,12 L8,4 L10,12 L12,4 L14,12 L16,4 L18,12 L20,4 L22,12
+module flanger(in = 0 in -1..1, rate = 0.3 in 0.02..5, depth = 0.8 in 0..1, feedback = 0.5 in -0.95..0.95, mix = 0.5 in 0..1) = {
+  let lfo = sine(freq: rate)
+
+  out out = delay(in: in, time: 0.0027 + lfo * (clamp(depth, 0, 1) * 0.0024), feedback: feedback, mix: mix) "The swept sound, mixed by 'mix'."
+  out lfo "The sweep itself, -1 to 1. It works on the picture too."
+}
+
+/// Two unrelated notches swept through the sound, from four allpass stages over the dry signal, so it sweeps where a flanger whooshes. Audio only but for 'lfo': on the picture it is a wire.
+/// category: Time effects · words: swept notches
+/// glyph: M2,16 C6,16 6,8 10,8 C14,8 14,16 18,16 C20,16 21,16 22,16 M4,4 L14,4 M4,4 L6.3,1.8 M4,4 L6.3,6.2 M14,4 L11.7,1.8 M14,4 L11.7,6.2
+module phaser(in = 0 in -1..1, rate = 0.4 in 0.02..5, depth = 0.7 in 0..1, feedback = 0.4 in 0..0.9, mix = 0.5 in 0..1) = {
+  let lfo = sine(freq: rate)
+  let clock = interval()
+
+  // The sweep in octaves, 180 Hz to 2400 Hz, turned into each stage's one-pole gain.
+  let across = lfo * clamp(depth, 0, 1) * 0.5 + 0.5
+  let corner = pow(2400 / 180, across) * 180
+  let g = tan(clamp(corner * clock.seconds, 0, 0.499) * 3.14159265)
+  let gain = g / (g + 1)
+
+  // The loop round the whole chain, one sample deep.
+  let round = add(a: 0)
+  let s0 = in + round * clamp(feedback, -0.9, 0.9)
+
+  // Four allpass stages: a lowpass and its own complement, so only the phase moves.
+  let c1 = add(a: 0)
+  let t1 = (s0 - c1) * gain
+  let l1 = t1 + c1
+  c1.b <- l1 + t1
+  let s1 = l1 * 2 - s0
+
+  let c2 = add(a: 0)
+  let t2 = (s1 - c2) * gain
+  let l2 = t2 + c2
+  c2.b <- l2 + t2
+  let s2 = l2 * 2 - s1
+
+  let c3 = add(a: 0)
+  let t3 = (s2 - c3) * gain
+  let l3 = t3 + c3
+  c3.b <- l3 + t3
+  let s3 = l3 * 2 - s2
+
+  let c4 = add(a: 0)
+  let t4 = (s3 - c4) * gain
+  let l4 = t4 + c4
+  c4.b <- l4 + t4
+  let s4 = l4 * 2 - s3
+
+  round.b <- s4
+
+  // Without memory the stages are a wire, so the picture gets the dry signal.
+  out out = math.mix(in, s4, mix * clock.remembers) "The swept sound, mixed by 'mix'."
+  out lfo "The sweep itself, -1 to 1. It works on the picture too."
+}
+
+/// A stereo echo that keeps time: with a Tempo in 'tempo', 'left' and 'right' are counted in steps, so 3 and 2 in a row at four steps a beat echo left a dotted eighth after the note and right two sixteenths after that. Set on the node: steps per beat, and whether the taps are in a row (the repeats cross over) or side by side. Two seconds at most. Audio only.
+/// category: Time effects · words: echo in time, delay
+/// glyph: M6,20 A9,9 0 0 1 6,4 M9,20 A6,6 0 0 1 9,8 M12,20 A3,3 0 0 1 12,14
+module echo(in = 0 in -1..1, tempo = 2 in 0.25..8, left = 3 in 0.25..16, right = 2 in 0.25..16, feedback = 0.45 in 0..0.95, mix = 0.4 in 0..1, taps = "row" in ["row", "side"], division = 4 in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]) = {
+  let steps = tempo * division
+  let first = delay(in: in, time: left / steps, feedback: feedback, mix: mix)
+
+  // In a row the right tap repeats the left one, so the repeats cross over; side by side each hears the input.
+  let second = if taps == "side" {
+    delay(in: in, time: right / steps, feedback: feedback, mix: mix)
+  } else {
+    delay(in: first, time: right / steps, feedback: 0, mix: mix)
+  }
+
+  out left = first "The sound and the left tap's repeats."
+  out right = second "The sound and the right tap's repeats."
+}
