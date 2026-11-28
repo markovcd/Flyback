@@ -3,7 +3,7 @@ import { beforeEach } from "vitest";
 
 await applyD1Migrations(env.DB, env.MIGRATIONS);
 
-const TABLES = ["preset_tags", "presets", "defaults", "plugins", "plugin_defaults", "reports", "ratings", "letters", "limits"];
+const TABLES = ["preset_tags", "presets", "defaults", "plugins", "plugin_defaults", "packs", "reports", "ratings", "letters", "limits"];
 
 /** Each test starts from an empty site: no rows and no files. */
 beforeEach(async () => {

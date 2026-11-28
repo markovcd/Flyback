@@ -53,7 +53,7 @@ internal static class InstalledPacks
 
         foreach (var file in files.Take(MostPacks))
         {
-            if (Read(file) is not { } source)
+            if (ReadFile(file) is not { } source)
             {
                 problems.Add(Problem(file, folder, $"not loaded: it could not be read, or is over {MostBytes / 1024} KB."));
                 continue;
@@ -87,19 +87,12 @@ internal static class InstalledPacks
     /// <returns>What was installed, or what stopped it.</returns>
     public static (PackInstalled? Installed, IReadOnlyList<string> Problems) Install(ModuleCatalog modules, string folder, string text)
     {
-        if (System.Text.Encoding.UTF8.GetByteCount(text) > MostBytes) return (null, [$"it is over {MostBytes / 1024} KB."]);
+        var (pack, problems) = Read(modules, text);
 
-        var (added, issues) = PackModules.Into(modules, text);
-
-        if (issues.Count > 0) return (null, [.. issues.Select(issue => $"line {issue.Line}: {issue.Message}")]);
-
-        var offered = added.All.Where(def => modules.Get(def.TypeId) is null).ToList();
-
-        if (offered.Count == 0 || PackModules.SourceOf(offered[0]) is not { } pack)
-            return (null, ["it is not a pack: it opens with no 'pack <id> <version>' line, or offers no module."]);
+        if (pack is null) return (null, problems);
 
         var file = Path.Combine(folder, pack.Id + Extension);
-        var replaced = File.Exists(file) && Read(file) is { } before ? VersionOf(modules, before) : null;
+        var replaced = File.Exists(file) && ReadFile(file) is { } before ? VersionOf(modules, before) : null;
 
         if (replaced is null && Directory.Exists(folder) && Directory.EnumerateFiles(folder, "*" + Extension).Count() >= MostPacks)
             return (null, [$"the packs folder already holds {MostPacks}, the most it loads."]);
@@ -117,7 +110,24 @@ internal static class InstalledPacks
             return (null, [$"it could not be written to the packs folder: {ex.Message}"]);
         }
 
-        return (new PackInstalled(pack.Id, pack.Version, replaced, [.. offered.Select(def => def.TypeId)], file), []);
+        return (new PackInstalled(pack.Id, pack.Version, replaced, [.. pack.Modules.Select(def => def.TypeId)], file), []);
+    }
+
+    /// <summary>The pack in <paramref name="text"/> read against <paramref name="modules"/>, the catalog without packs, or what is wrong with it.</summary>
+    public static (PackRead? Pack, IReadOnlyList<string> Problems) Read(ModuleCatalog modules, string text)
+    {
+        if (System.Text.Encoding.UTF8.GetByteCount(text) > MostBytes) return (null, [$"it is over {MostBytes / 1024} KB."]);
+
+        var (added, issues) = PackModules.Into(modules, text);
+
+        if (issues.Count > 0) return (null, [.. issues.Select(issue => $"line {issue.Line}: {issue.Message}")]);
+
+        var offered = added.All.Where(def => modules.Get(def.TypeId) is null).ToList();
+
+        if (offered.Count == 0 || PackModules.SourceOf(offered[0]) is not { } pack)
+            return (null, ["it is not a pack: it opens with no 'pack <id> <version>' line, or offers no module."]);
+
+        return (new PackRead(pack.Id, pack.Version, offered), []);
     }
 
     private static string? VersionOf(ModuleCatalog modules, string text)
@@ -130,7 +140,7 @@ internal static class InstalledPacks
     private static PluginProblem Problem(string file, string folder, string message) =>
         new(Path.GetFileName(file), message) { Folder = folder };
 
-    private static string? Read(string file)
+    private static string? ReadFile(string file)
     {
         try
         {

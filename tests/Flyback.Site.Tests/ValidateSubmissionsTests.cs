@@ -21,13 +21,15 @@ public sealed class ValidateSubmissionsTests
             ("GET", "/api/v1/admin/unchecked") when !listed && (listed = true) => FakeSite.Json("""
                 {
                   "presets": [ { "id": "p1", "name": "Night bus", "fileName": "Drone.fbk" }, { "id": "p2", "name": null, "fileName": "notes.fbk" } ],
-                  "plugins": [ { "id": "k1", "fileName": "upload.fbkp" } ]
+                  "plugins": [ { "id": "k1", "fileName": "upload.fbkp" } ],
+                  "packs": [ { "id": "m1", "fileName": "lights.fbks" } ]
                 }
                 """),
             ("GET", "/api/v1/admin/unchecked") => FakeSite.Json("""{ "presets": [], "plugins": [] }"""),
             ("GET", "/api/v1/admin/presets/p1/file") => FakeSite.Bytes(Files.Patch()),
             ("GET", "/api/v1/admin/presets/p2/file") => FakeSite.Bytes("{\"hello\": 1}"u8.ToArray()),
             ("GET", "/api/v1/admin/plugins/k1/file") => FakeSite.Bytes(Files.Package("win")),
+            ("GET", "/api/v1/admin/packs/m1/file") => FakeSite.Bytes("pack ada.lights 1.2.0\nmodule glow(level = 0.5) = sine(amp: level)\n"u8.ToArray()),
             ("PUT", "/api/v1/admin/presets/p2/check") => FakeSite.Status(secondAnswer),
             ("PUT", _) => FakeSite.Status(HttpStatusCode.OK),
             _ => FakeSite.Status(HttpStatusCode.NotFound),
@@ -49,6 +51,9 @@ public sealed class ValidateSubmissionsTests
         sent["/api/v1/admin/presets/p1/check"].GetProperty("name").GetString().ShouldBe("Night bus");
         sent["/api/v1/admin/presets/p2/check"].GetProperty("accepted").GetBoolean().ShouldBeFalse();
         sent["/api/v1/admin/plugins/k1/check"].GetProperty("assembly").GetString().ShouldBe("Flyback.Plugins.Picture");
+        sent["/api/v1/admin/packs/m1/check"].GetProperty("pack").GetString().ShouldBe("ada.lights");
+        sent["/api/v1/admin/packs/m1/check"].GetProperty("version").GetString().ShouldBe("1.2.0");
+        sent["/api/v1/admin/packs/m1/check"].GetProperty("modules")[0].GetProperty("id").GetString().ShouldBe("ada.lights.glow");
 
         output.ToString().ShouldContain("p2 notes.fbk: refused: That is not a Flyback patch.");
     }

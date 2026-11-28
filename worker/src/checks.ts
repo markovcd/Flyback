@@ -1,6 +1,7 @@
 import type { Env } from "./env";
 import { badRequest, body, field, json, notFound, refused } from "./http";
-import { pluginFile, presetFile } from "./keys";
+import { packFile, pluginFile, presetFile } from "./keys";
+import { describePack, findPack, packChecked, packView } from "./packs";
 import {
   type CheckedPlugin,
   describePlugin,
@@ -26,16 +27,19 @@ const WEEK_MS = 7 * 24 * 3600 * 1000;
 
 /** GET /admin/unchecked: the oldest submissions still waiting, of each kind. */
 export async function listUnchecked(env: Env): Promise<Response> {
-  const [presets, plugins] = await env.DB.batch([
+  const [presets, plugins, packs] = await env.DB.batch([
     env.DB.prepare(
       "SELECT id, name, file_name AS fileName FROM presets WHERE status = 'unchecked' ORDER BY submitted_at, id LIMIT ?",
     ).bind(BATCH),
     env.DB.prepare(
       "SELECT id, file_name AS fileName FROM plugins WHERE status = 'unchecked' ORDER BY submitted_at, id LIMIT ?",
     ).bind(BATCH),
+    env.DB.prepare(
+      "SELECT id, file_name AS fileName FROM packs WHERE status = 'unchecked' ORDER BY submitted_at, id LIMIT ?",
+    ).bind(BATCH),
   ]);
 
-  return json({ presets: presets!.results, plugins: plugins!.results });
+  return json({ presets: presets!.results, plugins: plugins!.results, packs: packs!.results });
 }
 
 /** GET /admin/presets: every checked preset's id and file name, for the pass that refreshes what browsers lack. */
@@ -47,12 +51,13 @@ export async function listCheckedPresets(env: Env): Promise<Response> {
   return json({ items: results });
 }
 
-/** GET /admin/{presets|plugins}/{id}/file: the file whatever its state, never counted. */
-export async function anyFile(env: Env, kind: "preset" | "plugin", id: string): Promise<Response> {
-  const row = kind === "preset" ? await findPreset(env, id) : await findPlugin(env, id);
+/** GET /admin/{presets|plugins|packs}/{id}/file: the file whatever its state, never counted. */
+export async function anyFile(env: Env, kind: "preset" | "plugin" | "pack", id: string): Promise<Response> {
+  const row =
+    kind === "preset" ? await findPreset(env, id) : kind === "plugin" ? await findPlugin(env, id) : await findPack(env, id);
   if (row === null) return notFound();
 
-  const file = await env.FILES.get(kind === "preset" ? presetFile(id) : pluginFile(id));
+  const file = await env.FILES.get(kind === "preset" ? presetFile(id) : kind === "plugin" ? pluginFile(id) : packFile(id));
   return file === null ? notFound() : download(file, row.file_name);
 }
 
@@ -102,6 +107,28 @@ export async function checkPlugin(env: Env, request: Request, id: string): Promi
   return json(pluginView((await findPlugin(env, id))!, NO_RATING));
 }
 
+/** PUT /admin/packs/{id}/check. An accepted pack is still unpublished until the admin publishes it. */
+export async function checkPack(env: Env, request: Request, id: string): Promise<Response> {
+  const result = await body(request);
+  if (result === null) return badRequest("Send what the check said as JSON.");
+
+  const row = await findPack(env, id);
+  if (row === null) return notFound();
+  if (row.status !== "unchecked") return refused(409, "That pack has been checked already.");
+
+  const verdict = refusal(result);
+  if (verdict !== undefined) {
+    if (verdict === null) return badRequest("A refusal says why.");
+    await refuse(env, "packs", id, verdict);
+  } else {
+    const checked = packChecked(result);
+    if (typeof checked === "string") return badRequest(checked);
+    await describePack(env, id, checked).run();
+  }
+
+  return json(packView((await findPack(env, id))!, NO_RATING));
+}
+
 /** PUT /admin/presets/{id}/lacks: what the web pages of this build lack to open the preset, or null. */
 export async function putLacks(env: Env, request: Request, id: string): Promise<Response> {
   let lacks: unknown;
@@ -125,7 +152,7 @@ export async function putLacks(env: Env, request: Request, id: string): Promise<
 export async function forgetRefused(env: Env): Promise<void> {
   const before = now(new Date(Date.now() - WEEK_MS));
 
-  for (const [table, key] of [["presets", presetFile], ["plugins", pluginFile]] as const) {
+  for (const [table, key] of [["presets", presetFile], ["plugins", pluginFile], ["packs", packFile]] as const) {
     const { results } = await env.DB.prepare(`SELECT id FROM ${table} WHERE status = 'refused' AND submitted_at < ?`)
       .bind(before)
       .all<{ id: string }>();
@@ -137,7 +164,7 @@ export async function forgetRefused(env: Env): Promise<void> {
   }
 }
 
-async function refuse(env: Env, table: "presets" | "plugins", id: string, reason: string): Promise<void> {
+async function refuse(env: Env, table: "presets" | "plugins" | "packs", id: string, reason: string): Promise<void> {
   await env.DB.prepare(`UPDATE ${table} SET status = 'refused', reason = ? WHERE id = ?`)
     .bind(reason.slice(0, REASON_LIMIT), id)
     .run();

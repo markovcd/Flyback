@@ -72,7 +72,10 @@ internal static class ValidateSubmissionsCommand
                 return Exit.Failed;
             }
 
-            var listed = (waiting?.Presets ?? []).Select(f => ("presets", f)).Concat((waiting?.Plugins ?? []).Select(f => ("plugins", f))).ToList();
+            var listed = (waiting?.Presets ?? []).Select(f => ("presets", f))
+                .Concat((waiting?.Plugins ?? []).Select(f => ("plugins", f)))
+                .Concat((waiting?.Packs ?? []).Select(f => ("packs", f)))
+                .ToList();
 
             if (listed.Count == 0) break;
 
@@ -83,7 +86,9 @@ internal static class ValidateSubmissionsCommand
                 try
                 {
                     var bytes = await site.GetByteArrayAsync($"api/v1/admin/{kind}/{file.Id}/file", cancellation);
-                    var check = Checks.Of(kind == "plugins", file.FileName, bytes, file.Name, browser, error);
+                    var check = kind == "packs"
+                        ? Checks.OfPack(file.FileName, bytes, error)
+                        : Checks.Of(kind == "plugins", file.FileName, bytes, file.Name, browser, error);
 
                     using var sent = await site.PutAsync(
                         $"api/v1/admin/{kind}/{file.Id}/check",

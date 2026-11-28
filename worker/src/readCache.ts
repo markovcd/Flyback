@@ -1,7 +1,7 @@
 import type { Env } from "./env";
 
 /** The anonymous reads whose answer is the same for every visitor: the lists and one entry, never a file, a rating or the render queue. */
-const READS = /^\/api\/v1\/(presets|plugins)(\/[^/]+)?$|^\/api\/v1\/tags$/;
+const READS = /^\/api\/v1\/(presets|plugins|packs)(\/[^/]+)?$|^\/api\/v1\/tags$/;
 
 /** How long a read is kept, in seconds; 0 or unset keeps nothing. */
 const seconds = (env: Env): number => {

@@ -4,7 +4,7 @@ import { limited } from "./limits";
 import { hex, now } from "./text";
 import { visitorOf } from "./visitor";
 
-export type Kind = "preset" | "plugin";
+export type Kind = "preset" | "plugin" | "pack";
 
 export interface Rating {
   average: number;

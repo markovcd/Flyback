@@ -47,7 +47,8 @@ export async function listReports(env: Env): Promise<Response> {
     `SELECT r.id, r.kind, r.subject_id AS subject,
        CASE r.kind
          WHEN 'preset' THEN (SELECT p.name FROM presets p WHERE p.id = r.subject_id)
-         ELSE (SELECT p.name FROM plugins p WHERE p.id = r.subject_id)
+         WHEN 'plugin' THEN (SELECT p.name FROM plugins p WHERE p.id = r.subject_id)
+         ELSE (SELECT p.pack FROM packs p WHERE p.id = r.subject_id)
        END AS name,
        r.reason, r.details, r.submitted_at AS submitted
      FROM reports r ORDER BY r.submitted_at DESC, r.id DESC`,

@@ -1,5 +1,5 @@
 import { adminEnabled, isAdmin } from "./access";
-import { anyFile, checkPlugin, checkPreset, forgetRefused, listCheckedPresets, listUnchecked, putLacks } from "./checks";
+import { anyFile, checkPack, checkPlugin, checkPreset, forgetRefused, listCheckedPresets, listUnchecked, putLacks } from "./checks";
 import { putDefault } from "./defaults";
 import type { Env } from "./env";
 import { json, notFound, unauthorized } from "./http";
@@ -26,6 +26,7 @@ import {
   presetShown,
   submitPreset,
 } from "./presets";
+import { changePack, deletePack, getPack, listPacks, packFileOf, packShown, submitPack } from "./packs";
 import { FRAMEWORK, KEPT_FOR_GOOD, largeFile, putLargeFile } from "./large";
 import { readCached } from "./readCache";
 import { giveRating, readRating } from "./ratings";
@@ -68,6 +69,14 @@ const PUBLIC: Route[] = [
   ["PUT", path("/api/v1/plugins/{id}/rating"), (a) => giveRating(a.env, a.request, "plugin", a.at[0]!, () => pluginShown(a.env, a.at[0]!))],
   ["POST", path("/api/v1/plugins/{id}/reports"), (a) => report(a.env, a.request, "plugin", a.at[0]!, () => pluginShown(a.env, a.at[0]!))],
 
+  ["GET", path("/api/v1/packs"), (a) => listPacks(a.env, a.url, a.admin)],
+  ["POST", path("/api/v1/packs"), (a) => submitPack(a.env, a.request, a.ctx)],
+  ["GET", path("/api/v1/packs/{id}"), (a) => getPack(a.env, a.at[0]!, a.admin)],
+  ["GET", path("/api/v1/packs/{id}/file"), (a) => packFileOf(a.env, a.url, a.at[0]!, a.admin)],
+  ["GET", path("/api/v1/packs/{id}/rating"), async (a) => readRating(a.env, a.request, "pack", a.at[0]!, await packShown(a.env, a.at[0]!))],
+  ["PUT", path("/api/v1/packs/{id}/rating"), (a) => giveRating(a.env, a.request, "pack", a.at[0]!, () => packShown(a.env, a.at[0]!))],
+  ["POST", path("/api/v1/packs/{id}/reports"), (a) => report(a.env, a.request, "pack", a.at[0]!, () => packShown(a.env, a.at[0]!))],
+
   ["POST", path("/api/v1/letters"), (a) => writeLetter(a.env, a.request)],
 
   // Every page asks whether the visitor is the admin; access says the sign-in is Cloudflare Access's.
@@ -96,6 +105,11 @@ const ADMIN: Route[] = [
   ["PUT", path("/api/v1/admin/plugins/{id}/check"), (a) => checkPlugin(a.env, a.request, a.at[0]!)],
   ["PATCH", path("/api/v1/admin/plugins/{id}"), (a) => changePlugin(a.env, a.request, a.at[0]!)],
   ["DELETE", path("/api/v1/admin/plugins/{id}"), (a) => deletePlugin(a.env, a.at[0]!)],
+
+  ["GET", path("/api/v1/admin/packs/{id}/file"), (a) => anyFile(a.env, "pack", a.at[0]!)],
+  ["PUT", path("/api/v1/admin/packs/{id}/check"), (a) => checkPack(a.env, a.request, a.at[0]!)],
+  ["PATCH", path("/api/v1/admin/packs/{id}"), (a) => changePack(a.env, a.request, a.at[0]!)],
+  ["DELETE", path("/api/v1/admin/packs/{id}"), (a) => deletePack(a.env, a.at[0]!)],
 
   ["GET", path("/api/v1/admin/reports"), (a) => listReports(a.env)],
   ["DELETE", path("/api/v1/admin/reports/{id}"), (a) => dismissReport(a.env, a.at[0]!)],

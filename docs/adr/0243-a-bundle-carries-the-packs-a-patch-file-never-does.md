@@ -30,6 +30,12 @@ installed pack stands over the bundle's copy.
 and writes it into the packs folder as `<id>.fbks`, over any earlier version, rather than opening
 an empty canvas; `flyback-cli packs install` does the same from a script.
 
+**The preset site shares packs as it shares plugins.** A `.fbks` sent to `/api/v1/packs`
+waits for Validate, which reads it against the modules that ship in the engine, and then
+for the admin to publish it, since a pack's id is whoever sent it first and a newer
+version replaces an installed one. The shelf lists each pack once, at its newest
+published version.
+
 ## Consequences
 
 - A shared patch opens anywhere, offline; a loose one without its pack opens as one

@@ -9,13 +9,13 @@ internal static class CheckSubmissionCommand
 {
     public static Command Build()
     {
-        var file = new Argument<FileInfo>("file") { Description = "The submitted .fbk, .fbkb or .fbkp." };
+        var file = new Argument<FileInfo>("file") { Description = "The submitted .fbk, .fbkb, .fbkp or .fbks." };
 
         var name = new Option<string?>("--name") { Description = "The name a preset was submitted under, where one was given." };
 
         var command = new Command(
             "check-submission",
-            "Read a submitted preset or plugin package as the preset site does, without running it, and print the verdict as JSON. Exits 1 where it is refused.")
+            "Read a submitted preset, plugin package or module pack as the preset site does, without running it, and print the verdict as JSON. Exits 1 where it is refused.")
         {
             file, name,
         };
@@ -38,7 +38,10 @@ internal static class CheckSubmissionCommand
             return Exit.Failed;
         }
 
-        var check = Checks.Of(Checks.IsPlugin(file.Name), file.Name, File.ReadAllBytes(file.FullName), name, browser, error);
+        var bytes = File.ReadAllBytes(file.FullName);
+        var check = Checks.IsPack(file.Name)
+            ? Checks.OfPack(file.Name, bytes, error)
+            : Checks.Of(Checks.IsPlugin(file.Name), file.Name, bytes, name, browser, error);
 
         output.WriteLine(Checks.ToJson(check));
 
