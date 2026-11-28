@@ -4,7 +4,7 @@ Planned on 2026-11-16, on `main` at `57aa9ab0`. It is on TODO.md; take it off th
 delete this file, in the commit that lands the last of it.
 
 - **Kind:** Plan
-- **Status:** Open. `fold` (ADR-0236), the header and `module` (ADR-0241), and placing a pack's module as one module expanded before compiling (ADR-0242) loading the packs installed in a folder and bundles carrying them (ADR-0243) landed; every host taking a bundle's packs, and the editor taking a pack added to its folder while it runs, landed, and so did socket ranges and choices, named outputs and the Interval module for running with memory; Effects is written as a pack; installing from a file landed; the preset site stores, checks and lists packs (dark), and installing from it is next.
+- **Status:** Open. `fold` (ADR-0236), the header and `module` (ADR-0241), and placing a pack's module as one module expanded before compiling (ADR-0242) loading the packs installed in a folder and bundles carrying them (ADR-0243) landed; every host taking a bundle's packs, and the editor taking a pack added to its folder while it runs, landed, and so did socket ranges and choices, named outputs and the Interval module for running with memory; Effects is written as a pack; installing from a file landed; the preset site stores, checks and lists packs, and `flyback-cli packs search` and `packs get` install from it (dark); the editor's side is next.
 
 ## What is wanted
 
@@ -69,7 +69,7 @@ viewer compile a bundle with its packs too. A pack file opened or dropped on the
 installed rather than opened (`PackShelf.Install`): checked, written as `<id>.fbks` over any
 earlier version, and its modules join the list. `flyback-cli packs install` and `packs list` do
 the same from a script, kept out of the help while packs are dark. Still to do: the web editor,
-which has no folder, installing from the preset site (it already takes, checks and lists packs at `/api/v1/packs`), and removing a pack.
+which has no folder, installing from the preset site in the editor (the site takes, checks and lists packs at `/api/v1/packs`, and `flyback-cli packs get` installs one), and removing a pack.
 
 ## Saving, versioning and checking
 

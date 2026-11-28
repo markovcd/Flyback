@@ -171,3 +171,19 @@ Feature: The command line says whether a patch works, and whether two are the sa
     When flyback-cli packs list the folder "packs"
     Then the command succeeds
     And it names "ada.echoes 1.0.0: ada.echoes.wobble"
+
+  Scenario: A module pack shared on the preset site is found and installed by its id
+    Given the preset site shares the pack:
+      """
+      pack ada.echoes 1.2.0
+
+      module wobble(rate = 3) = sine(freq: rate)
+      """
+    When flyback-cli packs search "echoes" on the preset site
+    Then the command succeeds
+    And it names "ada.echoes 1.2.0"
+    When flyback-cli packs get "ada.echoes" from the preset site into the folder "packs"
+    Then the command succeeds
+    And it names "ada.echoes.wobble"
+    When flyback-cli packs list the folder "packs"
+    Then it names "ada.echoes 1.2.0: ada.echoes.wobble"

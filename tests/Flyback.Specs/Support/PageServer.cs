@@ -33,6 +33,7 @@ internal sealed class PageServer : IDisposable
 
     private readonly HttpListener listener;
     private readonly ConcurrentDictionary<string, byte[]> offered = new();
+    private readonly ConcurrentDictionary<string, (string Name, byte[] Body)> answered = new();
 
     /// <summary>The site's root.</summary>
     public Uri Root { get; }
@@ -67,6 +68,9 @@ internal sealed class PageServer : IDisposable
         return new Uri(Root, $"files/{Uri.EscapeDataString(name)}");
     }
 
+    /// <summary>Answers <paramref name="path"/>, whatever its query, with <paramref name="bytes"/> typed by <paramref name="name"/>'s extension.</summary>
+    public void Answer(string path, string name, byte[] bytes) => answered[path] = (name, bytes);
+
     private async Task Serve()
     {
         while (listener.IsListening)
@@ -91,7 +95,7 @@ internal sealed class PageServer : IDisposable
         using var response = context.Response;
         var path = Uri.UnescapeDataString(context.Request.Url!.AbsolutePath);
 
-        var (named, body) = path.Split('/', 3) switch
+        var (named, body) = answered.TryGetValue(path, out var answer) ? answer : path.Split('/', 3) switch
         {
             ["", "files", var name] => (name, offered.GetValueOrDefault(name)),
             ["", "viewer", var rest] => Read(Viewer.Value.Find(Index(rest))),

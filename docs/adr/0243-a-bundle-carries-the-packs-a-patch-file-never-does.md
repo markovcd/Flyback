@@ -34,7 +34,8 @@ an empty canvas; `flyback-cli packs install` does the same from a script.
 waits for Validate, which reads it against the modules that ship in the engine, and then
 for the admin to publish it, since a pack's id is whoever sent it first and a newer
 version replaces an installed one. The shelf lists each pack once, at its newest
-published version.
+published version. `flyback-cli packs get <id>` installs that version, downloaded only from the
+site's own host and held to the hash the site lists.
 
 ## Consequences
 

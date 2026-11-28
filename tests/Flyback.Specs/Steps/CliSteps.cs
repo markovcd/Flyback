@@ -45,6 +45,7 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
     private int code;
     private string said = string.Empty;
     private PackageSigner? signer;
+    private PageServer? site;
 
     [Given("the patch is saved as {string}")]
     public void GivenSaved(string name) => File.WriteAllText(Path(name), PatchIO.ToJson(context.Patch));
@@ -408,6 +409,40 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
     [When("flyback-cli packs install {string} into the folder {string}")]
     public void WhenPackInstalled(string name, string packs) => Run("packs", "install", Path(name), "--folder", Path(packs));
 
+    [Given("the preset site shares the pack:")]
+    public void GivenSiteShares(string text)
+    {
+        var bytes = System.Text.Encoding.UTF8.GetBytes(text);
+        var header = text.Split('\n', 2)[0].Split(' ');
+        var listing = new JsonObject
+        {
+            ["items"] = new JsonArray(new JsonObject
+            {
+                ["id"] = "v1",
+                ["pack"] = header[1],
+                ["version"] = header[2],
+                ["sha256"] = Convert.ToHexStringLower(SHA256.HashData(bytes)),
+                ["file"] = "/api/v1/packs/v1/file",
+                ["modules"] = new JsonArray(),
+            }),
+            ["total"] = 1,
+            ["page"] = 1,
+            ["pageSize"] = 24,
+        };
+
+        site ??= new PageServer();
+        site.Answer("/api/v1/packs", "packs.json", System.Text.Encoding.UTF8.GetBytes(listing.ToJsonString()));
+        site.Answer("/api/v1/packs/v1/file", "pack.fbks", bytes);
+    }
+
+    [When("flyback-cli packs search {string} on the preset site")]
+    public void WhenPacksSearched(string words) => Run("packs", "search", words, "--server", Site.AbsoluteUri);
+
+    [When("flyback-cli packs get {string} from the preset site into the folder {string}")]
+    public void WhenPackGot(string pack, string packs) => Run("packs", "get", pack, "--server", Site.AbsoluteUri, "--folder", Path(packs));
+
+    private Uri Site => (site ?? throw new InvalidOperationException("No pack is shared on the preset site.")).Root;
+
     [When("flyback-cli packs list the folder {string}")]
     public void WhenPacksListed(string packs) => Run("packs", "list", "--folder", Path(packs));
 
@@ -631,7 +666,11 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
         said.ShouldContain("refused");
     }
 
-    public void Dispose() => folder.Delete(recursive: true);
+    public void Dispose()
+    {
+        site?.Dispose();
+        folder.Delete(recursive: true);
+    }
 
     /// <summary>The shipped Figures build, packed for any system and signed with a key of its own.</summary>
     private byte[] Package()
