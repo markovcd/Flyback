@@ -35,7 +35,8 @@ waits for Validate, which reads it against the modules that ship in the engine, 
 for the admin to publish it, since a pack's id is whoever sent it first and a newer
 version replaces an installed one. The shelf lists each pack once, at its newest
 published version. `flyback-cli packs get <id>` installs that version, downloaded only from the
-site's own host and held to the hash the site lists.
+site's own host and held to the hash the site lists; the plugins window lists them below the
+site's plugins, under the same search, once the site shares any.
 
 ## Consequences
 

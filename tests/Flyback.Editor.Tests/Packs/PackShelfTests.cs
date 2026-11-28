@@ -116,4 +116,32 @@ public sealed class PackShelfTests : EditorTest
         All<Avalonia.Controls.TextBlock>(window)
             .ShouldContain(t => t.Text != null && t.Text.StartsWith("Pack not installed: line 2", StringComparison.Ordinal));
     }
+
+    [AvaloniaFact]
+    public async Task A_pack_from_the_preset_site_is_installed_and_its_version_known()
+    {
+        var window = Window();
+        var shelf = Service<PackShelf>(window);
+        var site = new FakePackSite(Echoes);
+
+        var said = await shelf.InstallAsync(site.Site(), site.Listed, Xunit.TestContext.Current.CancellationToken);
+
+        said.ShouldBe("ada.echoes 1.0.0 is installed, and its modules are in the module list.");
+        shelf.Versions().ShouldBe(new Dictionary<string, string> { ["ada.echoes"] = "1.0.0" });
+        File.Exists(Path.Combine(folder.FullName, "ada.echoes.fbks")).ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public async Task A_pack_from_the_site_that_is_not_the_one_listed_is_not_installed()
+    {
+        var window = Window();
+        var shelf = Service<PackShelf>(window);
+        var site = new FakePackSite(Echoes, served: Echoes.Replace("3", "4"));
+
+        var said = await shelf.InstallAsync(site.Site(), site.Listed, Xunit.TestContext.Current.CancellationToken);
+
+        said.ShouldStartWith("Pack not installed: ada.echoes 1.0.0.");
+        shelf.Versions().ShouldBeEmpty();
+        Directory.EnumerateFiles(folder.FullName).ShouldBeEmpty();
+    }
 }

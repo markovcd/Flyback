@@ -75,6 +75,35 @@ internal sealed class PackShelf(PluginCatalog plugins, EditorFolders folders, Re
         return installed;
     }
 
+    /// <summary>Whether this editor installs packs at all: it has a folder to keep them in.</summary>
+    public bool Installs => folders.PackFolder is not null;
+
+    /// <summary>Each pack the module list holds, by id, with its version.</summary>
+    public IReadOnlyDictionary<string, string> Versions() =>
+        Packs(plugins.Modules).ToDictionary(pack => pack.Id, pack => pack.Version, StringComparer.Ordinal);
+
+    /// <summary>Downloads <paramref name="pack"/> from <paramref name="site"/> and installs it, saying how that went.</summary>
+    /// <returns>What became of it, for the row that asked.</returns>
+    public async Task<string> InstallAsync(PackSite site, SitePack pack, CancellationToken cancel)
+    {
+        string text;
+
+        try
+        {
+            text = await site.DownloadAsync(pack, cancel);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidDataException)
+        {
+            var refused = $"Pack not installed: {pack.Pack} {pack.Version}. {ex.Message}";
+            report.Say(refused);
+            return refused;
+        }
+
+        return Install(text) is { } installed
+            ? $"{installed.Id} {installed.Version} is installed, and its modules are in the module list."
+            : $"Pack not installed: {pack.Pack} {pack.Version}. The status bar says why.";
+    }
+
     private static IEnumerable<PackSource> Packs(ModuleCatalog modules) => modules.All
         .Select(PackModules.SourceOf)
         .OfType<PackSource>()

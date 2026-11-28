@@ -30,6 +30,7 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>, IReactTo<PluginsM
     private readonly Playback playback;
     private readonly Reactions reactions;
     private readonly Usage usage;
+    private readonly Packs.PackShelf packs;
 
     /// <summary>
     /// The patch the plugins window was opened for, which a restart from inside it opens
@@ -53,8 +54,10 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>, IReactTo<PluginsM
         PluginHubFactory pluginHubs,
         PluginInstallerFactory installers,
         Reactions reactions,
-        Usage usage)
+        Usage usage,
+        Packs.PackShelf packs)
     {
+        this.packs = packs;
         this.reactions = reactions;
         this.usage = usage;
         this.dialog = dialog;
@@ -216,9 +219,16 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>, IReactTo<PluginsM
             (plugin, downloaded) => InstallFromSiteAsync(pluginSite!, plugin, downloaded),
             plugin => ShowInstalledAsync(pluginSite, plugin), wanted, run);
 
+        using var packSection = site.Root is { } root && packs.Installs
+            ? new PackSiteSection(new PackSite(site.Http, root), packs.Versions, pack => InstallPackAsync(new PackSite(site.Http, root), pack), hub.Search)
+            : null;
+
+        if (packSection is not null) hub.Add(packSection.View);
+
         // Read before the window goes up, so the rows do not arrive above whatever is showing.
         await hub.RereadAsync();
         _ = hub.AskSiteAsync();
+        if (packSection is not null) _ = packSection.AskAsync();
 
         await dialog.Show("Plugins", hub.View, hub.Header, fill: true);
     }
@@ -239,6 +249,9 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>, IReactTo<PluginsM
 
         return MissingPlugins.StillNeeded(Awaited, had);
     }
+
+    private async Task<string?> InstallPackAsync(PackSite packSite, SitePack pack) =>
+        await packs.InstallAsync(packSite, pack, CancellationToken.None);
 
     private async Task<string?> InstallFromSiteAsync(PluginSite pluginSite, SitePlugin plugin, Action downloaded)
     {

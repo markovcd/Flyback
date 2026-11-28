@@ -197,6 +197,9 @@ internal sealed class PluginHub : IDisposable
 
     public StackPanel View { get; }
 
+    /// <summary>Adds a section below the site's plugins, such as the site's module packs.</summary>
+    public void Add(Control section) => View.Children.Add(section);
+
     /// <summary>Asks the site for the first page of what matches.</summary>
     public Task AskSiteAsync() => AskAsync(fresh: true);
 
